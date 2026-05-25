@@ -2,12 +2,14 @@ const express = require('express');
 const Datastore = require('nedb');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const path = require('path');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '.')));
 
 const users = new Datastore({ filename: 'users.db', autoload: true });
 const bookmarks = new Datastore({ filename: 'bookmarks.db', autoload: true });
@@ -106,6 +108,46 @@ app.get('/api/get-bookmarks/:userId', (req, res) => {
         const userBookmarks = row ? row.data : [];
         res.json({ success: true, bookmarks: userBookmarks });
     });
+});
+
+app.get('/api/users', (req, res) => {
+    users.find({}, (err, docs) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        const userList = docs.map(user => ({
+            id: user._id,
+            username: user.username,
+            createdAt: user.createdAt
+        }));
+        res.json({ success: true, users: userList });
+    });
+});
+
+app.delete('/api/users/:id', (req, res) => {
+    const { id } = req.params;
+    
+    users.remove({ _id: id }, {}, (err, numRemoved) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        bookmarks.remove({ userId: id }, {}, (err) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            
+            res.json({ success: true, message: '用户已删除' });
+        });
+    });
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(port, () => {
