@@ -13,36 +13,45 @@ app.use(express.static(path.join(__dirname, '.')));
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL ? true : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 async function initDatabase() {
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS bookmarks (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER REFERENCES users(id) UNIQUE NOT NULL,
-                data JSONB NOT NULL,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-        
-        console.log('Database tables initialized');
-    } catch (err) {
-        console.error('Error initializing database:', err);
+    let retries = 5;
+    while (retries > 0) {
+        try {
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(255) UNIQUE NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS bookmarks (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) UNIQUE NOT NULL,
+                    data JSONB NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            
+            console.log('Database tables initialized');
+            return;
+        } catch (err) {
+            console.error('Error initializing database:', err);
+            retries--;
+            if (retries > 0) {
+                console.log(`Retrying... ${retries} attempts left`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
     }
+    console.error('Failed to initialize database after all retries');
 }
 
 app.post('/api/register', async (req, res) => {
@@ -183,6 +192,11 @@ app.get('/admin', (req, res) => {
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 initDatabase().then(() => {
