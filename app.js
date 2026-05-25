@@ -123,56 +123,54 @@ fileInput.addEventListener('change', (e) => {
 function parseBookmarksHTML(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const root = { type: 'folder', name: '导入的书签', children: [] };
+    const root = [];
     
-    function processNode(node, parent) {
-        const children = Array.from(node.childNodes);
+    function processDL(dlElement, parent) {
+        const children = Array.from(dlElement.children);
         for (let child of children) {
-            if (child.nodeType === Node.ELEMENT_NODE) {
-                if (child.tagName === 'DT') {
-                    const a = child.querySelector('a');
-                    const h3 = child.querySelector('h3');
-                    const dl = child.querySelector('dl');
+            if (child.tagName === 'DT') {
+                // 处理 DT 标签
+                const h3 = child.querySelector('h3');
+                const a = child.querySelector('a');
+                
+                if (h3) {
+                    // 这是一个文件夹
+                    const folder = {
+                        type: 'folder',
+                        name: h3.textContent.trim(),
+                        dateAdded: h3.getAttribute('add_date'),
+                        children: []
+                    };
+                    parent.push(folder);
                     
-                    if (a && !h3) {
-                        parent.children.push({
-                            type: 'bookmark',
-                            title: a.textContent || a.getAttribute('href'),
-                            url: a.getAttribute('href'),
-                            dateAdded: a.getAttribute('add_date')
-                        });
-                    }
-                    
-                    if (h3) {
-                        const newFolder = {
-                            type: 'folder',
-                            name: h3.textContent,
-                            dateAdded: h3.getAttribute('add_date'),
-                            children: []
-                        };
-                        parent.children.push(newFolder);
-                        
-                        const nextDl = h3.parentElement.querySelector('+ dl dl, + dl');
-                        if (dl) {
-                            processNode(dl, newFolder);
-                        } else {
-                            const siblingDl = h3.nextElementSibling;
-                            if (siblingDl && siblingDl.tagName === 'DL') {
-                                processNode(siblingDl, newFolder);
-                            }
+                    // 查找文件夹内容的 DL
+                    let nextDl = child.nextElementSibling;
+                    while (nextDl) {
+                        if (nextDl.tagName === 'DL') {
+                            processDL(nextDl, folder.children);
+                            break;
                         }
+                        nextDl = nextDl.nextElementSibling;
                     }
+                } else if (a) {
+                    // 这是一个书签
+                    parent.push({
+                        type: 'bookmark',
+                        title: a.textContent.trim() || a.getAttribute('href'),
+                        url: a.getAttribute('href'),
+                        dateAdded: a.getAttribute('add_date')
+                    });
                 }
             }
         }
     }
     
-    const dlElements = doc.querySelectorAll('dl');
-    if (dlElements.length > 0) {
-        processNode(dlElements[0], root);
+    const firstDL = doc.querySelector('dl');
+    if (firstDL) {
+        processDL(firstDL, root);
     }
     
-    return root.children;
+    return root;
 }
 
 // 合并书签

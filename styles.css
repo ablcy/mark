@@ -50,6 +50,10 @@ header p {
     overflow: hidden;
 }
 
+#auth-container.hidden {
+    display: none;
+}
+
 .auth-tabs {
     display: flex;
     background: #f8f9fa;
