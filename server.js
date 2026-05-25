@@ -13,9 +13,10 @@ app.use(express.static(path.join(__dirname, '.')));
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.DATABASE_URL ? true : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000
 });
 
 async function initDatabase() {
