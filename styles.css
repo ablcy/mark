@@ -17,7 +17,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
+    padding: 40px 20px;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
@@ -26,43 +26,45 @@ body {
 header {
     text-align: center;
     color: white;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
 }
 
 header h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
     font-weight: 700;
     margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header p {
-    font-size: 1.1rem;
-    opacity: 0.9;
+    font-size: 1.2rem;
+    opacity: 0.95;
 }
 
 #auth-container {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
-    max-width: 400px;
+    max-width: 420px;
     overflow: hidden;
 }
 
 .auth-tabs {
     display: flex;
-    background: #f3f4f6;
+    background: #f8f9fa;
 }
 
 .auth-tabs button {
     flex: 1;
-    padding: 15px;
+    padding: 18px;
     border: none;
     background: transparent;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    color: #666;
 }
 
 .auth-tabs button.active {
@@ -70,8 +72,12 @@ header p {
     color: #667eea;
 }
 
+.auth-tabs button:hover:not(.active) {
+    background: #f0f0f0;
+}
+
 .auth-form {
-    padding: 30px;
+    padding: 35px;
 }
 
 .auth-form.hidden {
@@ -80,41 +86,42 @@ header p {
 
 .auth-form input {
     width: 100%;
-    padding: 12px 15px;
-    margin-bottom: 15px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
     font-size: 1rem;
-    transition: border-color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .auth-form input:focus {
     outline: none;
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .auth-form button {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border: none;
-    border-radius: 8px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .auth-form button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 #main-container {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
     max-width: 1000px;
     overflow: hidden;
@@ -126,104 +133,116 @@ header p {
 
 .toolbar {
     display: flex;
-    gap: 10px;
-    padding: 15px 20px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
+    gap: 12px;
+    padding: 20px 25px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e8e8e8;
     flex-wrap: wrap;
 }
 
 .toolbar button {
-    padding: 8px 16px;
+    padding: 10px 20px;
     background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.9rem;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
 }
 
 .toolbar button:hover {
-    background: #f3f4f6;
+    background: #667eea;
     border-color: #667eea;
-    color: #667eea;
+    color: white;
 }
 
 #bookmarks-container {
-    padding: 20px;
+    padding: 25px;
     max-height: 600px;
     overflow-y: auto;
 }
 
 .folder {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .folder-header {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
-    background: #f3f4f6;
-    border-radius: 6px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.3s ease;
     user-select: none;
 }
 
 .folder-header:hover {
-    background: #e5e7eb;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    transform: translateX(5px);
 }
 
 .folder-icon {
-    margin-right: 8px;
-    font-size: 1.2rem;
+    margin-right: 10px;
+    font-size: 1.3rem;
 }
 
 .folder-name {
-    font-weight: 500;
+    font-weight: 600;
     flex: 1;
+    color: #333;
 }
 
 .folder-toggle {
-    margin-right: 8px;
-    width: 20px;
+    margin-right: 10px;
+    width: 24px;
+    height: 24px;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .folder-content {
-    margin-left: 20px;
-    padding: 10px 0;
+    margin-left: 25px;
+    padding: 15px 0;
 }
 
 .bookmark-item {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
-    margin: 4px 0;
-    border-radius: 4px;
-    transition: background 0.2s ease;
+    padding: 10px 16px;
+    margin: 6px 0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
     text-decoration: none;
-    color: #374151;
+    color: #333;
+    border: 1px solid transparent;
 }
 
 .bookmark-item:hover {
-    background: #f3f4f6;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-color: #e8e8e8;
+    transform: translateX(5px);
 }
 
 .bookmark-icon {
-    margin-right: 10px;
-    width: 16px;
-    height: 16px;
+    margin-right: 12px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
 }
 
 .bookmark-title {
     flex: 1;
+    font-weight: 500;
 }
 
 .folder-actions, .bookmark-actions {
     display: none;
-    gap: 5px;
+    gap: 8px;
 }
 
 .folder-header:hover .folder-actions,
@@ -232,35 +251,37 @@ header p {
 }
 
 .action-btn {
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    background: transparent;
-    border: none;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background: white;
+    border: 1px solid #ddd;
     cursor: pointer;
-    color: #6b7280;
-    border-radius: 4px;
+    color: #666;
+    border-radius: 6px;
     transition: all 0.2s ease;
 }
 
 .action-btn:hover {
-    background: #e5e7eb;
-    color: #374151;
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
 }
 
 .action-btn.delete:hover {
-    color: #ef4444;
+    background: #ef4444;
+    border-color: #ef4444;
 }
 
 footer {
     text-align: center;
     color: white;
-    padding: 20px;
-    opacity: 0.8;
+    padding: 25px;
+    opacity: 0.9;
 }
 
 @media (max-width: 768px) {
     header h1 {
-        font-size: 2rem;
+        font-size: 2.5rem;
     }
     
     #auth-container {
@@ -269,5 +290,9 @@ footer {
     
     .toolbar {
         justify-content: center;
+    }
+    
+    .auth-form {
+        padding: 25px;
     }
 }

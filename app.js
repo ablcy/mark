@@ -70,6 +70,7 @@ loginForm.addEventListener('submit', (e) => {
 
     currentUser = username;
     bookmarks = users[username].bookmarks;
+    localStorage.setItem('mark_current_user', currentUser);
     showMainContainer();
     renderBookmarks();
 });
@@ -77,6 +78,7 @@ loginForm.addEventListener('submit', (e) => {
 // 退出登录
 logoutBtn.addEventListener('click', () => {
     saveBookmarks();
+    localStorage.removeItem('mark_current_user');
     currentUser = null;
     bookmarks = [];
     showAuthContainer();
@@ -123,41 +125,51 @@ function parseBookmarksHTML(html) {
     const doc = parser.parseFromString(html, 'text/html');
     const root = { type: 'folder', name: '导入的书签', children: [] };
     
-    function parseNode(node, parent) {
-        const children = node.children;
-        for (let i = 0; i < children.length; i++) {
-            const child = children[i];
-            if (child.tagName === 'DT') {
-                const a = child.querySelector('a');
-                const folder = child.querySelector('h3');
-                
-                if (a) {
-                    parent.children.push({
-                        type: 'bookmark',
-                        title: a.textContent || a.getAttribute('href'),
-                        url: a.getAttribute('href'),
-                        dateAdded: a.getAttribute('add_date')
-                    });
-                } else if (folder) {
-                    const newFolder = {
-                        type: 'folder',
-                        name: folder.textContent,
-                        dateAdded: folder.getAttribute('add_date'),
-                        children: []
-                    };
-                    parent.children.push(newFolder);
+    function processNode(node, parent) {
+        const children = Array.from(node.childNodes);
+        for (let child of children) {
+            if (child.nodeType === Node.ELEMENT_NODE) {
+                if (child.tagName === 'DT') {
+                    const a = child.querySelector('a');
+                    const h3 = child.querySelector('h3');
                     const dl = child.querySelector('dl');
-                    if (dl) {
-                        parseNode(dl, newFolder);
+                    
+                    if (a && !h3) {
+                        parent.children.push({
+                            type: 'bookmark',
+                            title: a.textContent || a.getAttribute('href'),
+                            url: a.getAttribute('href'),
+                            dateAdded: a.getAttribute('add_date')
+                        });
+                    }
+                    
+                    if (h3) {
+                        const newFolder = {
+                            type: 'folder',
+                            name: h3.textContent,
+                            dateAdded: h3.getAttribute('add_date'),
+                            children: []
+                        };
+                        parent.children.push(newFolder);
+                        
+                        const nextDl = h3.parentElement.querySelector('+ dl dl, + dl');
+                        if (dl) {
+                            processNode(dl, newFolder);
+                        } else {
+                            const siblingDl = h3.nextElementSibling;
+                            if (siblingDl && siblingDl.tagName === 'DL') {
+                                processNode(siblingDl, newFolder);
+                            }
+                        }
                     }
                 }
             }
         }
     }
     
-    const dl = doc.querySelector('dl');
-    if (dl) {
-        parseNode(dl, root);
+    const dlElements = doc.querySelectorAll('dl');
+    if (dlElements.length > 0) {
+        processNode(dlElements[0], root);
     }
     
     return root.children;
