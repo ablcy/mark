@@ -164,14 +164,14 @@ function parseBookmarksHTML(html) {
                             children: []
                         };
                         
-                        // 找到下一个 DL 作为这个文件夹的内容
-                        let nextNode = currentNode.nextElementSibling;
-                        while (nextNode) {
-                            if (nextNode.tagName === 'DL') {
-                                folder.children = processNode(nextNode);
+                        // 查找下一个 DL 元素（跳过中间的 p 标签和文本节点）
+                        let sibling = currentNode.nextSibling;
+                        while (sibling) {
+                            if (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'DL') {
+                                folder.children = processNode(sibling);
                                 break;
                             }
-                            nextNode = nextNode.nextElementSibling;
+                            sibling = sibling.nextSibling;
                         }
                         
                         result.push(folder);
