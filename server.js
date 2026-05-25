@@ -9,13 +9,15 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    next();
+});
 app.use(express.static(path.join(__dirname, '.')));
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 async function initDatabase() {
@@ -200,6 +202,10 @@ app.use((err, req, res, next) => {
 });
 
 initDatabase().then(() => {
+    console.log('Database initialized successfully');
+}).catch(err => {
+    console.error('Database initialization failed:', err);
+}).finally(() => {
     app.listen(port, () => {
         console.log(`Server running on http://localhost:${port}`);
     });
