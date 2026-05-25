@@ -29,6 +29,16 @@ header {
     margin-bottom: 40px;
 }
 
+.version-display {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
 header h1 {
     font-size: 3.5rem;
     font-weight: 700;
@@ -299,4 +309,79 @@ footer {
     .auth-form {
         padding: 25px;
     }
+}
+
+/* 模态框样式 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #667eea;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.changelog-entry h3 {
+    color: #667eea;
+    margin-top: 0;
+}
+
+.changelog-entry h4 {
+    color: #555;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.changelog-entry ul {
+    margin: 0 0 0 20px;
+    color: #666;
+    line-height: 1.8;
 }

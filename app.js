@@ -14,8 +14,11 @@ const importBtn = document.getElementById('import-btn');
 const exportBtn = document.getElementById('export-btn');
 const addFolderBtn = document.getElementById('add-folder-btn');
 const logoutBtn = document.getElementById('logout-btn');
+const changelogBtn = document.getElementById('changelog-btn');
 const fileInput = document.getElementById('file-input');
 const bookmarksTree = document.getElementById('bookmarks-tree');
+const changelogModal = document.getElementById('changelog-modal');
+const closeModalBtn = document.getElementById('close-modal');
 
 // 切换登录/注册标签
 loginTab.addEventListener('click', () => {
@@ -83,6 +86,22 @@ logoutBtn.addEventListener('click', () => {
     bookmarks = [];
     showAuthContainer();
     loginForm.reset();
+});
+
+// 更新日志
+changelogBtn.addEventListener('click', () => {
+    changelogModal.classList.remove('hidden');
+});
+
+closeModalBtn.addEventListener('click', () => {
+    changelogModal.classList.add('hidden');
+});
+
+// 点击模态框外部关闭
+changelogModal.addEventListener('click', (e) => {
+    if (e.target === changelogModal) {
+        changelogModal.classList.add('hidden');
+    }
 });
 
 // 显示认证界面
@@ -306,7 +325,7 @@ function renderFolder(folder, container, parentArray, index) {
     
     const toggle = document.createElement('span');
     toggle.className = 'folder-toggle';
-    toggle.textContent = '▶';
+    toggle.textContent = '▼'; // 默认展开
     toggle.onclick = (e) => {
         e.stopPropagation();
         const content = div.querySelector('.folder-content');
