@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark - 书签管理</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Mark</h1>
+            <p>简单、高效的书签管理应用</p>
+        </header>
+
+        <div id="auth-container">
+            <div class="auth-tabs">
+                <button id="login-tab" class="active">登录</button>
+                <button id="register-tab">注册</button>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <input type="text" id="login-username" placeholder="用户名" required>
+                <input type="password" id="login-password" placeholder="密码" required>
+                <button type="submit">登录</button>
+            </form>
+
+            <form id="register-form" class="auth-form hidden">
+                <input type="text" id="register-username" placeholder="用户名" required>
+                <input type="password" id="register-password" placeholder="密码" required>
+                <input type="password" id="register-confirm" placeholder="确认密码" required>
+                <button type="submit">注册</button>
+            </form>
+        </div>
+
+        <div id="main-container" class="hidden">
+            <div class="toolbar">
+                <button id="import-btn">导入书签</button>
+                <button id="export-btn">导出书签</button>
+                <button id="add-folder-btn">新建文件夹</button>
+                <button id="logout-btn">退出登录</button>
+                <input type="file" id="file-input" accept=".html" style="display: none;">
+            </div>
+
+            <div id="bookmarks-container">
+                <div id="bookmarks-tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Li Chengyan. All Rights Reserved.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
