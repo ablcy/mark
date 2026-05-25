@@ -140,68 +140,55 @@ fileInput.addEventListener('change', (e) => {
 
 // 解析书签 HTML 文件
 function parseBookmarksHTML(html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const root = [];
+    const result = [];
+    const stack = [];
+    let currentParent = result;
+    let currentItem = null;
     
-    // 递归处理节点
-    function processNode(node) {
-        const result = [];
-        let currentNode = node.firstChild;
+    const lines = html.split('\n');
+    
+    for (let line of lines) {
+        line = line.trim();
         
-        while (currentNode) {
-            if (currentNode.nodeType === Node.ELEMENT_NODE) {
-                if (currentNode.tagName === 'DT') {
-                    const h3 = currentNode.querySelector('h3');
-                    const a = currentNode.querySelector('a');
-                    
-                    if (h3) {
-                        // 这是一个文件夹
-                        const folder = {
-                            type: 'folder',
-                            name: h3.textContent.trim(),
-                            dateAdded: h3.getAttribute('add_date'),
-                            children: []
-                        };
-                        
-                        // 查找下一个 DL 元素（跳过中间的 p 标签和文本节点）
-                        let sibling = currentNode.nextSibling;
-                        while (sibling) {
-                            if (sibling.nodeType === Node.ELEMENT_NODE && sibling.tagName === 'DL') {
-                                folder.children = processNode(sibling);
-                                break;
-                            }
-                            sibling = sibling.nextSibling;
-                        }
-                        
-                        result.push(folder);
-                    } else if (a) {
-                        // 这是一个书签
-                        result.push({
-                            type: 'bookmark',
-                            title: a.textContent.trim() || a.getAttribute('href'),
-                            url: a.getAttribute('href'),
-                            dateAdded: a.getAttribute('add_date')
-                        });
-                    }
-                } else if (currentNode.tagName === 'DL') {
-                    // 处理 DL 标签内的内容
-                    const dlContent = processNode(currentNode);
-                    result.push(...dlContent);
-                }
-            }
-            currentNode = currentNode.nextSibling;
+        if (line.startsWith('<DT><H3')) {
+            const nameMatch = line.match(/>([^<]+)<\/H3>/i);
+            const addDateMatch = line.match(/ADD_DATE="?([^"]+)"?/i);
+            
+            currentItem = {
+                type: 'folder',
+                name: nameMatch ? nameMatch[1].trim() : '',
+                dateAdded: addDateMatch ? addDateMatch[1] : null,
+                children: []
+            };
         }
-        return result;
+        else if (line.includes('</DL>')) {
+            if (stack.length > 0) {
+                currentParent = stack.pop();
+            }
+        }
+        else if (line.includes('<DL>') && !line.includes('</DL>')) {
+            if (currentItem && currentItem.type === 'folder') {
+                currentParent.push(currentItem);
+                stack.push(currentParent);
+                currentParent = currentItem.children;
+                currentItem = null;
+            }
+        }
+        else if (line.startsWith('<DT><A ')) {
+            const hrefMatch = line.match(/HREF="?([^"]+)"?/i);
+            const addDateMatch = line.match(/ADD_DATE="?([^"]+)"?/i);
+            const titleMatch = line.match(/>([^<]+)<\/A>/i);
+            
+            currentParent.push({
+                type: 'bookmark',
+                title: titleMatch ? titleMatch[1].trim() : (hrefMatch ? hrefMatch[1] : ''),
+                url: hrefMatch ? hrefMatch[1] : '',
+                dateAdded: addDateMatch ? addDateMatch[1] : null
+            });
+        }
     }
     
-    const firstDL = doc.querySelector('dl');
-    if (firstDL) {
-        const parsed = processNode(firstDL);
-        return parsed;
-    }
-    
-    return root;
+    return result;
 }
 
 // 合并书签

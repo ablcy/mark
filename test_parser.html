@@ -2,86 +2,166 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>测试书签解析器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书签解析器测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .folder { margin-left: 20px; }
+        .bookmark { color: blue; text-decoration: underline; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
+    </style>
 </head>
 <body>
-    <h1>书签解析测试</h1>
-    <button onclick="testParse()">测试解析</button>
-    <div id="output"></div>
-    
+    <h1>书签解析器测试</h1>
+    <button onclick="runTest()">运行测试</button>
+    <div id="debug"></div>
+    <div id="result"></div>
+
     <script>
+        const testBookmarkHTML = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>
+    <DT><H3 ADD_DATE="1710431296" LAST_MODIFIED="1776957810" PERSONAL_TOOLBAR_FOLDER="true">收藏夹栏</H3>
+    <DL><p>
+        <DT><H3 ADD_DATE="1703031725" LAST_MODIFIED="1778063577">工作</H3>
+        <DL><p>
+            <DT><A HREF="https://aiwenweike.online/student/login" ADD_DATE="1778049682">智能学习系统</A>
+            <DT><A HREF="https://www.kdocs.cn/latest?from=docs" ADD_DATE="1772018276">金山文档</A>
+        </DL><p>
+        <DT><H3 ADD_DATE="1703031352" LAST_MODIFIED="1778661356">娱乐</H3>
+        <DL><p>
+            <DT><A HREF="https://www.bilibili.com/" ADD_DATE="1675337877">哔哩哔哩</A>
+            <DT><A HREF="https://www.steam.com/" ADD_DATE="1666408255">Steam</A>
+        </DL><p>
+    </DL><p>
+</DL><p>`;
+
         function parseBookmarksHTML(html) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
-            const root = [];
+            const result = [];
+            const stack = [];
+            let currentParent = result;
+            let currentItem = null;
+            const debugLog = [];
             
-            // 递归处理节点
-            function processNode(node) {
-                const result = [];
-                let currentNode = node.firstChild;
+            const lines = html.split('\n');
+            debugLog.push(`总共有 ${lines.length} 行`);
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
                 
-                while (currentNode) {
-                    if (currentNode.nodeType === Node.ELEMENT_NODE) {
-                        if (currentNode.tagName === 'DT') {
-                            const h3 = currentNode.querySelector('h3');
-                            const a = currentNode.querySelector('a');
-                            
-                            if (h3) {
-                                // 这是一个文件夹
-                                const folder = {
-                                    type: 'folder',
-                                    name: h3.textContent.trim(),
-                                    dateAdded: h3.getAttribute('add_date'),
-                                    children: []
-                                };
-                                
-                                // 找到下一个 DL 作为这个文件夹的内容
-                                let nextNode = currentNode.nextElementSibling;
-                                while (nextNode) {
-                                    if (nextNode.tagName === 'DL') {
-                                        folder.children = processNode(nextNode);
-                                        break;
-                                    }
-                                    nextNode = nextNode.nextElementSibling;
-                                }
-                                
-                                result.push(folder);
-                            } else if (a) {
-                                // 这是一个书签
-                                result.push({
-                                    type: 'bookmark',
-                                    title: a.textContent.trim() || a.getAttribute('href'),
-                                    url: a.getAttribute('href'),
-                                    dateAdded: a.getAttribute('add_date')
-                                });
-                            }
-                        } else if (currentNode.tagName === 'DL') {
-                            // 处理 DL 标签内的内容
-                            const dlContent = processNode(currentNode);
-                            result.push(...dlContent);
-                        }
-                    }
-                    currentNode = currentNode.nextSibling;
+                debugLog.push(`\n第 ${i+1} 行: ${line}`);
+                
+                if (line.startsWith('<DT><H3')) {
+                    const nameMatch = line.match(/>([^<]+)<\/H3>/i);
+                    const addDateMatch = line.match(/ADD_DATE="?([^"]+)"?/i);
+                    
+                    currentItem = {
+                        type: 'folder',
+                        name: nameMatch ? nameMatch[1].trim() : '',
+                        dateAdded: addDateMatch ? addDateMatch[1] : null,
+                        children: []
+                    };
+                    debugLog.push(`  → 创建文件夹: "${currentItem.name}", currentItem = ${JSON.stringify(currentItem)}`);
                 }
-                return result;
+                else if (line.includes('</DL>')) {
+                    debugLog.push(`  → 遇到 </DL>, 栈长度: ${stack.length}`);
+                    if (stack.length > 0) {
+                        const popped = stack.pop();
+                        currentParent = popped;
+                        debugLog.push(`  → 弹出栈, currentParent 现在指向 ${currentParent === result ? '根数组' : '某文件夹的children'}`);
+                    }
+                }
+                else if (line.includes('<DL>') && !line.includes('</DL>')) {
+                    debugLog.push(`  → 遇到 <DL>, currentItem = ${currentItem ? JSON.stringify(currentItem) : 'null'}`);
+                    if (currentItem && currentItem.type === 'folder') {
+                        currentParent.push(currentItem);
+                        debugLog.push(`  → 将 "${currentItem.name}" 推入 currentParent, currentParent长度: ${currentParent.length}`);
+                        
+                        stack.push(currentParent);
+                        debugLog.push(`  → currentParent 入栈, 栈长度: ${stack.length}`);
+                        
+                        currentParent = currentItem.children;
+                        debugLog.push(`  → currentParent 现在指向 "${currentItem.name}" 的children`);
+                        
+                        currentItem = null;
+                    }
+                }
+                else if (line.startsWith('<DT><A ')) {
+                    const hrefMatch = line.match(/HREF="?([^"]+)"?/i);
+                    const addDateMatch = line.match(/ADD_DATE="?([^"]+)"?/i);
+                    const titleMatch = line.match(/>([^<]+)<\/A>/i);
+                    
+                    const bookmark = {
+                        type: 'bookmark',
+                        title: titleMatch ? titleMatch[1].trim() : (hrefMatch ? hrefMatch[1] : ''),
+                        url: hrefMatch ? hrefMatch[1] : '',
+                        dateAdded: addDateMatch ? addDateMatch[1] : null
+                    };
+                    currentParent.push(bookmark);
+                    debugLog.push(`  → 创建书签: "${bookmark.title}", currentParent长度: ${currentParent.length}`);
+                }
             }
             
-            const firstDL = doc.querySelector('dl');
-            if (firstDL) {
-                const parsed = processNode(firstDL);
-                return parsed;
-            }
-            
-            return root;
+            document.getElementById('debug').innerHTML = '<h3>调试日志:</h3><pre>' + debugLog.join('\n') + '</pre>';
+            return result;
         }
 
-        async function testParse() {
-            const response = await fetch('test_bookmarks.html');
-            const html = await response.text();
-            const result = parseBookmarksHTML(html);
-            document.getElementById('output').innerHTML = 
-                '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
-            console.log('解析结果:', result);
+        function renderBookmarks(bookmarks, indent = 0) {
+            let html = '';
+            for (const item of bookmarks) {
+                const padding = 'padding-left: ' + (indent * 20) + 'px;';
+                if (item.type === 'folder') {
+                    html += `<div style="${padding}"><strong>📁 ${item.name}</strong> (${item.children.length} 项)</div>`;
+                    html += renderBookmarks(item.children, indent + 1);
+                } else {
+                    html += `<div style="${padding}" class="bookmark">🔗 ${item.title}</div>`;
+                }
+            }
+            return html;
+        }
+
+        function runTest() {
+            const resultDiv = document.getElementById('result');
+            try {
+                const parsed = parseBookmarksHTML(testBookmarkHTML);
+                console.log('解析结果:', JSON.stringify(parsed, null, 2));
+                
+                let totalBookmarks = 0;
+                let totalFolders = 0;
+                
+                function countItems(items) {
+                    for (const item of items) {
+                        if (item.type === 'folder') {
+                            totalFolders++;
+                            countItems(item.children);
+                        } else {
+                            totalBookmarks++;
+                        }
+                    }
+                }
+                countItems(parsed);
+                
+                if (parsed.length > 0 && parsed[0].name === '收藏夹栏' && parsed[0].children.length > 0) {
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ 解析成功！</div>
+                        <p>找到文件夹: ${totalFolders} 个</p>
+                        <p>找到书签: ${totalBookmarks} 个</p>
+                        <div>${renderBookmarks(parsed)}</div>
+                        <h3>原始数据:</h3>
+                        <pre>${JSON.stringify(parsed, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ 解析失败：未能正确解析文件夹结构</div>
+                    <pre>${JSON.stringify(parsed, null, 2)}</pre>`;
+                }
+            } catch (e) {
+                resultDiv.innerHTML = `<div class="error">❌ 解析错误: ${e.message}</div>`;
+            }
         }
     </script>
 </body>
