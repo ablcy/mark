@@ -23,6 +23,7 @@ const selectedFolderName = document.getElementById('selected-folder-name');
 const changelogModal = document.getElementById('changelog-modal');
 const closeModalBtn = document.getElementById('close-modal');
 const syncBtn = document.getElementById('sync-btn');
+const adminBtn = document.getElementById('admin-btn');
 
 loginTab.addEventListener('click', () => {
     loginTab.classList.add('active');
@@ -127,6 +128,10 @@ syncBtn.addEventListener('click', async () => {
     await syncBookmarks();
 });
 
+adminBtn.addEventListener('click', () => {
+    window.open('/admin', '_blank');
+});
+
 async function syncBookmarks() {
     try {
         const response = await fetch(`${API_URL}/get-bookmarks/${currentUserId}`);
@@ -159,26 +164,53 @@ function showMainContainer() {
 }
 
 importBtn.addEventListener('click', () => {
-    fileInput.click();
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.html';
+    input.style.display = 'none';
+    
+    input.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const html = event.target.result;
+            const importedBookmarks = parseBookmarksHTML(html);
+            
+            if (importedBookmarks.length === 0) {
+                alert('未解析到任何书签，请确保文件格式正确！');
+                return;
+            }
+            
+            bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
+            await saveBookmarks();
+            renderFolderTree();
+            updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
+            alert(`成功导入 ${countBookmarks(importedBookmarks)} 个书签！`);
+        };
+        reader.onerror = () => {
+            alert('文件读取失败！');
+        };
+        reader.readAsText(file);
+        document.body.removeChild(input);
+    });
+    
+    document.body.appendChild(input);
+    input.click();
 });
 
-fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        const html = event.target.result;
-        const importedBookmarks = parseBookmarksHTML(html);
-        bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
-        await saveBookmarks();
-        renderFolderTree();
-        updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
-        alert('书签导入成功！');
-    };
-    reader.readAsText(file);
-    fileInput.value = '';
-});
+function countBookmarks(arr) {
+    let count = 0;
+    for (let item of arr) {
+        if (item.type === 'bookmark') {
+            count++;
+        } else if (item.type === 'folder' && item.children) {
+            count += countBookmarks(item.children);
+        }
+    }
+    return count;
+}
 
 function parseBookmarksHTML(html) {
     const result = [];
