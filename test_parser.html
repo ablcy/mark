@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试书签解析器</title>
+</head>
+<body>
+    <h1>书签解析测试</h1>
+    <button onclick="testParse()">测试解析</button>
+    <div id="output"></div>
+    
+    <script>
+        function parseBookmarksHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const root = [];
+            
+            // 递归处理节点
+            function processNode(node) {
+                const result = [];
+                let currentNode = node.firstChild;
+                
+                while (currentNode) {
+                    if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                        if (currentNode.tagName === 'DT') {
+                            const h3 = currentNode.querySelector('h3');
+                            const a = currentNode.querySelector('a');
+                            
+                            if (h3) {
+                                // 这是一个文件夹
+                                const folder = {
+                                    type: 'folder',
+                                    name: h3.textContent.trim(),
+                                    dateAdded: h3.getAttribute('add_date'),
+                                    children: []
+                                };
+                                
+                                // 找到下一个 DL 作为这个文件夹的内容
+                                let nextNode = currentNode.nextElementSibling;
+                                while (nextNode) {
+                                    if (nextNode.tagName === 'DL') {
+                                        folder.children = processNode(nextNode);
+                                        break;
+                                    }
+                                    nextNode = nextNode.nextElementSibling;
+                                }
+                                
+                                result.push(folder);
+                            } else if (a) {
+                                // 这是一个书签
+                                result.push({
+                                    type: 'bookmark',
+                                    title: a.textContent.trim() || a.getAttribute('href'),
+                                    url: a.getAttribute('href'),
+                                    dateAdded: a.getAttribute('add_date')
+                                });
+                            }
+                        } else if (currentNode.tagName === 'DL') {
+                            // 处理 DL 标签内的内容
+                            const dlContent = processNode(currentNode);
+                            result.push(...dlContent);
+                        }
+                    }
+                    currentNode = currentNode.nextSibling;
+                }
+                return result;
+            }
+            
+            const firstDL = doc.querySelector('dl');
+            if (firstDL) {
+                const parsed = processNode(firstDL);
+                return parsed;
+            }
+            
+            return root;
+        }
+
+        async function testParse() {
+            const response = await fetch('test_bookmarks.html');
+            const html = await response.text();
+            const result = parseBookmarksHTML(html);
+            document.getElementById('output').innerHTML = 
+                '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            console.log('解析结果:', result);
+        }
+    </script>
+</body>
+</html>

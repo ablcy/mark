@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>简单测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #output { margin-top: 20px; background: #f5f5f5; padding: 20px; border-radius: 10px; }
+        .folder { margin-left: 20px; }
+        .bookmark { margin-left: 40px; color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>书签解析器测试</h1>
+    <button onclick="testIt()">加载并测试</button>
+    <div id="output"></div>
+    
+    <script>
+        function parseBookmarksHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const root = [];
+            
+            // 递归处理节点
+            function processNode(node) {
+                const result = [];
+                let currentNode = node.firstChild;
+                
+                while (currentNode) {
+                    if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                        if (currentNode.tagName === 'DT') {
+                            const h3 = currentNode.querySelector('h3');
+                            const a = currentNode.querySelector('a');
+                            
+                            if (h3) {
+                                // 这是一个文件夹
+                                const folder = {
+                                    type: 'folder',
+                                    name: h3.textContent.trim(),
+                                    dateAdded: h3.getAttribute('add_date'),
+                                    children: []
+                                };
+                                
+                                // 找到下一个 DL 作为这个文件夹的内容
+                                let nextNode = currentNode.nextElementSibling;
+                                while (nextNode) {
+                                    if (nextNode.tagName === 'DL') {
+                                        folder.children = processNode(nextNode);
+                                        break;
+                                    }
+                                    nextNode = nextNode.nextElementSibling;
+                                }
+                                
+                                result.push(folder);
+                            } else if (a) {
+                                // 这是一个书签
+                                result.push({
+                                    type: 'bookmark',
+                                    title: a.textContent.trim() || a.getAttribute('href'),
+                                    url: a.getAttribute('href'),
+                                    dateAdded: a.getAttribute('add_date')
+                                });
+                            }
+                        } else if (currentNode.tagName === 'DL') {
+                            // 处理 DL 标签内的内容
+                            const dlContent = processNode(currentNode);
+                            result.push(...dlContent);
+                        }
+                    }
+                    currentNode = currentNode.nextSibling;
+                }
+                return result;
+            }
+            
+            const firstDL = doc.querySelector('dl');
+            if (firstDL) {
+                const parsed = processNode(firstDL);
+                return parsed;
+            }
+            
+            return root;
+        }
+
+        function renderItems(items, container, level = 0) {
+            for (const item of items) {
+                const div = document.createElement('div');
+                if (item.type === 'folder') {
+                    div.className = 'folder';
+                    div.innerHTML = `📁 ${item.name} (${item.children.length} 项)`;
+                    container.appendChild(div);
+                    if (item.children.length > 0) {
+                        const subContainer = document.createElement('div');
+                        subContainer.style.marginLeft = '20px';
+                        container.appendChild(subContainer);
+                        renderItems(item.children, subContainer, level + 1);
+                    }
+                } else {
+                    div.className = 'bookmark';
+                    div.innerHTML = `🔗 ${item.title}`;
+                    container.appendChild(div);
+                }
+            }
+        }
+
+        async function testIt() {
+            const response = await fetch('test_bookmarks.html');
+            const html = await response.text();
+            const result = parseBookmarksHTML(html);
+            
+            console.log('完整解析结果:', result);
+            const output = document.getElementById('output');
+            output.innerHTML = `<h2>解析成功！找到 ${result.length} 个顶层文件夹</h2>`;
+            
+            renderItems(result, output);
+        }
+    </script>
+</body>
+</html>

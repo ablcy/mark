@@ -144,49 +144,61 @@ function parseBookmarksHTML(html) {
     const doc = parser.parseFromString(html, 'text/html');
     const root = [];
     
-    function processDL(dlElement, parent) {
-        const children = Array.from(dlElement.children);
-        for (let child of children) {
-            if (child.tagName === 'DT') {
-                // 处理 DT 标签
-                const h3 = child.querySelector('h3');
-                const a = child.querySelector('a');
-                
-                if (h3) {
-                    // 这是一个文件夹
-                    const folder = {
-                        type: 'folder',
-                        name: h3.textContent.trim(),
-                        dateAdded: h3.getAttribute('add_date'),
-                        children: []
-                    };
-                    parent.push(folder);
+    // 递归处理节点
+    function processNode(node) {
+        const result = [];
+        let currentNode = node.firstChild;
+        
+        while (currentNode) {
+            if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                if (currentNode.tagName === 'DT') {
+                    const h3 = currentNode.querySelector('h3');
+                    const a = currentNode.querySelector('a');
                     
-                    // 查找文件夹内容的 DL
-                    let nextDl = child.nextElementSibling;
-                    while (nextDl) {
-                        if (nextDl.tagName === 'DL') {
-                            processDL(nextDl, folder.children);
-                            break;
+                    if (h3) {
+                        // 这是一个文件夹
+                        const folder = {
+                            type: 'folder',
+                            name: h3.textContent.trim(),
+                            dateAdded: h3.getAttribute('add_date'),
+                            children: []
+                        };
+                        
+                        // 找到下一个 DL 作为这个文件夹的内容
+                        let nextNode = currentNode.nextElementSibling;
+                        while (nextNode) {
+                            if (nextNode.tagName === 'DL') {
+                                folder.children = processNode(nextNode);
+                                break;
+                            }
+                            nextNode = nextNode.nextElementSibling;
                         }
-                        nextDl = nextDl.nextElementSibling;
+                        
+                        result.push(folder);
+                    } else if (a) {
+                        // 这是一个书签
+                        result.push({
+                            type: 'bookmark',
+                            title: a.textContent.trim() || a.getAttribute('href'),
+                            url: a.getAttribute('href'),
+                            dateAdded: a.getAttribute('add_date')
+                        });
                     }
-                } else if (a) {
-                    // 这是一个书签
-                    parent.push({
-                        type: 'bookmark',
-                        title: a.textContent.trim() || a.getAttribute('href'),
-                        url: a.getAttribute('href'),
-                        dateAdded: a.getAttribute('add_date')
-                    });
+                } else if (currentNode.tagName === 'DL') {
+                    // 处理 DL 标签内的内容
+                    const dlContent = processNode(currentNode);
+                    result.push(...dlContent);
                 }
             }
+            currentNode = currentNode.nextSibling;
         }
+        return result;
     }
     
     const firstDL = doc.querySelector('dl');
     if (firstDL) {
-        processDL(firstDL, root);
+        const parsed = processNode(firstDL);
+        return parsed;
     }
     
     return root;
