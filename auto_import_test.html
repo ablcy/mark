@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>自动导入测试</title>
+</head>
+<body>
+    <h1>一键导入书签测试</h1>
+    <button onclick="doImport()">一键导入测试书签</button>
+    <button onclick="goToApp()">返回应用</button>
+    <div id="status"></div>
+
+    <script>
+        async function doImport() {
+            const status = document.getElementById('status');
+            status.innerHTML = '正在加载书签文件...';
+
+            try {
+                const response = await fetch('test_bookmarks.html');
+                const html = await response.text();
+                status.innerHTML = '文件加载成功！正在解析...';
+
+                // 解析书签
+                const bookmarks = parseBookmarksHTML(html);
+                status.innerHTML = `解析成功！找到 ${bookmarks.length} 个顶级文件夹！正在导入...`;
+
+                // 保存到 localStorage
+                const currentUser = localStorage.getItem('mark_current_user');
+                if (currentUser) {
+                    let users = JSON.parse(localStorage.getItem('mark_users') || '{}');
+                    
+                    // 合并书签
+                    const existingBookmarks = users[currentUser]?.bookmarks || [];
+                    users[currentUser].bookmarks = mergeBookmarks(existingBookmarks, bookmarks);
+                    
+                    localStorage.setItem('mark_users', JSON.stringify(users));
+                    
+                    status.innerHTML = '✅ 导入成功！现在可以去主应用查看了！';
+                    console.log('导入的书签:', bookmarks);
+                } else {
+                    status.innerHTML = '❌ 请先登录！';
+                }
+
+            } catch (error) {
+                status.innerHTML = '❌ 错误：' + error.message;
+                console.error(error);
+            }
+        }
+
+        function goToApp() {
+            window.location.href = 'index.html';
+        }
+
+        function parseBookmarksHTML(html) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const root = [];
+            
+            function processNode(node) {
+                const result = [];
+                let currentNode = node.firstChild;
+                
+                while (currentNode) {
+                    if (currentNode.nodeType === Node.ELEMENT_NODE) {
+                        if (currentNode.tagName === 'DT') {
+                            const h3 = currentNode.querySelector('h3');
+                            const a = currentNode.querySelector('a');
+                            
+                            if (h3) {
+                                const folder = {
+                                    type: 'folder',
+                                    name: h3.textContent.trim(),
+                                    dateAdded: h3.getAttribute('add_date'),
+                                    children: []
+                                };
+                                
+                                let nextNode = currentNode.nextElementSibling;
+                                while (nextNode) {
+                                    if (nextNode.tagName === 'DL') {
+                                        folder.children = processNode(nextNode);
+                                        break;
+                                    }
+                                    nextNode = nextNode.nextElementSibling;
+                                }
+                                
+                                result.push(folder);
+                            } else if (a) {
+                                result.push({
+                                    type: 'bookmark',
+                                    title: a.textContent.trim() || a.getAttribute('href'),
+                                    url: a.getAttribute('href'),
+                                    dateAdded: a.getAttribute('add_date')
+                                });
+                            }
+                        } else if (currentNode.tagName === 'DL') {
+                            const dlContent = processNode(currentNode);
+                            result.push(...dlContent);
+                        }
+                    }
+                    currentNode = currentNode.nextSibling;
+                }
+                return result;
+            }
+            
+            const firstDL = doc.querySelector('dl');
+            if (firstDL) {
+                const parsed = processNode(firstDL);
+                return parsed;
+            }
+            
+            return root;
+        }
+
+        function mergeBookmarks(existing, imported) {
+            const merged = [...existing];
+            for (const item of imported) {
+                let found = false;
+                for (const existingItem of merged) {
+                    if (existingItem.type === item.type) {
+                        if (existingItem.type === 'bookmark' && existingItem.url === item.url) {
+                            found = true;
+                            break;
+                        }
+                        if (existingItem.type === 'folder' && existingItem.name === item.name) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                if (!found) {
+                    merged.push(item);
+                }
+            }
+            return merged;
+        }
+    </script>
+</body>
+</html>
