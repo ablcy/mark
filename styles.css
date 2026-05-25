@@ -18,7 +18,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 40px 20px;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     width: 100%;
 }
@@ -137,8 +137,10 @@ header p {
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     width: 100%;
-    max-width: 1000px;
+    max-width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 #main-container.hidden {
@@ -171,107 +173,205 @@ header p {
     color: white;
 }
 
-#bookmarks-container {
-    padding: 25px;
-    max-height: 600px;
-    overflow-y: auto;
+.main-content {
+    display: flex;
+    flex: 1;
+    min-height: 500px;
 }
 
-.folder {
-    margin-bottom: 15px;
+.sidebar {
+    width: 280px;
+    background: #f8f9fa;
+    border-right: 1px solid #e8e8e8;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h2 {
+    padding: 20px 25px;
+    font-size: 1.1rem;
+    color: #555;
+    border-bottom: 1px solid #e8e8e8;
+    margin: 0;
+}
+
+#folder-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.folder-item:hover {
+    background: #e9ecef;
+}
+
+.folder-item.selected {
+    background: #667eea;
+    color: white;
+}
+
+.folder-item.selected .folder-name,
+.folder-item.selected .folder-icon,
+.folder-item.selected .folder-toggle {
+    color: white;
 }
 
 .folder-header {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    user-select: none;
-}
-
-.folder-header:hover {
-    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-    transform: translateX(5px);
-}
-
-.folder-icon {
-    margin-right: 10px;
-    font-size: 1.3rem;
-}
-
-.folder-name {
-    font-weight: 600;
-    flex: 1;
-    color: #333;
+    width: 100%;
 }
 
 .folder-toggle {
-    margin-right: 10px;
-    width: 24px;
-    height: 24px;
-    text-align: center;
-    font-size: 0.9rem;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.75rem;
+    color: #666;
 }
 
-.folder-content {
-    margin-left: 25px;
-    padding: 15px 0;
+.folder-icon {
+    margin-right: 8px;
+    font-size: 1.1rem;
 }
 
-.bookmark-item {
+.folder-name {
+    flex: 1;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.subfolders {
+    padding-left: 20px;
+}
+
+.bookmark-leaf {
+    padding-left: 30px;
+}
+
+.bookmark-icon-sm {
+    font-size: 0.85rem;
+    margin-right: 8px;
+}
+
+.content-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e8e8e8;
+    background: white;
+}
+
+.content-header h2 {
+    margin: 0;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+#bookmarks-list {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.bookmark-card {
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.bookmark-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.bookmark-card a {
     display: flex;
     align-items: center;
-    padding: 10px 16px;
-    margin: 6px 0;
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    padding: 15px;
     text-decoration: none;
     color: #333;
-    border: 1px solid transparent;
 }
 
-.bookmark-item:hover {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-color: #e8e8e8;
-    transform: translateX(5px);
-}
-
-.bookmark-icon {
+.bookmark-favicon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     margin-right: 12px;
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
+    flex-shrink: 0;
 }
 
-.bookmark-title {
+.bookmark-info {
     flex: 1;
-    font-weight: 500;
+    min-width: 0;
 }
 
-.folder-actions, .bookmark-actions {
+.bookmark-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bookmark-url {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bookmark-actions {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
     display: none;
-    gap: 8px;
+    gap: 5px;
 }
 
-.folder-header:hover .folder-actions,
-.bookmark-item:hover .bookmark-actions {
+.bookmark-card:hover .bookmark-actions {
     display: flex;
 }
 
 .action-btn {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: white;
     border: 1px solid #ddd;
-    cursor: pointer;
-    color: #666;
     border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
@@ -286,32 +386,14 @@ header p {
     border-color: #ef4444;
 }
 
-footer {
+.empty-message {
+    grid-column: 1 / -1;
     text-align: center;
-    color: white;
-    padding: 25px;
-    opacity: 0.9;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 1.1rem;
 }
 
-@media (max-width: 768px) {
-    header h1 {
-        font-size: 2.5rem;
-    }
-    
-    #auth-container {
-        max-width: 100%;
-    }
-    
-    .toolbar {
-        justify-content: center;
-    }
-    
-    .auth-form {
-        padding: 25px;
-    }
-}
-
-/* 模态框样式 */
 .modal {
     position: fixed;
     top: 0;
@@ -337,51 +419,87 @@ footer {
     max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
 }
 
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 30px;
-    border-bottom: 1px solid #e8e8e8;
-}
-
-.modal-header h2 {
-    margin: 0;
-    color: #333;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 2rem;
+.close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    font-weight: bold;
     cursor: pointer;
     color: #666;
     transition: color 0.3s ease;
 }
 
-.close-btn:hover {
+.close:hover {
     color: #667eea;
 }
 
-.modal-body {
+#changelog-content {
     padding: 30px;
 }
 
-.changelog-entry h3 {
-    color: #667eea;
-    margin-top: 0;
+#changelog-content h2 {
+    margin: 0 0 20px 0;
+    color: #333;
 }
 
-.changelog-entry h4 {
-    color: #555;
-    margin-top: 20px;
-    margin-bottom: 10px;
+#changelog-content details {
+    margin-bottom: 15px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.changelog-entry ul {
-    margin: 0 0 0 20px;
-    color: #666;
+#changelog-content summary {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    font-weight: 600;
+    color: #333;
+}
+
+#changelog-content summary:hover {
+    background: #e9ecef;
+}
+
+#changelog-content ul {
+    padding: 15px 20px 20px 45px;
+    margin: 0;
     line-height: 1.8;
+    color: #555;
+}
+
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 2.5rem;
+    }
+    
+    #auth-container {
+        max-width: 100%;
+    }
+    
+    .toolbar {
+        justify-content: center;
+    }
+    
+    .auth-form {
+        padding: 25px;
+    }
+    
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e8e8e8;
+    }
+    
+    #bookmarks-list {
+        grid-template-columns: 1fr;
+    }
 }

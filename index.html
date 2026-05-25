@@ -11,7 +11,7 @@
         <header>
             <h1>Mark</h1>
             <p>简单、高效的书签管理应用</p>
-            <div id="version-info" class="version-display">V1.0.2-202605251434</div>
+            <div id="version-info" class="version-display">V1.0.3-202605251516</div>
         </header>
 
         <div id="auth-container">
@@ -39,65 +39,66 @@
                 <button id="import-btn">导入书签</button>
                 <button id="export-btn">导出书签</button>
                 <button id="add-folder-btn">新建文件夹</button>
+                <button id="sync-btn">🔄 同步</button>
                 <button id="changelog-btn">更新日志</button>
                 <button id="logout-btn">退出登录</button>
                 <input type="file" id="file-input" accept=".html" style="display: none;">
             </div>
 
-            <div id="bookmarks-container">
-                <div id="bookmarks-tree"></div>
+            <div class="main-content">
+                <div class="sidebar">
+                    <h2>📁 文件夹</h2>
+                    <div id="folder-tree"></div>
+                </div>
+
+                <div class="content-area">
+                    <div class="content-header">
+                        <h2 id="selected-folder-name">全部书签</h2>
+                    </div>
+                    <div id="bookmarks-list"></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <footer>
-        <p>&copy; 2026 Li Chengyan. All Rights Reserved.</p>
-    </footer>
-
-    <!-- 更新日志模态框 -->
-    <div id="changelog-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>更新日志</h2>
-                <button id="close-modal" class="close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="changelog-entry">
-                    <h3>V0.0.4-202605242114 - 2026年5月24日</h3>
-                    <h4>核心功能完善</h4>
-                    <ul>
-                        <li>完全重写书签解析器，使用更可靠的 DOM 遍历算法</li>
-                        <li>完美支持深度嵌套的文件夹和书签结构</li>
-                        <li>文件夹默认展开，便于查看导入的书签内容</li>
-                        <li>完整验证了真实书签文件的解析和显示功能</li>
-                    </ul>
-                </div>
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e8e8e8;">
-                <div class="changelog-entry">
-                    <h3>V0.0.2-202605252115 - 2026年5月25日</h3>
-                    <h4>界面改进</h4>
-                    <ul>
-                        <li>在页面顶部显示版本号</li>
-                        <li>在工具栏添加「更新日志」按钮</li>
-                        <li>添加更新日志模态框，可查看详细版本更新信息</li>
-                        <li>文件夹默认展开显示，方便查看内容</li>
-                    </ul>
-                </div>
-                <hr style="margin: 30px 0; border: none; border-top: 1px solid #e8e8e8;">
-                <div class="changelog-entry">
-                    <h3>V0.0.1-202605242114 - 2026年5月24日</h3>
-                    <h4>Bug 修复</h4>
-                    <ul>
-                        <li>修复登录后登录界面未隐藏的问题</li>
-                        <li>完全重写书签解析函数，正确处理 Netscape 书签格式</li>
-                        <li>支持正确解析嵌套文件夹和书签</li>
-                    </ul>
-                    <h4>功能测试</h4>
-                    <ul>
-                        <li>成功注册测试账户</li>
-                        <li>成功登录并验证界面切换</li>
-                        <li>验证书签解析器可以正常解析真实书签文件</li>
-                    </ul>
+        <div id="changelog-modal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="changelog-content">
+                    <h2>更新日志</h2>
+                    <details>
+                        <summary>V1.0.3-202605251434 - 2026年5月25日</summary>
+                        <ul>
+                            <li>新增数据库同步功能，支持跨设备书签同步</li>
+                            <li>重构界面布局为左右分栏：左边文件夹树，右边书签列表</li>
+                            <li>添加同步按钮，手动触发数据同步</li>
+                            <li>用户注册和登录数据现在存储到 SQLite 数据库</li>
+                            <li>书签数据自动保存到数据库</li>
+                        </ul>
+                    </details>
+                    <details>
+                        <summary>V1.0.2-202605251434 - 2026年5月25日</summary>
+                        <ul>
+                            <li>修复书签解析器问题，正确处理嵌套文件夹结构</li>
+                            <li>测试成功解析：3个文件夹 + 4个书签</li>
+                        </ul>
+                    </details>
+                    <details>
+                        <summary>V1.0.1-202605252114 - 2026年5月25日</summary>
+                        <ul>
+                            <li>修复登录后界面未隐藏的问题</li>
+                            <li>修复书签导入功能</li>
+                            <li>优化界面设计</li>
+                        </ul>
+                    </details>
+                    <details>
+                        <summary>V1.0.0-202605252114 - 2026年5月25日</summary>
+                        <ul>
+                            <li>初始版本发布</li>
+                            <li>用户注册与登录系统</li>
+                            <li>书签导入/导出功能</li>
+                            <li>文件夹管理功能</li>
+                        </ul>
+                    </details>
                 </div>
             </div>
         </div>

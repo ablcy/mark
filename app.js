@@ -1,9 +1,10 @@
-// 用户和书签数据（本地存储模拟）
-let users = JSON.parse(localStorage.getItem('mark_users') || '{}');
-let currentUser = null;
-let bookmarks = [];
+const API_URL = 'http://localhost:3000/api';
 
-// DOM 元素
+let currentUser = null;
+let currentUserId = null;
+let bookmarks = [];
+let selectedFolder = null;
+
 const loginTab = document.getElementById('login-tab');
 const registerTab = document.getElementById('register-tab');
 const loginForm = document.getElementById('login-form');
@@ -16,11 +17,13 @@ const addFolderBtn = document.getElementById('add-folder-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const changelogBtn = document.getElementById('changelog-btn');
 const fileInput = document.getElementById('file-input');
-const bookmarksTree = document.getElementById('bookmarks-tree');
+const folderTree = document.getElementById('folder-tree');
+const bookmarksList = document.getElementById('bookmarks-list');
+const selectedFolderName = document.getElementById('selected-folder-name');
 const changelogModal = document.getElementById('changelog-modal');
 const closeModalBtn = document.getElementById('close-modal');
+const syncBtn = document.getElementById('sync-btn');
 
-// 切换登录/注册标签
 loginTab.addEventListener('click', () => {
     loginTab.classList.add('active');
     registerTab.classList.remove('active');
@@ -35,8 +38,7 @@ registerTab.addEventListener('click', () => {
     loginForm.classList.add('hidden');
 });
 
-// 注册功能
-registerForm.addEventListener('submit', (e) => {
+registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('register-username').value;
     const password = document.getElementById('register-password').value;
@@ -47,48 +49,66 @@ registerForm.addEventListener('submit', (e) => {
         return;
     }
 
-    if (users[username]) {
-        alert('用户名已存在！');
-        return;
+    try {
+        const response = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('注册成功！请登录');
+            registerForm.reset();
+            loginTab.click();
+        } else {
+            alert(data.error);
+        }
+    } catch (err) {
+        alert('网络错误，请检查后端服务是否启动');
     }
-
-    users[username] = { password, bookmarks: [] };
-    localStorage.setItem('mark_users', JSON.stringify(users));
-    alert('注册成功！请登录');
-    
-    registerForm.reset();
-    loginTab.click();
 });
 
-// 登录功能
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('login-username').value;
     const password = document.getElementById('login-password').value;
 
-    if (!users[username] || users[username].password !== password) {
-        alert('用户名或密码错误！');
-        return;
+    try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            currentUser = data.user.username;
+            currentUserId = data.user.id;
+            bookmarks = data.bookmarks;
+            localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
+            showMainContainer();
+            renderFolderTree();
+            updateBookmarksList([]);
+        } else {
+            alert(data.error);
+        }
+    } catch (err) {
+        alert('网络错误，请检查后端服务是否启动');
     }
-
-    currentUser = username;
-    bookmarks = users[username].bookmarks;
-    localStorage.setItem('mark_current_user', currentUser);
-    showMainContainer();
-    renderBookmarks();
 });
 
-// 退出登录
-logoutBtn.addEventListener('click', () => {
-    saveBookmarks();
+logoutBtn.addEventListener('click', async () => {
+    await saveBookmarks();
     localStorage.removeItem('mark_current_user');
     currentUser = null;
+    currentUserId = null;
     bookmarks = [];
+    selectedFolder = null;
     showAuthContainer();
     loginForm.reset();
 });
 
-// 更新日志
 changelogBtn.addEventListener('click', () => {
     changelogModal.classList.remove('hidden');
 });
@@ -97,26 +117,47 @@ closeModalBtn.addEventListener('click', () => {
     changelogModal.classList.add('hidden');
 });
 
-// 点击模态框外部关闭
 changelogModal.addEventListener('click', (e) => {
     if (e.target === changelogModal) {
         changelogModal.classList.add('hidden');
     }
 });
 
-// 显示认证界面
+syncBtn.addEventListener('click', async () => {
+    await syncBookmarks();
+});
+
+async function syncBookmarks() {
+    try {
+        const response = await fetch(`${API_URL}/get-bookmarks/${currentUserId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const serverBookmarks = data.bookmarks;
+            
+            const merged = mergeBookmarks(bookmarks, serverBookmarks);
+            bookmarks = merged;
+            
+            await saveBookmarks();
+            renderFolderTree();
+            updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
+            alert('同步成功！');
+        }
+    } catch (err) {
+        alert('同步失败，请检查网络连接');
+    }
+}
+
 function showAuthContainer() {
     authContainer.classList.remove('hidden');
     mainContainer.classList.add('hidden');
 }
 
-// 显示主界面
 function showMainContainer() {
     authContainer.classList.add('hidden');
     mainContainer.classList.remove('hidden');
 }
 
-// 导入书签
 importBtn.addEventListener('click', () => {
     fileInput.click();
 });
@@ -126,19 +167,19 @@ fileInput.addEventListener('change', (e) => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
         const html = event.target.result;
         const importedBookmarks = parseBookmarksHTML(html);
         bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
-        saveBookmarks();
-        renderBookmarks();
+        await saveBookmarks();
+        renderFolderTree();
+        updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
         alert('书签导入成功！');
     };
     reader.readAsText(file);
     fileInput.value = '';
 });
 
-// 解析书签 HTML 文件
 function parseBookmarksHTML(html) {
     const result = [];
     const stack = [];
@@ -191,33 +232,39 @@ function parseBookmarksHTML(html) {
     return result;
 }
 
-// 合并书签
 function mergeBookmarks(existing, imported) {
     const merged = [...existing];
-    for (const item of imported) {
-        if (!findItem(merged, item)) {
-            merged.push(item);
+    
+    function mergeRecursive(existingItems, importedItems) {
+        for (const item of importedItems) {
+            let found = false;
+            
+            for (const existingItem of existingItems) {
+                if (existingItem.type === item.type) {
+                    if (existingItem.type === 'bookmark' && existingItem.url === item.url) {
+                        found = true;
+                        break;
+                    }
+                    if (existingItem.type === 'folder' && existingItem.name === item.name) {
+                        found = true;
+                        if (item.children && existingItem.children) {
+                            mergeRecursive(existingItem.children, item.children);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            if (!found) {
+                existingItems.push(JSON.parse(JSON.stringify(item)));
+            }
         }
     }
+    
+    mergeRecursive(merged, imported);
     return merged;
 }
 
-// 查找是否已存在相同项
-function findItem(list, item) {
-    for (const existing of list) {
-        if (existing.type === item.type) {
-            if (existing.type === 'bookmark' && existing.url === item.url) {
-                return true;
-            }
-            if (existing.type === 'folder' && existing.name === item.name) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// 导出书签
 exportBtn.addEventListener('click', () => {
     const html = generateBookmarksHTML(bookmarks);
     const blob = new Blob([html], { type: 'text/html' });
@@ -229,7 +276,6 @@ exportBtn.addEventListener('click', () => {
     URL.revokeObjectURL(url);
 });
 
-// 生成书签 HTML
 function generateBookmarksHTML(bookmarks) {
     let html = '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n';
     html += '<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">\n';
@@ -262,7 +308,6 @@ function generateBookmarksHTML(bookmarks) {
     return html;
 }
 
-// 转义 HTML
 function escapeHTML(str) {
     if (!str) return '';
     return str
@@ -273,8 +318,7 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
-// 新建文件夹
-addFolderBtn.addEventListener('click', () => {
+addFolderBtn.addEventListener('click', async () => {
     const name = prompt('请输入文件夹名称：');
     if (name) {
         bookmarks.push({
@@ -283,59 +327,88 @@ addFolderBtn.addEventListener('click', () => {
             dateAdded: Math.floor(Date.now() / 1000),
             children: []
         });
-        saveBookmarks();
-        renderBookmarks();
+        await saveBookmarks();
+        renderFolderTree();
     }
 });
 
-// 保存书签
-function saveBookmarks() {
-    if (currentUser && users[currentUser]) {
-        users[currentUser].bookmarks = bookmarks;
-        localStorage.setItem('mark_users', JSON.stringify(users));
-    }
-}
-
-// 渲染书签树
-function renderBookmarks() {
-    bookmarksTree.innerHTML = '';
-    renderItems(bookmarks, bookmarksTree);
-}
-
-// 渲染列表项
-function renderItems(items, container) {
-    for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (item.type === 'folder') {
-            renderFolder(item, container, items, i);
-        } else if (item.type === 'bookmark') {
-            renderBookmark(item, container, items, i);
+async function saveBookmarks() {
+    if (currentUserId) {
+        try {
+            await fetch(`${API_URL}/save-bookmarks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId, bookmarks })
+            });
+        } catch (err) {
+            console.log('保存到服务器失败，继续使用本地存储');
         }
     }
 }
 
-// 渲染文件夹
-function renderFolder(folder, container, parentArray, index) {
+function renderFolderTree() {
+    folderTree.innerHTML = '';
+    
+    const allBookmarksItem = document.createElement('div');
+    allBookmarksItem.className = 'folder-item all-bookmarks';
+    allBookmarksItem.innerHTML = '<span class="folder-icon">📚</span><span class="folder-name">全部书签</span>';
+    allBookmarksItem.onclick = () => {
+        selectedFolder = null;
+        selectedFolderName.textContent = '全部书签';
+        const allBookmarks = getAllBookmarks(bookmarks);
+        updateBookmarksList(allBookmarks);
+    };
+    
+    if (!selectedFolder) {
+        allBookmarksItem.classList.add('selected');
+        selectedFolderName.textContent = '全部书签';
+    }
+    
+    folderTree.appendChild(allBookmarksItem);
+
+    for (let i = 0; i < bookmarks.length; i++) {
+        const item = bookmarks[i];
+        if (item.type === 'folder') {
+            const folderItem = renderFolderItem(item, bookmarks, i, '');
+            folderTree.appendChild(folderItem);
+        } else if (item.type === 'bookmark') {
+            const bookmarkItem = document.createElement('div');
+            bookmarkItem.className = 'folder-item bookmark-leaf';
+            bookmarkItem.innerHTML = `<span class="bookmark-icon-sm">🔗</span><span class="folder-name">${escapeHTML(item.title)}</span>`;
+            bookmarkItem.onclick = () => {
+                selectedFolder = null;
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList([item]);
+            };
+            folderTree.appendChild(bookmarkItem);
+        }
+    }
+}
+
+function renderFolderItem(folder, parentArray, index, indent) {
     const div = document.createElement('div');
-    div.className = 'folder';
+    div.className = 'folder-item';
     
     const header = document.createElement('div');
     header.className = 'folder-header';
     
-    const toggle = document.createElement('span');
-    toggle.className = 'folder-toggle';
-    toggle.textContent = '▼'; // 默认展开
-    toggle.onclick = (e) => {
-        e.stopPropagation();
-        const content = div.querySelector('.folder-content');
-        if (content.style.display === 'none') {
-            content.style.display = 'block';
-            toggle.textContent = '▼';
-        } else {
-            content.style.display = 'none';
-            toggle.textContent = '▶';
-        }
-    };
+    if (folder.children && folder.children.length > 0) {
+        const toggle = document.createElement('span');
+        toggle.className = 'folder-toggle';
+        toggle.textContent = '▶';
+        toggle.onclick = (e) => {
+            e.stopPropagation();
+            const content = div.querySelector('.subfolders');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▶';
+            }
+        };
+        header.appendChild(toggle);
+    }
     
     const icon = document.createElement('span');
     icon.className = 'folder-icon';
@@ -345,158 +418,170 @@ function renderFolder(folder, container, parentArray, index) {
     name.className = 'folder-name';
     name.textContent = folder.name;
     
-    const actions = document.createElement('div');
-    actions.className = 'folder-actions';
-    
-    const addBookmarkBtn = document.createElement('button');
-    addBookmarkBtn.className = 'action-btn';
-    addBookmarkBtn.textContent = '+ 书签';
-    addBookmarkBtn.onclick = (e) => {
-        e.stopPropagation();
-        const title = prompt('请输入书签标题：');
-        const url = prompt('请输入书签 URL：');
-        if (title && url) {
-            if (!folder.children) folder.children = [];
-            folder.children.push({
-                type: 'bookmark',
-                title: title,
-                url: url.startsWith('http') ? url : 'https://' + url,
-                dateAdded: Math.floor(Date.now() / 1000)
-            });
-            saveBookmarks();
-            renderBookmarks();
-        }
-    };
-    
-    const addSubfolderBtn = document.createElement('button');
-    addSubfolderBtn.className = 'action-btn';
-    addSubfolderBtn.textContent = '+ 子文件夹';
-    addSubfolderBtn.onclick = (e) => {
-        e.stopPropagation();
-        const name = prompt('请输入文件夹名称：');
-        if (name) {
-            if (!folder.children) folder.children = [];
-            folder.children.push({
-                type: 'folder',
-                name: name,
-                dateAdded: Math.floor(Date.now() / 1000),
-                children: []
-            });
-            saveBookmarks();
-            renderBookmarks();
-        }
-    };
-    
-    const renameBtn = document.createElement('button');
-    renameBtn.className = 'action-btn';
-    renameBtn.textContent = '重命名';
-    renameBtn.onclick = (e) => {
-        e.stopPropagation();
-        const newName = prompt('请输入新名称：', folder.name);
-        if (newName) {
-            folder.name = newName;
-            saveBookmarks();
-            renderBookmarks();
-        }
-    };
-    
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'action-btn delete';
-    deleteBtn.textContent = '删除';
-    deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (confirm('确定要删除这个文件夹及其所有内容吗？')) {
-            parentArray.splice(index, 1);
-            saveBookmarks();
-            renderBookmarks();
-        }
-    };
-    
-    actions.appendChild(addBookmarkBtn);
-    actions.appendChild(addSubfolderBtn);
-    actions.appendChild(renameBtn);
-    actions.appendChild(deleteBtn);
-    
-    header.appendChild(toggle);
     header.appendChild(icon);
     header.appendChild(name);
-    header.appendChild(actions);
     
-    const content = document.createElement('div');
-    content.className = 'folder-content';
-    if (folder.children) {
-        renderItems(folder.children, content);
+    header.onclick = () => {
+        selectedFolder = folder;
+        selectedFolderName.textContent = folder.name;
+        updateBookmarksList(folder.children || []);
+        document.querySelectorAll('.folder-item').forEach(item => item.classList.remove('selected'));
+        div.classList.add('selected');
+    };
+    
+    if (selectedFolder === folder) {
+        div.classList.add('selected');
     }
     
     div.appendChild(header);
-    div.appendChild(content);
-    container.appendChild(div);
+    
+    if (folder.children && folder.children.length > 0) {
+        const subfolders = document.createElement('div');
+        subfolders.className = 'subfolders';
+        
+        for (let i = 0; i < folder.children.length; i++) {
+            const child = folder.children[i];
+            if (child.type === 'folder') {
+                const childItem = renderFolderItem(child, folder.children, i, indent + '  ');
+                subfolders.appendChild(childItem);
+            } else if (child.type === 'bookmark') {
+                const bookmarkItem = document.createElement('div');
+                bookmarkItem.className = 'folder-item bookmark-leaf';
+                bookmarkItem.innerHTML = `<span class="bookmark-icon-sm">🔗</span><span class="folder-name">${escapeHTML(child.title)}</span>`;
+                bookmarkItem.onclick = () => {
+                    selectedFolder = folder;
+                    selectedFolderName.textContent = folder.name;
+                    updateBookmarksList([child]);
+                };
+                subfolders.appendChild(bookmarkItem);
+            }
+        }
+        
+        div.appendChild(subfolders);
+    }
+    
+    return div;
 }
 
-// 渲染书签
-function renderBookmark(bookmark, container, parentArray, index) {
-    const a = document.createElement('a');
-    a.className = 'bookmark-item';
-    a.href = bookmark.url;
-    a.target = '_blank';
+function getAllBookmarks(items) {
+    const result = [];
+    for (const item of items) {
+        if (item.type === 'bookmark') {
+            result.push(item);
+        } else if (item.type === 'folder' && item.children) {
+            result.push(...getAllBookmarks(item.children));
+        }
+    }
+    return result;
+}
+
+function getFolderChildren(folder) {
+    if (!folder || !folder.children) return [];
+    return folder.children.filter(item => item.type === 'bookmark');
+}
+
+function updateBookmarksList(items) {
+    bookmarksList.innerHTML = '';
     
-    const icon = document.createElement('img');
-    icon.className = 'bookmark-icon';
-    icon.src = `https://www.google.com/s2/favicons?domain=${new URL(bookmark.url).hostname}&sz=32`;
-    icon.onerror = () => {
-        icon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+    if (items.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'empty-message';
+        emptyMsg.textContent = '该文件夹暂无书签';
+        bookmarksList.appendChild(emptyMsg);
+        return;
+    }
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type === 'bookmark') {
+            const bookmarkElement = renderBookmarkItem(item, items, i);
+            bookmarksList.appendChild(bookmarkElement);
+        }
+    }
+}
+
+function renderBookmarkItem(bookmark, parentArray, index) {
+    const div = document.createElement('div');
+    div.className = 'bookmark-card';
+    
+    const link = document.createElement('a');
+    link.href = bookmark.url;
+    link.target = '_blank';
+    
+    const favicon = document.createElement('img');
+    favicon.className = 'bookmark-favicon';
+    favicon.src = `https://www.google.com/s2/favicons?domain=${new URL(bookmark.url).hostname}&sz=64`;
+    favicon.onerror = () => {
+        favicon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
     };
     
-    const title = document.createElement('span');
+    const info = document.createElement('div');
+    info.className = 'bookmark-info';
+    
+    const title = document.createElement('h3');
     title.className = 'bookmark-title';
     title.textContent = bookmark.title;
+    
+    const url = document.createElement('p');
+    url.className = 'bookmark-url';
+    url.textContent = bookmark.url;
+    
+    info.appendChild(title);
+    info.appendChild(url);
+    
+    link.appendChild(favicon);
+    link.appendChild(info);
     
     const actions = document.createElement('div');
     actions.className = 'bookmark-actions';
     
     const editBtn = document.createElement('button');
     editBtn.className = 'action-btn';
-    editBtn.textContent = '编辑';
-    editBtn.onclick = (e) => {
+    editBtn.innerHTML = '✏️';
+    editBtn.title = '编辑';
+    editBtn.onclick = async (e) => {
         e.preventDefault();
-        e.stopPropagation();
         const newTitle = prompt('请输入新标题：', bookmark.title);
         const newUrl = prompt('请输入新 URL：', bookmark.url);
         if (newTitle && newUrl) {
             bookmark.title = newTitle;
-            bookmark.url = newUrl;
-            saveBookmarks();
-            renderBookmarks();
+            bookmark.url = newUrl.startsWith('http') ? newUrl : 'https://' + newUrl;
+            await saveBookmarks();
+            updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : getAllBookmarks(bookmarks));
         }
     };
     
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'action-btn delete';
-    deleteBtn.textContent = '删除';
-    deleteBtn.onclick = (e) => {
+    deleteBtn.innerHTML = '🗑️';
+    deleteBtn.title = '删除';
+    deleteBtn.onclick = async (e) => {
         e.preventDefault();
-        e.stopPropagation();
         if (confirm('确定要删除这个书签吗？')) {
             parentArray.splice(index, 1);
-            saveBookmarks();
-            renderBookmarks();
+            await saveBookmarks();
+            updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : getAllBookmarks(bookmarks));
         }
     };
     
     actions.appendChild(editBtn);
     actions.appendChild(deleteBtn);
     
-    a.appendChild(icon);
-    a.appendChild(title);
-    a.appendChild(actions);
-    container.appendChild(a);
+    div.appendChild(link);
+    div.appendChild(actions);
+    
+    return div;
 }
 
-// 检查是否有已登录用户
 const savedUser = localStorage.getItem('mark_current_user');
-if (savedUser && users[savedUser]) {
-    currentUser = savedUser;
-    bookmarks = users[currentUser].bookmarks;
-    showMainContainer();
-    renderBookmarks();
+if (savedUser) {
+    try {
+        const userData = JSON.parse(savedUser);
+        currentUser = userData.username;
+        currentUserId = userData.id;
+        showMainContainer();
+        syncBookmarks();
+    } catch (err) {
+        console.log('无法解析保存的用户信息');
+    }
 }
