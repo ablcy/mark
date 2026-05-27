@@ -15,27 +15,121 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
-            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* 密码验证界面 */
+        .auth-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .auth-panel h1 {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .auth-panel p {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .auth-panel input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            margin-bottom: 16px;
+        }
+
+        .auth-panel input:focus {
+            border-color: #667eea;
+        }
+
+        .auth-panel .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .auth-panel .btn:hover {
+            opacity: 0.9;
+        }
+
+        .auth-panel .error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        /* 管理主界面 */
         .container {
             max-width: 1000px;
             margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .container.hidden, .auth-panel.hidden {
+            display: none;
         }
 
         header {
             text-align: center;
             color: white;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
 
         header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
         }
 
-        header p {
-            opacity: 0.8;
+        header .toolbar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .toolbar .btn-sm {
+            padding: 8px 16px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .toolbar .btn-sm:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .toolbar .btn-sm.danger {
+            border-color: rgba(231,76,60,0.5);
+            color: #e74c3c;
+        }
+
+        .toolbar .btn-sm.danger:hover {
+            background: rgba(231,76,60,0.15);
         }
 
         .stats {
@@ -74,29 +168,46 @@
         .table-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 16px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .table-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             margin: 0;
         }
 
+        .table-header .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .refresh-btn {
-            padding: 8px 16px;
+            padding: 6px 14px;
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 6px;
             color: white;
             cursor: pointer;
-            transition: background 0.3s ease;
+            font-size: 13px;
         }
 
         .refresh-btn:hover {
             background: rgba(255, 255, 255, 0.3);
+        }
+
+        .select-all-label {
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .select-all-label input {
+            margin-right: 4px;
         }
 
         table {
@@ -105,9 +216,10 @@
         }
 
         th, td {
-            padding: 15px 20px;
+            padding: 12px 16px;
             text-align: left;
             border-bottom: 1px solid #e8e8e8;
+            font-size: 14px;
         }
 
         th {
@@ -121,21 +233,31 @@
         }
 
         .action-btn {
-            padding: 6px 12px;
+            padding: 5px 10px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 12px;
             transition: all 0.2s ease;
         }
 
         .delete-btn {
             background: #dc3545;
             color: white;
+            margin-left: 4px;
         }
 
         .delete-btn:hover {
             background: #c82333;
+        }
+
+        .reset-pwd-btn {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .reset-pwd-btn:hover {
+            background: #138496;
         }
 
         .empty-state {
@@ -158,10 +280,24 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 密码验证界面 -->
+    <div id="authPanel" class="auth-panel">
+        <h1>Mark</h1>
+        <p>管理员登录</p>
+        <input type="password" id="adminPassword" placeholder="请输入管理员密码" onkeydown="if(event.key==='Enter')verifyAdmin()">
+        <button class="btn" onclick="verifyAdmin()">进入管理面板</button>
+        <div id="authError" class="error"></div>
+    </div>
+
+    <!-- 管理主界面 -->
+    <div id="adminContainer" class="container hidden">
         <header>
-            <h1>🔧 管理员面板</h1>
-            <p>Mark 书签管理应用 - 用户数据管理</p>
+            <h1>管理员面板</h1>
+            <div class="toolbar">
+                <button class="btn-sm" onclick="showChangePasswordModal()">修改管理员密码</button>
+                <button class="btn-sm danger" onclick="batchDelete()">批量删除选中</button>
+                <button class="btn-sm" onclick="location.href='/'">返回首页</button>
+            </div>
         </header>
 
         <div class="stats">
@@ -174,7 +310,12 @@
         <div class="table-container">
             <div class="table-header">
                 <h2>用户列表</h2>
-                <button class="refresh-btn" onclick="loadUsers()">🔄 刷新</button>
+                <div class="header-actions">
+                    <label class="select-all-label">
+                        <input type="checkbox" id="selectAll" onclick="toggleSelectAll()"> 全选
+                    </label>
+                    <button class="refresh-btn" onclick="loadUsers()">刷新</button>
+                </div>
             </div>
             <div id="usersContainer">
                 <div class="loading">加载中...</div>
@@ -182,22 +323,194 @@
         </div>
     </div>
 
+    <!-- 修改管理员密码模态框 -->
+    <div id="changePwdModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:12px;padding:32px;width:90%;max-width:360px;">
+            <h3 style="margin-bottom:20px;color:#333;">修改管理员密码</h3>
+            <input type="password" id="oldAdminPwd" placeholder="原密码" style="width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;margin-bottom:12px;outline:none;">
+            <input type="password" id="newAdminPwd" placeholder="新密码" style="width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:6px;font-size:14px;margin-bottom:16px;outline:none;">
+            <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button onclick="document.getElementById('changePwdModal').style.display='none'" style="padding:8px 16px;border:1px solid #e0e0e0;border-radius:6px;background:white;cursor:pointer;font-size:14px;">取消</button>
+                <button onclick="changeAdminPassword()" style="padding:8px 16px;border:none;border-radius:6px;background:#667eea;color:white;cursor:pointer;font-size:14px;">确认修改</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let selectedUserIds = new Set();
+
+        // 管理员密码验证
+        async function verifyAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            const errorEl = document.getElementById('authError');
+            try {
+                const res = await fetch('/api/admin/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('authPanel').classList.add('hidden');
+                    document.getElementById('adminContainer').classList.remove('hidden');
+                    document.body.style.alignItems = 'flex-start';
+                    loadUsers();
+                } else {
+                    errorEl.textContent = data.error || '密码错误';
+                }
+            } catch (err) {
+                errorEl.textContent = '网络错误';
+            }
+        }
+
+        // 修改管理员密码
+        function showChangePasswordModal() {
+            document.getElementById('changePwdModal').style.display = 'flex';
+            document.getElementById('oldAdminPwd').value = '';
+            document.getElementById('newAdminPwd').value = '';
+        }
+
+        async function changeAdminPassword() {
+            const oldPassword = document.getElementById('oldAdminPwd').value;
+            const newPassword = document.getElementById('newAdminPwd').value;
+            if (!oldPassword || !newPassword) {
+                alert('请填写完整');
+                return;
+            }
+            try {
+                const res = await fetch('/api/admin/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ oldPassword, newPassword })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('密码修改成功');
+                    document.getElementById('changePwdModal').style.display = 'none';
+                } else {
+                    alert(data.error || '修改失败');
+                }
+            } catch (err) {
+                alert('网络错误');
+            }
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('changePwdModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAll').checked;
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checked;
+                if (checked) {
+                    selectedUserIds.add(cb.value);
+                } else {
+                    selectedUserIds.delete(cb.value);
+                }
+            });
+        }
+
+        function toggleUser(id, checked) {
+            if (checked) {
+                selectedUserIds.add(id);
+            } else {
+                selectedUserIds.delete(id);
+            }
+            document.getElementById('selectAll').checked = false;
+        }
+
+        // 批量删除
+        async function batchDelete() {
+            if (selectedUserIds.size === 0) {
+                alert('请先选择要删除的用户');
+                return;
+            }
+            if (!confirm(`确定要删除选中的 ${selectedUserIds.size} 个用户吗？此操作无法撤销。`)) {
+                return;
+            }
+            try {
+                const res = await fetch('/api/users/batch-delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: Array.from(selectedUserIds) })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    selectedUserIds.clear();
+                    document.getElementById('selectAll').checked = false;
+                    loadUsers();
+                } else {
+                    alert(data.error || '删除失败');
+                }
+            } catch (err) {
+                alert('网络错误');
+            }
+        }
+
+        // 单用户删除
+        async function deleteUser(userId, username) {
+            if (!confirm(`确定要删除用户 "${username}" 吗？此操作无法撤销。`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    selectedUserIds.delete(userId);
+                    loadUsers();
+                } else {
+                    alert('删除失败: ' + data.error);
+                }
+            } catch (err) {
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 重置用户密码
+        async function resetUserPassword(userId, username) {
+            const newPwd = prompt(`请输入用户 "${username}" 的新密码：`);
+            if (!newPwd) return;
+            try {
+                const res = await fetch(`/api/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ newPassword: newPwd })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('密码修改成功');
+                } else {
+                    alert(data.error || '修改失败');
+                }
+            } catch (err) {
+                alert('网络错误');
+            }
+        }
+
+        // 加载用户列表
         async function loadUsers() {
             const container = document.getElementById('usersContainer');
             container.innerHTML = '<div class="loading">加载中...</div>';
 
             try {
-                const response = await fetch('/api/users');
-                const data = await response.json();
+                const res = await fetch('/api/users');
+                const data = await res.json();
 
                 if (data.success && data.users.length > 0) {
                     document.getElementById('userCount').textContent = data.users.length;
-                    
+                    selectedUserIds.clear();
+
                     let html = `
                         <table>
                             <thead>
                                 <tr>
+                                    <th style="width:40px;"></th>
                                     <th>ID</th>
                                     <th>用户名</th>
                                     <th>创建时间</th>
@@ -210,14 +523,15 @@
                     data.users.forEach(user => {
                         const date = new Date(user.createdAt);
                         const formattedDate = date.toLocaleString('zh-CN');
-                        
                         html += `
                             <tr>
+                                <td><input type="checkbox" class="user-checkbox" value="${user.id}" onclick="toggleUser('${user.id}', this.checked)"></td>
                                 <td>${user.id}</td>
-                                <td>${user.username}</td>
+                                <td>${escapeHtml(user.username)}</td>
                                 <td>${formattedDate}</td>
                                 <td>
-                                    <button class="action-btn delete-btn" onclick="deleteUser('${user.id}', '${user.username}')">删除</button>
+                                    <button class="action-btn reset-pwd-btn" onclick="resetUserPassword('${user.id}', '${escapeHtml(user.username)}')">修改密码</button>
+                                    <button class="action-btn delete-btn" onclick="deleteUser('${user.id}', '${escapeHtml(user.username)}')">删除</button>
                                 </td>
                             </tr>
                         `;
@@ -235,28 +549,9 @@
             }
         }
 
-        async function deleteUser(userId, username) {
-            if (!confirm(`确定要删除用户 "${username}" 吗？此操作无法撤销。`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/users/${userId}`, {
-                    method: 'DELETE'
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    loadUsers();
-                } else {
-                    alert('删除失败: ' + data.error);
-                }
-            } catch (error) {
-                alert('删除失败，请检查网络连接');
-            }
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
         }
-
-        loadUsers();
     </script>
 </body>
 </html>

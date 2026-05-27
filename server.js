@@ -23,6 +23,9 @@ if (process.env.DATABASE_URL) {
 
 const pool = new Pool(databaseConfig);
 
+// 管理员密码（内存存储，服务重启后重置）
+let adminPassword = 'admin';
+
 pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
 });
@@ -248,6 +251,63 @@ app.delete('/api/users/:id', async (req, res) => {
         console.error('Delete user error:', err);
         res.status(500).json({ error: '删除用户失败' });
     }
+});
+
+// 批量删除用户
+app.post('/api/users/batch-delete', async (req, res) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: '请选择要删除的用户' });
+    }
+    try {
+        for (const id of ids) {
+            await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
+            await pool.query('DELETE FROM users WHERE id = $1', [id]);
+        }
+        res.json({ success: true, message: `已删除 ${ids.length} 个用户` });
+    } catch (err) {
+        console.error('Batch delete error:', err);
+        res.status(500).json({ error: '批量删除失败' });
+    }
+});
+
+// 重置用户密码
+app.post('/api/users/:id/reset-password', async (req, res) => {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 1) {
+        return res.status(400).json({ error: '新密码不能为空' });
+    }
+    try {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, id]);
+        res.json({ success: true, message: '密码修改成功' });
+    } catch (err) {
+        console.error('Reset password error:', err);
+        res.status(500).json({ error: '修改密码失败' });
+    }
+});
+
+// 管理员 API
+app.post('/api/admin/verify', (req, res) => {
+    const { password } = req.body;
+    if (password === adminPassword) {
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, error: '密码错误' });
+    }
+});
+
+app.post('/api/admin/change-password', (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    if (oldPassword !== adminPassword) {
+        return res.json({ success: false, error: '原密码错误' });
+    }
+    if (!newPassword || newPassword.length < 1) {
+        return res.json({ success: false, error: '新密码不能为空' });
+    }
+    adminPassword = newPassword;
+    res.json({ success: true, message: '密码修改成功' });
 });
 
 app.get('/admin', (req, res) => {

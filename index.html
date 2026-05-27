@@ -8,51 +8,55 @@
 </head>
 <body>
     <div id="app">
-        <!-- 顶部导航栏 -->
-        <header class="top-nav">
-            <div class="nav-left">
-                <h1 class="logo">Mark</h1>
-                <span id="version-display" class="version-badge">V1.0.13</span>
-            </div>
-            <div class="nav-center">
-                <input type="text" class="search-input" placeholder="搜索书签...">
-            </div>
-            <div class="nav-right">
-                <button id="import-btn" class="nav-btn">导入</button>
-                <button id="export-btn" class="nav-btn">导出</button>
-                <button id="sync-btn" class="nav-btn">同步</button>
-                <button id="add-folder-btn" class="nav-btn">新建</button>
-                <button id="changelog-btn" class="nav-btn">日志</button>
-                <button id="admin-btn" class="nav-btn">管理</button>
-                <button id="logout-btn" class="nav-btn">退出</button>
-            </div>
-        </header>
-
         <!-- 认证界面 -->
         <div id="auth-container">
-            <div class="auth-box">
-                <div class="auth-tabs">
-                    <button id="login-tab" class="active">登录</button>
-                    <button id="register-tab">注册</button>
+            <div class="auth-wrapper">
+                <h1 class="auth-logo">Mark</h1>
+                <div class="auth-box">
+                    <div class="auth-tabs">
+                        <button id="login-tab" class="active">登录</button>
+                        <button id="register-tab">注册</button>
+                    </div>
+
+                    <form id="login-form" class="auth-form">
+                        <input type="text" id="login-username" placeholder="用户名" required>
+                        <input type="password" id="login-password" placeholder="密码" required>
+                        <button type="submit">登录</button>
+                    </form>
+
+                    <form id="register-form" class="auth-form hidden">
+                        <input type="text" id="register-username" placeholder="用户名" required>
+                        <input type="password" id="register-password" placeholder="密码" required>
+                        <input type="password" id="register-confirm" placeholder="确认密码" required>
+                        <button type="submit">注册</button>
+                    </form>
                 </div>
-
-                <form id="login-form" class="auth-form">
-                    <input type="text" id="login-username" placeholder="用户名" required>
-                    <input type="password" id="login-password" placeholder="密码" required>
-                    <button type="submit">登录</button>
-                </form>
-
-                <form id="register-form" class="auth-form hidden">
-                    <input type="text" id="register-username" placeholder="用户名" required>
-                    <input type="password" id="register-password" placeholder="密码" required>
-                    <input type="password" id="register-confirm" placeholder="确认密码" required>
-                    <button type="submit">注册</button>
-                </form>
+                <p class="auth-copyright">(c) 2026 Li Chengyan. All Rights Reserved.</p>
+                <span class="auth-version">V1.0.13</span>
             </div>
         </div>
 
         <!-- 主界面 -->
         <div id="main-container" class="hidden">
+            <!-- 顶部导航栏 -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <h1 class="logo">Mark</h1>
+                    <span id="version-display" class="version-badge">V1.0.13</span>
+                </div>
+                <div class="nav-center">
+                    <input type="text" class="search-input" placeholder="搜索书签...">
+                </div>
+                <div class="nav-right">
+                    <button id="import-btn" class="nav-btn">导入</button>
+                    <button id="export-btn" class="nav-btn">导出</button>
+                    <button id="sync-btn" class="nav-btn">同步</button>
+                    <button id="add-folder-btn" class="nav-btn">新建</button>
+                    <button id="changelog-btn" class="nav-btn">日志</button>
+                    <button id="admin-btn" class="nav-btn">管理</button>
+                    <button id="logout-btn" class="nav-btn">退出</button>
+                </div>
+            </header>
             <div class="main-layout">
                 <!-- 左侧文件夹树 -->
                 <aside class="sidebar">
