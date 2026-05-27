@@ -257,10 +257,7 @@ header p {
 
 .subfolders {
     padding-left: 0;
-}
-
-.subfolders .folder-item {
-    padding-left: 32px;
+    margin: 0;
 }
 
 .folder-name {
@@ -310,6 +307,7 @@ header p {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 12px;
+    align-items: start;
 }
 
 .bookmark-card {
@@ -319,6 +317,7 @@ header p {
     overflow: hidden;
     transition: all 0.2s ease;
     position: relative;
+    min-height: 64px;
 }
 
 .bookmark-card:hover {
