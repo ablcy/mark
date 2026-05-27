@@ -447,23 +447,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         folderTree.appendChild(allBookmarksItem);
 
-        // 文件夹和书签
+        // 只显示文件夹
         for (let i = 0; i < bookmarks.length; i++) {
             const item = bookmarks[i];
             if (item.type === 'folder') {
                 const folderItem = renderFolderItem(item, bookmarks, i, '');
                 folderTree.appendChild(folderItem);
-            } else if (item.type === 'bookmark') {
-                const bookmarkItem = document.createElement('div');
-                bookmarkItem.className = 'folder-item';
-                bookmarkItem.innerHTML = `<span class="bookmark-icon-sm">🔗</span><span class="folder-name">${escapeHTML(item.title)}</span>`;
-                bookmarkItem.onclick = () => {
-                    selectedFolder = null;
-                    selectedFolderName.textContent = '全部书签';
-                    updateBookmarksList([item]);
-                    updateSelectedState(bookmarkItem);
-                };
-                folderTree.appendChild(bookmarkItem);
             }
         }
     }
@@ -475,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = document.createElement('div');
         header.className = 'folder-header';
         
-        if (folder.children && folder.children.length > 0) {
+        if (folder.children && folder.children.some(child => child.type === 'folder')) {
             const toggle = document.createElement('span');
             toggle.className = 'folder-toggle';
             toggle.textContent = '▶';
@@ -519,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         div.appendChild(header);
         
-        if (folder.children && folder.children.length > 0) {
+        if (folder.children && folder.children.some(child => child.type === 'folder')) {
             const subfolders = document.createElement('div');
             subfolders.className = 'subfolders';
             
@@ -528,17 +517,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (child.type === 'folder') {
                     const childItem = renderFolderItem(child, folder.children, i, indent + '  ');
                     subfolders.appendChild(childItem);
-                } else if (child.type === 'bookmark') {
-                    const bookmarkItem = document.createElement('div');
-                    bookmarkItem.className = 'folder-item';
-                    bookmarkItem.innerHTML = `<span class="bookmark-icon-sm">🔗</span><span class="folder-name">${escapeHTML(child.title)}</span>`;
-                    bookmarkItem.onclick = () => {
-                        selectedFolder = folder;
-                        selectedFolderName.textContent = folder.name;
-                        updateBookmarksList([child]);
-                        updateSelectedState(bookmarkItem);
-                    };
-                    subfolders.appendChild(bookmarkItem);
                 }
             }
             
