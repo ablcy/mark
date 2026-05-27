@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.14';
+const CURRENT_VERSION = 'V1.0.15';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -229,10 +229,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
+                // 如果选中了文件夹，导入到该文件夹内
+                if (selectedFolder) {
+                    if (!selectedFolder.children) selectedFolder.children = [];
+                    selectedFolder.children = mergeBookmarks(selectedFolder.children, importedBookmarks);
+                } else {
+                    bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
+                }
                 await saveBookmarks();
                 renderFolderTree();
-                updateBookmarksList(selectedFolder ? (selectedFolder.children || []) : getAllBookmarks(bookmarks));
+                if (selectedFolder) {
+                    selectedFolderName.textContent = selectedFolder.name;
+                    updateBookmarksList(selectedFolder.children || []);
+                } else {
+                    updateBookmarksList(getAllBookmarks(bookmarks));
+                }
                 alert('成功导入 ' + countBookmarks(importedBookmarks) + ' 个书签！');
             };
             reader.onerror = () => {
@@ -341,12 +352,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookmarks = data.bookmarks || [];
                 localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
                 showMainContainer();
+                // 新用户默认创建"收藏夹"文件夹
+                initDefaultFolder();
                 renderFolderTree();
-                // 默认显示全部书签
-                selectedFolder = null;
-                selectedFolderName.textContent = '全部书签';
-                updateBookmarksList(getAllBookmarks(bookmarks));
-                if (contentActions) contentActions.classList.add('hidden');
+                // 默认选中收藏夹
+                selectDefaultFolder();
             } else {
                 alert(data.error || '登录失败');
             }
@@ -442,6 +452,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function showMainContainer() {
         authContainer.classList.add('hidden');
         mainContainer.classList.remove('hidden');
+    }
+
+    // 初始化默认文件夹（新用户无数据时创建"收藏夹"）
+    function initDefaultFolder() {
+        if (!bookmarks || bookmarks.length === 0) {
+            bookmarks = [{
+                type: 'folder',
+                name: '收藏夹',
+                dateAdded: Math.floor(Date.now() / 1000),
+                children: []
+            }];
+            saveBookmarks();
+        }
+    }
+
+    // 默认选中收藏夹（效果等于显示全部书签）
+    function selectDefaultFolder() {
+        // 查找"收藏夹"文件夹，有则选中它，否则选全部
+        const defaultFolder = bookmarks.find(b => b.type === 'folder' && b.name === '收藏夹');
+        if (defaultFolder) {
+            selectedFolder = defaultFolder;
+            selectedFolderName.textContent = defaultFolder.name;
+            updateBookmarksList(getAllBookmarks(bookmarks));
+            if (contentActions) contentActions.classList.remove('hidden');
+        } else {
+            selectedFolder = null;
+            selectedFolderName.textContent = '全部书签';
+            updateBookmarksList(getAllBookmarks(bookmarks));
+            if (contentActions) contentActions.classList.add('hidden');
+        }
     }
 
     async function saveBookmarks() {
@@ -826,16 +866,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showMainContainer();
             // 先同步服务器数据，再渲染
             syncBookmarks().then(() => {
+                initDefaultFolder();
                 renderFolderTree();
-                // 默认显示全部书签
-                selectedFolder = null;
-                selectedFolderName.textContent = '全部书签';
-                updateBookmarksList(getAllBookmarks(bookmarks));
+                selectDefaultFolder();
             }).catch(() => {
+                initDefaultFolder();
                 renderFolderTree();
-                selectedFolder = null;
-                selectedFolderName.textContent = '全部书签';
-                updateBookmarksList(getAllBookmarks(bookmarks));
+                selectDefaultFolder();
             });
         } catch (err) {
             console.log('无法解析保存的用户信息');
