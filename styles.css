@@ -192,12 +192,13 @@ body {
 .folder-item {
     display: flex;
     align-items: center;
-    padding: 6px 20px;
+    padding: 2px 20px;
     cursor: pointer;
     transition: background-color 0.15s ease;
     font-size: 14px;
     color: #333;
     position: relative;
+    margin: 0;
 }
 
 .folder-item:hover {
@@ -312,10 +313,17 @@ body {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
+    text-decoration: none;
+    color: inherit;
 }
 
 .bookmark-item:hover {
     background: #f0f0f0;
+    text-decoration: none;
+}
+
+.bookmark-item * {
+    text-decoration: none;
 }
 
 .bookmark-favicon {

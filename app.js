@@ -598,7 +598,16 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const favicon = document.createElement('img');
         favicon.className = 'bookmark-favicon';
-        favicon.src = `https://www.google.com/s2/favicons?domain=${new URL(bookmark.url).hostname}&sz=32`;
+        
+        let faviconUrl = '';
+        try {
+            const urlObj = new URL(bookmark.url);
+            faviconUrl = `https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`;
+        } catch (e) {
+            faviconUrl = 'https://icons.duckduckgo.com/ip3/default.ico';
+        }
+        
+        favicon.src = faviconUrl;
         favicon.onerror = () => {
             favicon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
         };
