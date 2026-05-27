@@ -437,41 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFolderTree() {
         folderTree.innerHTML = '';
         
-        // 如果没有书签，设置示例数据
-        if (bookmarks.length === 0) {
-            bookmarks = [
-                {
-                    type: 'folder',
-                    name: '学习',
-                    children: [
-                        { type: 'bookmark', title: 'GitHub', url: 'https://github.com' },
-                        { type: 'bookmark', title: 'Stack Overflow', url: 'https://stackoverflow.com' }
-                    ]
-                },
-                {
-                    type: 'folder',
-                    name: '工具',
-                    children: [
-                        { type: 'bookmark', title: 'Google', url: 'https://google.com' },
-                        {
-                            type: 'folder',
-                            name: '开发工具',
-                            children: [
-                                { type: 'bookmark', title: 'CodePen', url: 'https://codepen.io' }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    type: 'folder',
-                    name: '娱乐',
-                    children: [
-                        { type: 'bookmark', title: 'YouTube', url: 'https://youtube.com' }
-                    ]
-                }
-            ];
-        }
-        
         // 全部书签
         const allBookmarksItem = document.createElement('div');
         allBookmarksItem.className = 'folder-item';
@@ -494,61 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         folderTree.appendChild(allBookmarksItem);
 
-        // 收藏夹 header 行（可折叠，但本身不缩进）
-        const favoritesDiv = document.createElement('div');
-        favoritesDiv.className = 'folder-item';
-
-        const favoritesHeader = document.createElement('div');
-        favoritesHeader.className = 'folder-header';
-
+        // 渲染用户导入的文件夹树
         const topFolders = bookmarks.filter(item => item.type === 'folder');
-
-        const toggle = document.createElement('span');
-        toggle.className = 'folder-toggle';
-        if (topFolders.length > 0) {
-            toggle.textContent = '▼';
-            toggle.onclick = (e) => {
-                e.stopPropagation();
-                if (subfolderContainer.style.display === 'none') {
-                    subfolderContainer.style.display = 'block';
-                    toggle.textContent = '▼';
-                } else {
-                    subfolderContainer.style.display = 'none';
-                    toggle.textContent = '▶';
-                }
-            };
-        }
-        favoritesHeader.appendChild(toggle);
-
-        const favIcon = document.createElement('span');
-        favIcon.className = 'folder-icon';
-        favIcon.textContent = '📂';
-        const favName = document.createElement('span');
-        favName.className = 'folder-name';
-        favName.textContent = '收藏夹';
-        favoritesHeader.appendChild(favIcon);
-        favoritesHeader.appendChild(favName);
-        favoritesHeader.onclick = () => {
-            selectedFolder = null;
-            selectedFolderName.textContent = '收藏夹';
-            const allBookmarks = getAllBookmarks(bookmarks);
-            updateBookmarksList(allBookmarks);
-            updateSelectedState(favoritesDiv);
-        };
-        favoritesDiv.appendChild(favoritesHeader);
-
-        // 一级文件夹直接放在收藏夹下，使用 subfolders 缩进（它们是收藏夹的子）
-        const subfolderContainer = document.createElement('div');
-        subfolderContainer.className = 'subfolders';
-        subfolderContainer.style.display = 'block';
-
         for (let i = 0; i < topFolders.length; i++) {
             const childItem = renderFolderItem(topFolders[i], topFolders, i);
-            subfolderContainer.appendChild(childItem);
+            folderTree.appendChild(childItem);
         }
-
-        favoritesDiv.appendChild(subfolderContainer);
-        folderTree.appendChild(favoritesDiv);
     }
 
     function renderFolderItem(folder, parentArray, index) {
