@@ -109,11 +109,11 @@ body {
     max-width: 380px;
 }
 
-.auth-logo-img {
-    width: 80px;
-    height: 80px;
+.auth-logo {
+    font-size: 48px;
+    font-weight: bold;
+    color: #2c3e50;
     margin-bottom: 32px;
-    object-fit: contain;
 }
 
 .auth-copyright {
