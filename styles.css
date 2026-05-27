@@ -394,6 +394,20 @@ body {
     border-radius: 0 0 4px 4px;
 }
 
+.dropdown-divider {
+    height: 1px;
+    background: #eee;
+    margin: 4px 0;
+}
+
+.dropdown-item--danger {
+    color: #e74c3c;
+}
+
+.dropdown-item--danger:hover {
+    background: #fdf2f2;
+}
+
 .bookmarks-list {
     flex: 1;
     padding: 20px 30px;

@@ -172,6 +172,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 菜单-删除收藏夹
+    const menuDeleteBtn = document.getElementById('menu-delete-btn');
+    if (menuDeleteBtn) {
+        menuDeleteBtn.addEventListener('click', async () => {
+            moreMenuDropdown.classList.add('hidden');
+            if (!selectedFolder) {
+                alert('请在左侧选中要删除的文件夹！');
+                return;
+            }
+            const folderName = selectedFolder.name;
+            const confirmMsg = '确定要删除文件夹「' + folderName + '」及其所有内容吗？此操作不可恢复！';
+            if (!confirm(confirmMsg)) return;
+
+            function removeFromTree(items, target) {
+                for (let i = items.length - 1; i >= 0; i--) {
+                    if (items[i] === target) {
+                        items.splice(i, 1);
+                        return true;
+                    }
+                    if (items[i].type === 'folder' && items[i].children) {
+                        if (removeFromTree(items[i].children, target)) return true;
+                    }
+                }
+                return false;
+            }
+
+            removeFromTree(bookmarks, selectedFolder);
+            selectedFolder = null;
+            selectedFolderName.textContent = '全部书签';
+            await saveBookmarks();
+            renderFolderTree();
+            updateBookmarksList(getAllBookmarks(bookmarks));
+            if (contentActions) contentActions.classList.add('hidden');
+        });
+    }
+
     // 导入书签（可复用函数）
     function importBookmarks() {
         const input = document.createElement('input');
