@@ -180,35 +180,35 @@ header p {
 }
 
 .sidebar {
-    width: 280px;
-    background: white;
-    border-right: 1px solid #e8e8e8;
+    width: 260px;
+    background: #fafafa;
+    border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar h2 {
-    padding: 15px 20px;
-    font-size: 1rem;
-    color: #888;
-    border-bottom: 1px solid #e8e8e8;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
     margin: 0;
-    font-weight: normal;
+    font-weight: 500;
 }
 
 #folder-tree {
     flex: 1;
     overflow-y: auto;
-    padding: 0;
+    padding: 4px 0;
 }
 
 .folder-item {
     display: flex;
     align-items: center;
-    padding: 8px 20px;
+    padding: 6px 16px;
     cursor: pointer;
-    transition: all 0.15s ease;
-    font-size: 0.9rem;
+    transition: background-color 0.15s ease;
+    font-size: 0.85rem;
     color: #333;
 }
 
@@ -217,12 +217,8 @@ header p {
 }
 
 .folder-item.selected {
-    background: #f0f0f0;
+    background: #e8f0fe;
     font-weight: 500;
-}
-
-.folder-item.selected .folder-name {
-    color: #333;
 }
 
 .folder-header {
@@ -232,14 +228,15 @@ header p {
 }
 
 .folder-toggle {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.6rem;
-    color: #aaa;
-    transition: transform 0.2s ease;
+    font-size: 0.55rem;
+    color: #999;
+    margin-right: 2px;
+    flex-shrink: 0;
 }
 
 .folder-item.selected .folder-toggle {
@@ -247,17 +244,23 @@ header p {
 }
 
 .folder-icon {
-    margin-right: 8px;
-    font-size: 1rem;
+    margin-right: 6px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
 }
 
 .bookmark-icon-sm {
-    margin-right: 8px;
-    font-size: 0.85rem;
+    margin-right: 6px;
+    font-size: 0.8rem;
+    flex-shrink: 0;
 }
 
 .subfolders {
-    padding-left: 20px;
+    padding-left: 0;
+}
+
+.subfolders .folder-item {
+    padding-left: 32px;
 }
 
 .folder-name {
@@ -302,40 +305,42 @@ header p {
 
 #bookmarks-list {
     flex: 1;
-    padding: 20px;
+    padding: 16px;
     overflow-y: auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
 }
 
 .bookmark-card {
-    background: #f8f9fa;
-    border-radius: 12px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
 }
 
 .bookmark-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
 }
 
 .bookmark-card a {
     display: flex;
     align-items: center;
-    padding: 15px;
+    padding: 12px;
     text-decoration: none;
     color: #333;
 }
 
 .bookmark-favicon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    margin-right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    margin-right: 10px;
     flex-shrink: 0;
+    background: #f5f5f5;
 }
 
 .bookmark-info {
@@ -344,18 +349,19 @@ header p {
 }
 
 .bookmark-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    font-weight: 600;
+    margin: 0 0 3px 0;
+    font-size: 0.9rem;
+    font-weight: 500;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: #333;
 }
 
 .bookmark-url {
     margin: 0;
-    font-size: 0.85rem;
-    color: #666;
+    font-size: 0.75rem;
+    color: #888;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
