@@ -12,6 +12,7 @@
         <header class="top-nav">
             <div class="nav-left">
                 <h1 class="logo">Mark</h1>
+                <span id="version-display" class="version-badge">V1.0.7</span>
             </div>
             <div class="nav-center">
                 <input type="text" class="search-input" placeholder="搜索书签...">
@@ -79,55 +80,19 @@
                 <div id="changelog-content">
                     <h2>更新日志</h2>
                     <details>
+                        <summary>V1.0.8-202605261600 - 2026年5月26日</summary>
+                        <ul>
+                            <li>顶部版本号显示，Mark右边添加版本号徽章</li>
+                            <li>子文件夹在主文件夹下方垂直排列显示</li>
+                            <li>版本号自动迭代，每次发布自动更新</li>
+                        </ul>
+                    </details>
+                    <details>
                         <summary>V1.0.7-202605261600 - 2026年5月26日</summary>
                         <ul>
                             <li>默认展开所有文件夹，子文件夹直接显示在主文件夹下面</li>
                             <li>▼表示展开，▶表示折叠，点击可切换</li>
                             <li>无需手动展开即可查看完整文件夹结构</li>
-                        </ul>
-                    </details>
-                    <details>
-                        <summary>V1.0.6-202605270634 - 2026年5月27日</summary>
-                        <ul>
-                            <li>移除虚线连接线，清除界面多余装饰元素</li>
-                            <li>左侧导航栏只显示文件夹，书签全部在右侧展示</li>
-                            <li>简化层级显示，只有包含子文件夹的才显示展开/折叠按钮</li>
-                            <li>界面更简洁干净</li>
-                        </ul>
-                    </details>
-                    <details>
-                        <summary>V1.0.5-202605270633 - 2026年5月27日</summary>
-                        <ul>
-                            <li>彻底修复文件夹间距问题：设置固定高度24px，垂直padding为0</li>
-                            <li>优化图标获取机制，改进favicon多源回退策略</li>
-                            <li>确保文件夹项紧密排列，视觉效果更整洁</li>
-                        </ul>
-                    </details>
-                    <details>
-                        <summary>V1.1.0-202605271600 - 2026年5月27日</summary>
-                        <ul>
-                            <li>全新界面设计，模仿书签地球风格</li>
-                            <li>深色顶部导航栏</li>
-                            <li>左侧文件夹树带虚线连接线</li>
-                            <li>简洁的书签展示</li>
-                        </ul>
-                    </details>
-                    <details>
-                        <summary>V1.0.4-202605271530 - 2026年5月27日</summary>
-                        <ul>
-                            <li>移除用户名和密码长度限制，支持1位字符注册</li>
-                            <li>修复DOM元素null引用错误</li>
-                            <li>优化数据库连接配置，支持Neon PostgreSQL</li>
-                            <li>添加完整的错误处理和重试机制</li>
-                        </ul>
-                    </details>
-                    <details>
-                        <summary>V1.0.3-202605251434 - 2026年5月25日</summary>
-                        <ul>
-                            <li>新增数据库同步功能，支持跨设备书签同步</li>
-                            <li>重构界面布局为左右分栏：左边文件夹树，右边书签列表</li>
-                            <li>添加同步按钮，手动触发数据同步</li>
-                            <li>用户注册和登录数据现在存储到数据库</li>
                         </ul>
                     </details>
                 </div>

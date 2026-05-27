@@ -1,3 +1,6 @@
+// 当前版本号 - 每次发布时自动更新
+const CURRENT_VERSION = 'V1.0.8';
+
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
 
@@ -5,6 +8,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUserId = null;
     let bookmarks = [];
     let selectedFolder = null;
+
+    // 初始化版本号显示
+    const versionDisplay = document.getElementById('version-display');
+    if (versionDisplay) {
+        versionDisplay.textContent = CURRENT_VERSION;
+    }
 
     // 初始化DOM元素
     const loginTab = document.getElementById('login-tab');
