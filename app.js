@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.11';
+const CURRENT_VERSION = 'V1.0.12';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -465,6 +465,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const favoritesItem = renderFolderItem(favoritesFolder, bookmarks, 0, '');
         folderTree.appendChild(favoritesItem);
+
+        // 如果没有书签，显示提示
+        if (bookmarks.length === 0) {
+            const emptyMsg = document.createElement('div');
+            emptyMsg.className = 'empty-state';
+            emptyMsg.textContent = '暂无书签，请导入或添加';
+            folderTree.appendChild(emptyMsg);
+        }
     }
 
     function renderFolderItem(folder, parentArray, index, indent) {
