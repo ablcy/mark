@@ -131,27 +131,37 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.reset();
     });
 
-    changelogBtn.addEventListener('click', () => {
-        changelogModal.classList.remove('hidden');
-    });
+    if (changelogBtn) {
+        changelogBtn.addEventListener('click', () => {
+            changelogModal.classList.remove('hidden');
+        });
+    }
 
-    closeModalBtn.addEventListener('click', () => {
-        changelogModal.classList.add('hidden');
-    });
-
-    changelogModal.addEventListener('click', (e) => {
-        if (e.target === changelogModal) {
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
             changelogModal.classList.add('hidden');
-        }
-    });
+        });
+    }
 
-    syncBtn.addEventListener('click', async () => {
-        await syncBookmarks();
-    });
+    if (changelogModal) {
+        changelogModal.addEventListener('click', (e) => {
+            if (e.target === changelogModal) {
+                changelogModal.classList.add('hidden');
+            }
+        });
+    }
 
-    adminBtn.addEventListener('click', () => {
-        window.open('/admin', '_blank');
-    });
+    if (syncBtn) {
+        syncBtn.addEventListener('click', async () => {
+            await syncBookmarks();
+        });
+    }
+
+    if (adminBtn) {
+        adminBtn.addEventListener('click', () => {
+            window.open('/admin', '_blank');
+        });
+    }
 
     async function syncBookmarks() {
         if (!currentUserId) return;
@@ -186,7 +196,8 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContainer.classList.remove('hidden');
     }
 
-    importBtn.addEventListener('click', () => {
+    if (importBtn) {
+        importBtn.addEventListener('click', () => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.html';
@@ -220,8 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         document.body.appendChild(input);
-        input.click();
-    });
+            input.click();
+        });
+    }
 
     function countBookmarks(arr) {
         let count = 0;
@@ -320,16 +332,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return merged;
     }
 
-    exportBtn.addEventListener('click', () => {
-        const html = generateBookmarksHTML(bookmarks);
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'bookmarks.html';
-        a.click();
-        URL.revokeObjectURL(url);
-    });
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const html = generateBookmarksHTML(bookmarks);
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'bookmarks.html';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
 
     function generateBookmarksHTML(bookmarks) {
         let html = '<!DOCTYPE NETSCAPE-Bookmark-file-1>\n';
@@ -372,19 +386,21 @@ document.addEventListener('DOMContentLoaded', () => {
             .replace(/'/g, '&#039;');
     }
 
-    addFolderBtn.addEventListener('click', async () => {
-        const name = prompt('请输入文件夹名称：');
-        if (name) {
-            bookmarks.push({
-                type: 'folder',
-                name: name,
-                dateAdded: Math.floor(Date.now() / 1000),
-                children: []
-            });
-            await saveBookmarks();
-            renderFolderTree();
-        }
-    });
+    if (addFolderBtn) {
+        addFolderBtn.addEventListener('click', async () => {
+            const name = prompt('请输入文件夹名称：');
+            if (name) {
+                bookmarks.push({
+                    type: 'folder',
+                    name: name,
+                    dateAdded: Math.floor(Date.now() / 1000),
+                    children: []
+                });
+                await saveBookmarks();
+                renderFolderTree();
+            }
+        });
+    }
 
     async function saveBookmarks() {
         if (currentUserId) {
