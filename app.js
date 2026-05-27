@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.8';
+const CURRENT_VERSION = 'V1.0.9';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
