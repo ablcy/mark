@@ -63,8 +63,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.url.toLowerCase().includes(keyword)
                 )
             );
+            // 同时搜索文件夹名称
+            const matchedFolders = source.filter(item =>
+                item.type === 'folder' && item.name.toLowerCase().includes(keyword)
+            );
+            const allFiltered = [...matchedFolders, ...filtered];
             selectedFolderName.textContent = `搜索："${searchInput.value.trim()}"`;
-            updateBookmarksList(filtered);
+            updateBookmarksList(allFiltered);
         });
     }
 
@@ -470,8 +475,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (defaultFolder) {
             selectedFolder = defaultFolder;
             selectedFolderName.textContent = defaultFolder.name;
-            updateBookmarksList(getAllBookmarks(bookmarks));
+            updateBookmarksList(defaultFolder.children || []);
             if (contentActions) contentActions.classList.remove('hidden');
+        } else {
+            // 没有根文件夹时显示全部书签（扁平列表）
+            selectedFolder = null;
+            selectedFolderName.textContent = '全部书签';
+            updateBookmarksList(getAllBookmarks(bookmarks));
+            if (contentActions) contentActions.classList.add('hidden');
         }
     }
 
@@ -502,7 +513,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookmarks = merged;
                 await saveBookmarks();
                 renderFolderTree();
-                updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
+                // 同步后刷新右侧内容区
+                if (selectedFolder) {
+                    selectedFolderName.textContent = selectedFolder.name;
+                    updateBookmarksList(selectedFolder.children || []);
+                } else {
+                    selectDefaultFolder();
+                }
                 alert('同步成功！');
             } else {
                 alert('同步失败');
@@ -666,7 +683,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFolderItem(folder, parentArray, index) {
         const div = document.createElement('div');
         div.className = 'folder-item';
-        
+
+        // 存储 DOM 引用，供高亮使用
+        folder._domElement = div;
+
         const header = document.createElement('div');
         header.className = 'folder-header';
         
@@ -759,22 +779,70 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateBookmarksList(items) {
         bookmarksList.innerHTML = '';
 
-        if (items.length === 0) {
+        if (!items || items.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-state';
-            emptyMsg.textContent = '暂无书签';
+            emptyMsg.textContent = '暂无内容';
             bookmarksList.appendChild(emptyMsg);
             return;
         }
 
-        const bookmarkArray = items.filter(item => item.type === 'bookmark');
         const fragment = document.createDocumentFragment();
 
+        // 先渲染子文件夹（如果有）
+        const folders = items.filter(item => item.type === 'folder');
+        for (let i = 0; i < folders.length; i++) {
+            fragment.appendChild(renderContentFolderItem(folders[i]));
+        }
+
+        // 再渲染书签
+        const bookmarkArray = items.filter(item => item.type === 'bookmark');
         for (let i = 0; i < bookmarkArray.length; i++) {
             fragment.appendChild(renderBookmarkItem(bookmarkArray[i]));
         }
 
         bookmarksList.appendChild(fragment);
+    }
+
+    // 渲染内容区的子文件夹（可点击进入）
+    function renderContentFolderItem(folder) {
+        const div = document.createElement('div');
+        div.className = 'content-folder-item';
+
+        const icon = document.createElement('span');
+        icon.className = 'content-folder-icon';
+        icon.textContent = '📂';
+
+        const name = document.createElement('span');
+        name.className = 'content-folder-name';
+        name.textContent = folder.name;
+
+        const count = document.createElement('span');
+        count.className = 'content-folder-count';
+        const bookmarkCount = countBookmarks([folder]);
+        count.textContent = bookmarkCount + ' 个书签';
+
+        div.appendChild(icon);
+        div.appendChild(name);
+        div.appendChild(count);
+
+        div.onclick = () => {
+            selectedFolder = folder;
+            selectedFolderName.textContent = folder.name;
+            updateBookmarksList(folder.children || []);
+            updateSelectedStateByFolder(folder);
+            if (contentActions) contentActions.classList.remove('hidden');
+        };
+
+        return div;
+    }
+
+    // 根据 folder 对象高亮左侧对应项
+    function updateSelectedStateByFolder(folder) {
+        document.querySelectorAll('.folder-item').forEach(item => item.classList.remove('selected'));
+        if (folder && folder._domElement) {
+            folder._domElement.classList.add('selected');
+        }
     }
 
     function renderBookmarkItem(bookmark) {
