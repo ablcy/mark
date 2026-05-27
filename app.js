@@ -611,14 +611,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Do nothing
         }
         
-        faviconSources.push('https://www.google.com/s2/favicons?domain=google.com&sz=32');
-        
         function tryNextFavicon() {
             if (faviconAttempts < faviconSources.length) {
                 favicon.src = faviconSources[faviconAttempts];
                 faviconAttempts++;
             } else {
-                favicon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="%23667eea" stroke-width="2"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+                favicon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%233498db"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
             }
         }
         
