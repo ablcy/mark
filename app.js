@@ -503,9 +503,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const topFolders = bookmarks.filter(item => item.type === 'folder');
 
+        const toggle = document.createElement('span');
+        toggle.className = 'folder-toggle';
         if (topFolders.length > 0) {
-            const toggle = document.createElement('span');
-            toggle.className = 'folder-toggle';
             toggle.textContent = '▼';
             toggle.onclick = (e) => {
                 e.stopPropagation();
@@ -517,8 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     toggle.textContent = '▶';
                 }
             };
-            favoritesHeader.appendChild(toggle);
         }
+        favoritesHeader.appendChild(toggle);
 
         const favIcon = document.createElement('span');
         favIcon.className = 'folder-icon';
@@ -558,9 +558,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const header = document.createElement('div');
         header.className = 'folder-header';
         
+        const toggle = document.createElement('span');
+        toggle.className = 'folder-toggle';
         if (folder.children && folder.children.some(child => child.type === 'folder')) {
-            const toggle = document.createElement('span');
-            toggle.className = 'folder-toggle';
             toggle.textContent = '▼'; // 默认展开
             toggle.onclick = (e) => {
                 e.stopPropagation();
@@ -575,8 +575,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             };
-            header.appendChild(toggle);
         }
+        header.appendChild(toggle);
         
         const icon = document.createElement('span');
         icon.className = 'folder-icon';
