@@ -50,11 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (username.length < 3 || password.length < 6) {
-            alert('用户名至少3位，密码至少6位！');
-            return;
-        }
-
         try {
             const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',

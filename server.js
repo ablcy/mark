@@ -75,10 +75,6 @@ app.post('/api/register', async (req, res) => {
         return res.status(400).json({ error: '用户名和密码不能为空' });
     }
     
-    if (username.length < 3 || password.length < 6) {
-        return res.status(400).json({ error: '用户名至少3位，密码至少6位' });
-    }
-    
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
         
