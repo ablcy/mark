@@ -595,7 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateBookmarksList(items) {
         bookmarksList.innerHTML = '';
-        
+
         if (items.length === 0) {
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-state';
@@ -603,14 +603,15 @@ document.addEventListener('DOMContentLoaded', () => {
             bookmarksList.appendChild(emptyMsg);
             return;
         }
-        
+
         const bookmarkArray = items.filter(item => item.type === 'bookmark');
-        
+        const fragment = document.createDocumentFragment();
+
         for (let i = 0; i < bookmarkArray.length; i++) {
-            const bookmark = bookmarkArray[i];
-            const bookmarkElement = renderBookmarkItem(bookmark);
-            bookmarksList.appendChild(bookmarkElement);
+            fragment.appendChild(renderBookmarkItem(bookmarkArray[i]));
         }
+
+        bookmarksList.appendChild(fragment);
     }
 
     function renderBookmarkItem(bookmark) {
@@ -618,34 +619,30 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = 'bookmark-item';
         div.href = bookmark.url;
         div.target = '_blank';
-        
+
         const favicon = document.createElement('img');
         favicon.className = 'bookmark-favicon';
-        
-        let faviconAttempts = 0;
-        const faviconSources = [];
-        
+        // 默认显示内置SVG，Google API加载成功后再替换
+        favicon.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3498db"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>');
+
         try {
             const urlObj = new URL(bookmark.url);
-            faviconSources.push(`https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`);
-            faviconSources.push(`https://icons.duckduckgo.com/ip3/${urlObj.hostname}.ico`);
-            faviconSources.push(`${urlObj.origin}/favicon.ico`);
+            const googleFavicon = 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
+            const fallbackFavicon = urlObj.origin + '/favicon.ico';
+
+            // 先用 Google API，失败则尝试网站原生 favicon
+            favicon.onerror = function() {
+                if (favicon.src === googleFavicon) {
+                    favicon.src = fallbackFavicon;
+                }
+                // 二次失败就保留内置SVG，不再重试
+                favicon.onerror = null;
+            };
+            favicon.src = googleFavicon;
         } catch (e) {
-            // Do nothing
+            // URL 解析失败，保持默认SVG
         }
-        
-        function tryNextFavicon() {
-            if (faviconAttempts < faviconSources.length) {
-                favicon.src = faviconSources[faviconAttempts];
-                faviconAttempts++;
-            } else {
-                favicon.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="%233498db"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
-            }
-        }
-        
-        favicon.onerror = tryNextFavicon;
-        tryNextFavicon();
-        
+
         const info = document.createElement('div');
         info.className = 'bookmark-info';
         
