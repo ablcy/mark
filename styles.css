@@ -181,49 +181,48 @@ header p {
 
 .sidebar {
     width: 280px;
-    background: #f8f9fa;
+    background: white;
     border-right: 1px solid #e8e8e8;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar h2 {
-    padding: 20px 25px;
-    font-size: 1.1rem;
-    color: #555;
+    padding: 15px 20px;
+    font-size: 1rem;
+    color: #888;
     border-bottom: 1px solid #e8e8e8;
     margin: 0;
+    font-weight: normal;
 }
 
 #folder-tree {
     flex: 1;
     overflow-y: auto;
-    padding: 10px;
+    padding: 0;
 }
 
 .folder-item {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 8px 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.95rem;
+    transition: all 0.15s ease;
+    font-size: 0.9rem;
+    color: #333;
 }
 
 .folder-item:hover {
-    background: #e9ecef;
+    background: #f0f0f0;
 }
 
 .folder-item.selected {
-    background: #667eea;
-    color: white;
+    background: #f0f0f0;
+    font-weight: 500;
 }
 
-.folder-item.selected .folder-name,
-.folder-item.selected .folder-icon,
-.folder-item.selected .folder-toggle {
-    color: white;
+.folder-item.selected .folder-name {
+    color: #333;
 }
 
 .folder-header {
@@ -233,18 +232,32 @@ header p {
 }
 
 .folder-toggle {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
+    font-size: 0.6rem;
+    color: #aaa;
+    transition: transform 0.2s ease;
+}
+
+.folder-item.selected .folder-toggle {
     color: #666;
 }
 
 .folder-icon {
     margin-right: 8px;
-    font-size: 1.1rem;
+    font-size: 1rem;
+}
+
+.bookmark-icon-sm {
+    margin-right: 8px;
+    font-size: 0.85rem;
+}
+
+.subfolders {
+    padding-left: 20px;
 }
 
 .folder-name {
