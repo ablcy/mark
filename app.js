@@ -50,23 +50,36 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (username.length < 3 || password.length < 6) {
+            alert('用户名至少3位，密码至少6位！');
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            const data = await response.json();
+            
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                alert('服务器响应错误，请稍后重试');
+                return;
+            }
             
             if (data.success) {
                 alert('注册成功！请登录');
                 registerForm.reset();
                 loginTab.click();
             } else {
-                alert(data.error);
+                alert(data.error || '注册失败');
             }
         } catch (err) {
-            alert('网络错误，请检查后端服务是否启动');
+            alert('网络错误，请稍后重试');
         }
     });
 
@@ -81,21 +94,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
-            const data = await response.json();
+            
+            const text = await response.text();
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                alert('服务器响应错误，请稍后重试');
+                return;
+            }
             
             if (data.success) {
                 currentUser = data.user.username;
                 currentUserId = data.user.id;
-                bookmarks = data.bookmarks;
+                bookmarks = data.bookmarks || [];
                 localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
                 showMainContainer();
                 renderFolderTree();
                 updateBookmarksList([]);
             } else {
-                alert(data.error);
+                alert(data.error || '登录失败');
             }
         } catch (err) {
-            alert('网络错误，请检查后端服务是否启动');
+            alert('网络错误，请稍后重试');
         }
     });
 
@@ -140,13 +161,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             if (data.success) {
-                const serverBookmarks = data.bookmarks;
+                const serverBookmarks = data.bookmarks || [];
                 const merged = mergeBookmarks(bookmarks, serverBookmarks);
                 bookmarks = merged;
                 await saveBookmarks();
                 renderFolderTree();
                 updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : getAllBookmarks(bookmarks));
                 alert('同步成功！');
+            } else {
+                alert('同步失败');
             }
         } catch (err) {
             alert('同步失败，请检查网络连接');
@@ -372,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ userId: currentUserId, bookmarks })
                 });
             } catch (err) {
-                console.log('保存到服务器失败，继续使用本地存储');
+                console.log('保存到服务器失败');
             }
         }
     }

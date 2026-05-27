@@ -8,22 +8,31 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
-app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    next();
-});
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, '.')));
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+const databaseConfig = {
+    connectionString: process.env.DATABASE_URL
+};
+
+if (process.env.DATABASE_URL) {
+    databaseConfig.ssl = {
+        rejectUnauthorized: false
+    };
+}
+
+const pool = new Pool(databaseConfig);
+
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
 });
 
 async function initDatabase() {
     let retries = 5;
     while (retries > 0) {
         try {
+            console.log('Attempting to initialize database...');
+            
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS users (
                     id SERIAL PRIMARY KEY,
@@ -32,28 +41,31 @@ async function initDatabase() {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `);
+            console.log('Users table created or already exists');
             
             await pool.query(`
                 CREATE TABLE IF NOT EXISTS bookmarks (
                     id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id) UNIQUE NOT NULL,
-                    data JSONB NOT NULL,
+                    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    data JSONB NOT NULL DEFAULT '[]',
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `);
+            console.log('Bookmarks table created or already exists');
             
-            console.log('Database tables initialized');
-            return;
+            console.log('Database tables initialized successfully');
+            return true;
         } catch (err) {
-            console.error('Error initializing database:', err);
+            console.error('Error initializing database:', err.message);
             retries--;
             if (retries > 0) {
-                console.log(`Retrying... ${retries} attempts left`);
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                console.log(`Retrying in 3 seconds... ${retries} attempts left`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
             }
         }
     }
     console.error('Failed to initialize database after all retries');
+    return false;
 }
 
 app.post('/api/register', async (req, res) => {
@@ -61,6 +73,10 @@ app.post('/api/register', async (req, res) => {
     
     if (!username || !password) {
         return res.status(400).json({ error: '用户名和密码不能为空' });
+    }
+    
+    if (username.length < 3 || password.length < 6) {
+        return res.status(400).json({ error: '用户名至少3位，密码至少6位' });
     }
     
     try {
@@ -75,20 +91,25 @@ app.post('/api/register', async (req, res) => {
         
         await pool.query(
             'INSERT INTO bookmarks (user_id, data) VALUES ($1, $2)',
-            [user.id, JSON.stringify([])]
+            [user.id, '[]']
         );
         
         res.json({ success: true, message: '注册成功' });
     } catch (err) {
+        console.error('Register error:', err);
         if (err.code === '23505') {
             return res.status(400).json({ error: '用户名已存在' });
         }
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: '注册失败，请重试' });
     }
 });
 
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ error: '用户名和密码不能为空' });
+    }
     
     try {
         const userResult = await pool.query(
@@ -112,9 +133,16 @@ app.post('/api/login', async (req, res) => {
             [user.id]
         );
         
-        const userBookmarks = bookmarksResult.rows.length > 0 
-            ? JSON.parse(bookmarksResult.rows[0].data) 
-            : [];
+        let userBookmarks = [];
+        if (bookmarksResult.rows.length > 0 && bookmarksResult.rows[0].data) {
+            try {
+                userBookmarks = typeof bookmarksResult.rows[0].data === 'string' 
+                    ? JSON.parse(bookmarksResult.rows[0].data) 
+                    : bookmarksResult.rows[0].data;
+            } catch (e) {
+                console.error('Error parsing bookmarks:', e);
+            }
+        }
         
         res.json({
             success: true,
@@ -125,27 +153,51 @@ app.post('/api/login', async (req, res) => {
             bookmarks: userBookmarks
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Login error:', err);
+        res.status(500).json({ error: '登录失败，请重试' });
     }
 });
 
 app.post('/api/save-bookmarks', async (req, res) => {
     const { userId, bookmarks: bookmarksData } = req.body;
     
+    if (!userId) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
+    
     try {
-        await pool.query(
-            'UPDATE bookmarks SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
-            [JSON.stringify(bookmarksData), userId]
+        const bookmarksJson = JSON.stringify(bookmarksData || []);
+        
+        const existing = await pool.query(
+            'SELECT id FROM bookmarks WHERE user_id = $1',
+            [userId]
         );
+        
+        if (existing.rows.length > 0) {
+            await pool.query(
+                'UPDATE bookmarks SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
+                [bookmarksJson, userId]
+            );
+        } else {
+            await pool.query(
+                'INSERT INTO bookmarks (user_id, data) VALUES ($1, $2)',
+                [userId, bookmarksJson]
+            );
+        }
         
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Save bookmarks error:', err);
+        res.status(500).json({ error: '保存失败，请重试' });
     }
 });
 
 app.get('/api/get-bookmarks/:userId', async (req, res) => {
     const { userId } = req.params;
+    
+    if (!userId) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
     
     try {
         const result = await pool.query(
@@ -153,13 +205,21 @@ app.get('/api/get-bookmarks/:userId', async (req, res) => {
             [userId]
         );
         
-        const userBookmarks = result.rows.length > 0 
-            ? JSON.parse(result.rows[0].data) 
-            : [];
+        let userBookmarks = [];
+        if (result.rows.length > 0 && result.rows[0].data) {
+            try {
+                userBookmarks = typeof result.rows[0].data === 'string' 
+                    ? JSON.parse(result.rows[0].data) 
+                    : result.rows[0].data;
+            } catch (e) {
+                console.error('Error parsing bookmarks:', e);
+            }
+        }
         
         res.json({ success: true, bookmarks: userBookmarks });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Get bookmarks error:', err);
+        res.status(500).json({ error: '获取书签失败，请重试' });
     }
 });
 
@@ -171,12 +231,17 @@ app.get('/api/users', async (req, res) => {
         
         res.json({ success: true, users: result.rows });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Get users error:', err);
+        res.status(500).json({ error: '获取用户列表失败' });
     }
 });
 
 app.delete('/api/users/:id', async (req, res) => {
     const { id } = req.params;
+    
+    if (!id) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
     
     try {
         await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
@@ -184,7 +249,8 @@ app.delete('/api/users/:id', async (req, res) => {
         
         res.json({ success: true, message: '用户已删除' });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error('Delete user error:', err);
+        res.status(500).json({ error: '删除用户失败' });
     }
 });
 
@@ -198,15 +264,26 @@ app.get('/', (req, res) => {
 
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: '服务器内部错误' });
 });
 
-initDatabase().then(() => {
-    console.log('Database initialized successfully');
-}).catch(err => {
-    console.error('Database initialization failed:', err);
-}).finally(() => {
+async function startServer() {
+    console.log('Starting server...');
+    console.log('Database URL:', process.env.DATABASE_URL ? 'configured' : 'not configured');
+    
+    const dbInitialized = await initDatabase();
+    
+    if (dbInitialized) {
+        console.log('Database connection successful');
+    } else {
+        console.log('Database connection failed, server will start anyway');
+    }
+    
     app.listen(port, () => {
-        console.log(`Server running on http://localhost:${port}`);
+        console.log(`Server running on port ${port}`);
+        console.log(`Main app: http://localhost:${port}/`);
+        console.log(`Admin panel: http://localhost:${port}/admin`);
     });
-});
+}
+
+startServer();
