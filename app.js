@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.9';
+const CURRENT_VERSION = 'V1.0.10';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -456,14 +456,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         folderTree.appendChild(allBookmarksItem);
 
-        // 只显示文件夹
-        for (let i = 0; i < bookmarks.length; i++) {
-            const item = bookmarks[i];
-            if (item.type === 'folder') {
-                const folderItem = renderFolderItem(item, bookmarks, i, '');
-                folderTree.appendChild(folderItem);
-            }
-        }
+        // 创建收藏夹容器
+        const favoritesFolder = {
+            type: 'folder',
+            name: '收藏夹',
+            children: bookmarks.filter(item => item.type === 'folder')
+        };
+        
+        const favoritesItem = renderFolderItem(favoritesFolder, bookmarks, 0, '');
+        folderTree.appendChild(favoritesItem);
     }
 
     function renderFolderItem(folder, parentArray, index, indent) {
