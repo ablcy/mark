@@ -313,12 +313,36 @@ body {
     padding: 20px 30px;
     border-bottom: 1px solid #e8e8e8;
     background: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .content-header h2 {
     font-size: 20px;
     color: #333;
     font-weight: 500;
+}
+
+.content-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    padding: 6px 16px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background: white;
+    color: #333;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
 }
 
 .bookmarks-list {

@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const syncBtn = document.getElementById('sync-btn');
     const adminBtn = document.getElementById('admin-btn');
     const searchInput = document.querySelector('.search-input');
+    const contentActions = document.getElementById('content-actions');
+    const addBookmarkBtn = document.getElementById('add-bookmark-btn');
+    const addSubfolderBtn = document.getElementById('add-subfolder-btn');
 
     // 搜索功能
     if (searchInput) {
@@ -62,6 +65,68 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             selectedFolderName.textContent = `搜索："${searchInput.value.trim()}"`;
             updateBookmarksList(filtered);
+        });
+    }
+
+    // 添加链接
+    if (addBookmarkBtn) {
+        addBookmarkBtn.addEventListener('click', async () => {
+            const title = prompt('链接标题：');
+            if (!title) return;
+            const url = prompt('链接地址：');
+            if (!url) return;
+            const parent = selectedFolder;
+            const newBookmark = {
+                type: 'bookmark',
+                title: title,
+                url: url,
+                dateAdded: Math.floor(Date.now() / 1000)
+            };
+            if (parent) {
+                if (!parent.children) parent.children = [];
+                parent.children.push(newBookmark);
+            } else {
+                bookmarks.push(newBookmark);
+            }
+            await saveBookmarks();
+            renderFolderTree();
+            if (parent) {
+                selectedFolderName.textContent = parent.name;
+                updateBookmarksList(parent.children || []);
+            } else {
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList(getAllBookmarks(bookmarks));
+            }
+        });
+    }
+
+    // 添加子文件夹
+    if (addSubfolderBtn) {
+        addSubfolderBtn.addEventListener('click', async () => {
+            const name = prompt('文件夹名称：');
+            if (!name) return;
+            const parent = selectedFolder;
+            const newFolder = {
+                type: 'folder',
+                name: name,
+                dateAdded: Math.floor(Date.now() / 1000),
+                children: []
+            };
+            if (parent) {
+                if (!parent.children) parent.children = [];
+                parent.children.push(newFolder);
+            } else {
+                bookmarks.push(newFolder);
+            }
+            await saveBookmarks();
+            renderFolderTree();
+            if (parent) {
+                selectedFolderName.textContent = parent.name;
+                updateBookmarksList(parent.children || []);
+            } else {
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList(getAllBookmarks(bookmarks));
+            }
         });
     }
 
@@ -153,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedFolder = null;
                 selectedFolderName.textContent = '全部书签';
                 updateBookmarksList(getAllBookmarks(bookmarks));
+                if (contentActions) contentActions.classList.add('hidden');
             } else {
                 alert(data.error || '登录失败');
             }
@@ -484,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const allBookmarks = getAllBookmarks(bookmarks);
             updateBookmarksList(allBookmarks);
             updateSelectedState(allBookmarksItem);
+            if (contentActions) contentActions.classList.add('hidden');
         };
         
         if (!selectedFolder) {
@@ -544,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFolderName.textContent = folder.name;
             updateBookmarksList(folder.children || []);
             updateSelectedState(div);
+            if (contentActions) contentActions.classList.remove('hidden');
         };
         
         if (selectedFolder === folder) {
