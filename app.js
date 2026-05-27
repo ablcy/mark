@@ -73,8 +73,13 @@ document.addEventListener('DOMContentLoaded', () => {
         addBookmarkBtn.addEventListener('click', async () => {
             const title = prompt('链接标题：');
             if (!title) return;
-            const url = prompt('链接地址：');
-            if (!url) return;
+            const rawUrl = prompt('链接地址：');
+            if (!rawUrl) return;
+            // 自动补全协议
+            let url = rawUrl.trim();
+            if (!/^https?:\/\//i.test(url) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
+                url = 'https://' + url;
+            }
             const parent = selectedFolder;
             const newBookmark = {
                 type: 'bookmark',
@@ -128,6 +133,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateBookmarksList(getAllBookmarks(bookmarks));
             }
         });
+    }
+
+    // 三点菜单
+    const moreMenuBtn = document.getElementById('more-menu-btn');
+    const moreMenuDropdown = document.getElementById('more-menu-dropdown');
+    const menuImportBtn = document.getElementById('menu-import-btn');
+    const menuExportBtn = document.getElementById('menu-export-btn');
+
+    if (moreMenuBtn && moreMenuDropdown) {
+        // 点击三点按钮切换菜单
+        moreMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            moreMenuDropdown.classList.toggle('hidden');
+        });
+        // 点击页面其他地方关闭菜单
+        document.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+        });
+        moreMenuDropdown.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    // 菜单-导入收藏夹
+    if (menuImportBtn) {
+        menuImportBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            importBookmarks();
+        });
+    }
+
+    // 菜单-导出收藏夹
+    if (menuExportBtn) {
+        menuExportBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            exportBookmarks();
+        });
+    }
+
+    // 导入书签（可复用函数）
+    function importBookmarks() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.html';
+        input.style.display = 'none';
+
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const html = event.target.result;
+                const importedBookmarks = parseBookmarksHTML(html);
+
+                if (importedBookmarks.length === 0) {
+                    alert('未解析到任何书签，请确保文件格式正确！');
+                    return;
+                }
+
+                bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
+                await saveBookmarks();
+                renderFolderTree();
+                updateBookmarksList(selectedFolder ? (selectedFolder.children || []) : getAllBookmarks(bookmarks));
+                alert('成功导入 ' + countBookmarks(importedBookmarks) + ' 个书签！');
+            };
+            reader.onerror = () => {
+                alert('文件读取失败！');
+            };
+            reader.readAsText(file);
+            document.body.removeChild(input);
+        });
+
+        document.body.appendChild(input);
+        input.click();
+    }
+
+    // 导出书签（可复用函数）
+    function exportBookmarks() {
+        const html = generateBookmarksHTML(bookmarks);
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'bookmarks.html';
+        a.click();
+        URL.revokeObjectURL(url);
     }
 
     // 登录/注册标签切换
@@ -278,57 +370,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 导入书签
     if (importBtn) {
         importBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.html';
-            input.style.display = 'none';
-            
-            input.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    const html = event.target.result;
-                    const importedBookmarks = parseBookmarksHTML(html);
-                    
-                    if (importedBookmarks.length === 0) {
-                        alert('未解析到任何书签，请确保文件格式正确！');
-                        return;
-                    }
-                    
-                    bookmarks = mergeBookmarks(bookmarks, importedBookmarks);
-                    await saveBookmarks();
-                    renderFolderTree();
-                    updateBookmarksList(selectedFolder ? getFolderChildren(selectedFolder) : []);
-                    alert(`成功导入 ${countBookmarks(importedBookmarks)} 个书签！`);
-                };
-                reader.onerror = () => {
-                    alert('文件读取失败！');
-                };
-                reader.readAsText(file);
-                document.body.removeChild(input);
-            });
-            
-            document.body.appendChild(input);
-            input.click();
+            importBookmarks();
         });
     }
 
     // 导出书签
     if (exportBtn) {
         exportBtn.addEventListener('click', () => {
-            const html = generateBookmarksHTML(bookmarks);
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'bookmarks.html';
-            a.click();
-            URL.revokeObjectURL(url);
+            exportBookmarks();
         });
     }
-
     // 新建文件夹
     if (addFolderBtn) {
         addFolderBtn.addEventListener('click', async () => {
