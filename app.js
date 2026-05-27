@@ -467,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (folder.children && folder.children.some(child => child.type === 'folder')) {
             const toggle = document.createElement('span');
             toggle.className = 'folder-toggle';
-            toggle.textContent = '▶';
+            toggle.textContent = '▼'; // 默认展开
             toggle.onclick = (e) => {
                 e.stopPropagation();
                 const content = div.querySelector('.subfolders');
@@ -511,6 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (folder.children && folder.children.some(child => child.type === 'folder')) {
             const subfolders = document.createElement('div');
             subfolders.className = 'subfolders';
+            subfolders.style.display = 'block'; // 默认展开
             
             for (let i = 0; i < folder.children.length; i++) {
                 const child = folder.children[i];
