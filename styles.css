@@ -206,24 +206,19 @@ body {
 
 .folder-item {
     display: flex;
-    align-items: center;
-    padding: 0 20px;
+    flex-direction: column;
     cursor: pointer;
-    transition: background-color 0.15s ease;
     font-size: 14px;
     color: #333;
     position: relative;
     margin: 0;
-    line-height: 1;
-    height: 24px;
-    min-height: 24px;
 }
 
-.folder-item:hover {
+.folder-item:hover > .folder-header {
     background: #f0f0f0;
 }
 
-.folder-item.selected {
+.folder-item.selected > .folder-header {
     background: #e8f0fe;
 }
 
@@ -231,6 +226,11 @@ body {
     display: flex;
     align-items: center;
     width: 100%;
+    padding: 0 20px;
+    height: 24px;
+    min-height: 24px;
+    line-height: 1;
+    transition: background-color 0.15s ease;
 }
 
 .folder-toggle {
@@ -266,7 +266,7 @@ body {
 }
 
 .subfolders {
-    padding-left: 24px;
+    padding-left: 1em;
 }
 
 /* 右侧内容区 */
