@@ -192,13 +192,14 @@ body {
 .folder-item {
     display: flex;
     align-items: center;
-    padding: 2px 20px;
+    padding: 1px 20px;
     cursor: pointer;
     transition: background-color 0.15s ease;
     font-size: 14px;
     color: #333;
     position: relative;
     margin: 0;
+    line-height: 1.2;
 }
 
 .folder-item:hover {
