@@ -33,6 +33,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const changelogModal = document.getElementById('changelog-modal');
     const syncBtn = document.getElementById('sync-btn');
     const adminBtn = document.getElementById('admin-btn');
+    const searchInput = document.querySelector('.search-input');
+
+    // 搜索功能
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const keyword = searchInput.value.trim().toLowerCase();
+            if (!keyword) {
+                // 搜索框为空，恢复当前选中文件夹的显示
+                if (selectedFolder) {
+                    selectedFolderName.textContent = selectedFolder.name;
+                    updateBookmarksList(selectedFolder.children || []);
+                } else {
+                    selectedFolderName.textContent = '全部书签';
+                    updateBookmarksList(getAllBookmarks(bookmarks));
+                }
+                return;
+            }
+            // 在当前视图范围内搜索
+            const source = selectedFolder
+                ? (selectedFolder.children || [])
+                : getAllBookmarks(bookmarks);
+            const filtered = source.filter(item =>
+                item.type === 'bookmark' && (
+                    item.title.toLowerCase().includes(keyword) ||
+                    item.url.toLowerCase().includes(keyword)
+                )
+            );
+            selectedFolderName.textContent = `搜索："${searchInput.value.trim()}"`;
+            updateBookmarksList(filtered);
+        });
+    }
 
     // 登录/注册标签切换
     loginTab.addEventListener('click', () => {
