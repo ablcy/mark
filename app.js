@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.12';
+const CURRENT_VERSION = 'V1.0.13';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -437,6 +437,41 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFolderTree() {
         folderTree.innerHTML = '';
         
+        // 如果没有书签，设置示例数据
+        if (bookmarks.length === 0) {
+            bookmarks = [
+                {
+                    type: 'folder',
+                    name: '学习',
+                    children: [
+                        { type: 'bookmark', title: 'GitHub', url: 'https://github.com' },
+                        { type: 'bookmark', title: 'Stack Overflow', url: 'https://stackoverflow.com' }
+                    ]
+                },
+                {
+                    type: 'folder',
+                    name: '工具',
+                    children: [
+                        { type: 'bookmark', title: 'Google', url: 'https://google.com' },
+                        {
+                            type: 'folder',
+                            name: '开发工具',
+                            children: [
+                                { type: 'bookmark', title: 'CodePen', url: 'https://codepen.io' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    type: 'folder',
+                    name: '娱乐',
+                    children: [
+                        { type: 'bookmark', title: 'YouTube', url: 'https://youtube.com' }
+                    ]
+                }
+            ];
+        }
+        
         // 全部书签
         const allBookmarksItem = document.createElement('div');
         allBookmarksItem.className = 'folder-item';
@@ -465,14 +500,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const favoritesItem = renderFolderItem(favoritesFolder, bookmarks, 0, '');
         folderTree.appendChild(favoritesItem);
-
-        // 如果没有书签，显示提示
-        if (bookmarks.length === 0) {
-            const emptyMsg = document.createElement('div');
-            emptyMsg.className = 'empty-state';
-            emptyMsg.textContent = '暂无书签，请导入或添加';
-            folderTree.appendChild(emptyMsg);
-        }
     }
 
     function renderFolderItem(folder, parentArray, index, indent) {
