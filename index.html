@@ -43,16 +43,12 @@
             <header class="top-nav">
                 <div class="nav-left">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.17</span>
+                    <span id="version-display" class="version-badge">V1.0.18</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
                 </div>
                 <div class="nav-right">
-                    <button id="import-btn" class="nav-btn">导入</button>
-                    <button id="export-btn" class="nav-btn">导出</button>
-                    <button id="sync-btn" class="nav-btn">同步</button>
-                    <button id="add-folder-btn" class="nav-btn">新建</button>
                     <button id="changelog-btn" class="nav-btn">日志</button>
                     <button id="admin-btn" class="nav-btn">管理</button>
                     <button id="logout-btn" class="nav-btn">退出</button>
@@ -63,7 +59,7 @@
                 <aside class="sidebar">
                     <div class="sidebar-title">
                         <span class="folder-icon">📂</span>
-                        收藏夹
+                        根文件夹
                     </div>
                     <div id="folder-tree" class="folder-tree"></div>
                 </aside>
@@ -78,8 +74,11 @@
                             <div class="menu-wrapper">
                                 <button id="more-menu-btn" class="action-btn">...</button>
                                 <div id="more-menu-dropdown" class="dropdown-menu hidden">
-                                    <button id="menu-import-btn" class="dropdown-item">导入收藏夹</button>
-                                    <button id="menu-export-btn" class="dropdown-item">导出收藏夹</button>
+                                    <button id="menu-import-btn" class="dropdown-item">导入</button>
+                                    <button id="menu-export-btn" class="dropdown-item">导出</button>
+                                    <button id="menu-sync-btn" class="dropdown-item">同步</button>
+                                    <div class="dropdown-divider"></div>
+                                    <button id="menu-rename-btn" class="dropdown-item">修改名称</button>
                                     <div class="dropdown-divider"></div>
                                     <button id="menu-delete-btn" class="dropdown-item dropdown-item--danger">删除收藏夹</button>
                                 </div>
@@ -97,6 +96,17 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <details open>
+                        <summary>V1.0.18-202605280200 - 2026年5月28日</summary>
+                        <ul>
+                            <li>顶部导航栏去掉导入、导出、同步、新建按钮</li>
+                            <li>三点菜单新增：同步、修改名称</li>
+                            <li>导出功能改为只导出当前选中文件夹的内容</li>
+                            <li>导入功能支持导入到当前选中文件夹内</li>
+                            <li>保护根文件夹不能被删除</li>
+                            <li>修复同步后 selectedFolder 引用失效问题</li>
+                        </ul>
+                    </details>
                     <details open>
                         <summary>V1.0.17-202605270300 - 2026年5月27日</summary>
                         <ul>

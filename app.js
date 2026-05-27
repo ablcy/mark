@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.17';
+const CURRENT_VERSION = 'V1.0.18';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -22,16 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const authContainer = document.getElementById('auth-container');
     const mainContainer = document.getElementById('main-container');
-    const importBtn = document.getElementById('import-btn');
-    const exportBtn = document.getElementById('export-btn');
-    const addFolderBtn = document.getElementById('add-folder-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const changelogBtn = document.getElementById('changelog-btn');
     const folderTree = document.getElementById('folder-tree');
     const bookmarksList = document.getElementById('bookmarks-list');
     const selectedFolderName = document.getElementById('selected-folder-name');
     const changelogModal = document.getElementById('changelog-modal');
-    const syncBtn = document.getElementById('sync-btn');
     const adminBtn = document.getElementById('admin-btn');
     const searchInput = document.querySelector('.search-input');
     const contentActions = document.getElementById('content-actions');
@@ -145,6 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const moreMenuDropdown = document.getElementById('more-menu-dropdown');
     const menuImportBtn = document.getElementById('menu-import-btn');
     const menuExportBtn = document.getElementById('menu-export-btn');
+    const menuSyncBtn = document.getElementById('menu-sync-btn');
+    const menuRenameBtn = document.getElementById('menu-rename-btn');
 
     if (moreMenuBtn && moreMenuDropdown) {
         // 点击三点按钮切换菜单
@@ -161,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 菜单-导入收藏夹
+    // 菜单-导入
     if (menuImportBtn) {
         menuImportBtn.addEventListener('click', () => {
             moreMenuDropdown.classList.add('hidden');
@@ -169,11 +167,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 菜单-导出收藏夹
+    // 菜单-导出（仅导出当前选中文件夹的内容）
     if (menuExportBtn) {
         menuExportBtn.addEventListener('click', () => {
             moreMenuDropdown.classList.add('hidden');
             exportBookmarks();
+        });
+    }
+
+    // 菜单-同步
+    if (menuSyncBtn) {
+        menuSyncBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            syncBookmarks();
+        });
+    }
+
+    // 菜单-修改名称
+    if (menuRenameBtn) {
+        menuRenameBtn.addEventListener('click', async () => {
+            moreMenuDropdown.classList.add('hidden');
+            if (!selectedFolder) {
+                alert('请在左侧选中要修改名称的文件夹！');
+                return;
+            }
+            const newName = prompt('请输入新的文件夹名称：', selectedFolder.name);
+            if (!newName || newName.trim() === '') return;
+            selectedFolder.name = newName.trim();
+            await saveBookmarks();
+            renderFolderTree();
+            selectedFolderName.textContent = selectedFolder.name;
+            // 刷新内容区
+            updateBookmarksList(selectedFolder.children || []);
         });
     }
 
@@ -184,6 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
             moreMenuDropdown.classList.add('hidden');
             if (!selectedFolder) {
                 alert('请在左侧选中要删除的文件夹！');
+                return;
+            }
+            if (selectedFolder.name === '根文件夹') {
+                alert('根文件夹不能删除！');
                 return;
             }
             const folderName = selectedFolder.name;
@@ -259,14 +288,16 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
     }
 
-    // 导出书签（可复用函数）
+    // 导出书签（只导出当前选中文件夹的内容）
     function exportBookmarks() {
-        const html = generateBookmarksHTML(bookmarks);
+        const target = selectedFolder ? selectedFolder.children || [] : bookmarks;
+        const html = generateBookmarksHTML(target);
         const blob = new Blob([html], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'bookmarks.html';
+        const fileName = selectedFolder ? selectedFolder.name : 'bookmarks';
+        a.download = fileName + '.html';
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -401,47 +432,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 同步
-    if (syncBtn) {
-        syncBtn.addEventListener('click', async () => {
-            await syncBookmarks();
-        });
-    }
-
     // 管理
     if (adminBtn) {
         adminBtn.addEventListener('click', () => {
             window.open('/admin', '_blank');
-        });
-    }
-
-    // 导入书签
-    if (importBtn) {
-        importBtn.addEventListener('click', () => {
-            importBookmarks();
-        });
-    }
-
-    // 导出书签
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            exportBookmarks();
-        });
-    }
-    // 新建文件夹
-    if (addFolderBtn) {
-        addFolderBtn.addEventListener('click', async () => {
-            const name = prompt('请输入文件夹名称：');
-            if (name) {
-                bookmarks.push({
-                    type: 'folder',
-                    name: name,
-                    dateAdded: Math.floor(Date.now() / 1000),
-                    children: []
-                });
-                await saveBookmarks();
-                renderFolderTree();
-            }
         });
     }
 
@@ -502,21 +496,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function syncBookmarks() {
         if (!currentUserId) return;
-        
+
         try {
             const response = await fetch(`${API_URL}/get-bookmarks/${currentUserId}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 const serverBookmarks = data.bookmarks || [];
                 const merged = mergeBookmarks(bookmarks, serverBookmarks);
                 bookmarks = merged;
                 await saveBookmarks();
                 renderFolderTree();
-                // 同步后刷新右侧内容区
+
+                // 同步后重新定位 selectedFolder（引用可能已失效）
                 if (selectedFolder) {
-                    selectedFolderName.textContent = selectedFolder.name;
-                    updateBookmarksList(selectedFolder.children || []);
+                    const found = findFolderByName(bookmarks, selectedFolder.name);
+                    if (found) {
+                        selectedFolder = found;
+                        selectedFolderName.textContent = found.name;
+                        updateBookmarksList(found.children || []);
+                        updateSelectedStateByFolder(found);
+                    } else {
+                        // 文件夹已不存在，回到默认
+                        selectDefaultFolder();
+                    }
                 } else {
                     selectDefaultFolder();
                 }
@@ -527,6 +530,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             alert('同步失败，请检查网络连接');
         }
+    }
+
+    // 在文件夹树中按名称查找文件夹对象
+    function findFolderByName(items, name) {
+        for (const item of items) {
+            if (item.type === 'folder' && item.name === name) return item;
+            if (item.type === 'folder' && item.children) {
+                const found = findFolderByName(item.children, name);
+                if (found) return found;
+            }
+        }
+        return null;
     }
 
     // 书签解析函数
