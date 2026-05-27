@@ -475,7 +475,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 全部书签
         const allBookmarksItem = document.createElement('div');
         allBookmarksItem.className = 'folder-item';
-        allBookmarksItem.innerHTML = '<span class="folder-icon">📚</span><span class="folder-name">全部书签</span>';
+        const allHeader = document.createElement('div');
+        allHeader.className = 'folder-header';
+        allHeader.innerHTML = '<span class="folder-icon">📚</span><span class="folder-name">全部书签</span>';
+        allBookmarksItem.appendChild(allHeader);
         allBookmarksItem.onclick = () => {
             selectedFolder = null;
             selectedFolderName.textContent = '全部书签';
@@ -491,18 +494,64 @@ document.addEventListener('DOMContentLoaded', () => {
         
         folderTree.appendChild(allBookmarksItem);
 
-        // 创建收藏夹容器
-        const favoritesFolder = {
-            type: 'folder',
-            name: '收藏夹',
-            children: bookmarks.filter(item => item.type === 'folder')
+        // 收藏夹 header 行（可折叠，但本身不缩进）
+        const favoritesDiv = document.createElement('div');
+        favoritesDiv.className = 'folder-item';
+
+        const favoritesHeader = document.createElement('div');
+        favoritesHeader.className = 'folder-header';
+
+        const topFolders = bookmarks.filter(item => item.type === 'folder');
+
+        if (topFolders.length > 0) {
+            const toggle = document.createElement('span');
+            toggle.className = 'folder-toggle';
+            toggle.textContent = '▼';
+            toggle.onclick = (e) => {
+                e.stopPropagation();
+                if (subfolderContainer.style.display === 'none') {
+                    subfolderContainer.style.display = 'block';
+                    toggle.textContent = '▼';
+                } else {
+                    subfolderContainer.style.display = 'none';
+                    toggle.textContent = '▶';
+                }
+            };
+            favoritesHeader.appendChild(toggle);
+        }
+
+        const favIcon = document.createElement('span');
+        favIcon.className = 'folder-icon';
+        favIcon.textContent = '📂';
+        const favName = document.createElement('span');
+        favName.className = 'folder-name';
+        favName.textContent = '收藏夹';
+        favoritesHeader.appendChild(favIcon);
+        favoritesHeader.appendChild(favName);
+        favoritesHeader.onclick = () => {
+            selectedFolder = null;
+            selectedFolderName.textContent = '收藏夹';
+            const allBookmarks = getAllBookmarks(bookmarks);
+            updateBookmarksList(allBookmarks);
+            updateSelectedState(favoritesDiv);
         };
-        
-        const favoritesItem = renderFolderItem(favoritesFolder, bookmarks, 0, '');
-        folderTree.appendChild(favoritesItem);
+        favoritesDiv.appendChild(favoritesHeader);
+
+        // 一级文件夹直接放在收藏夹下，使用 subfolders 缩进（它们是收藏夹的子）
+        const subfolderContainer = document.createElement('div');
+        subfolderContainer.className = 'subfolders';
+        subfolderContainer.style.display = 'block';
+
+        for (let i = 0; i < topFolders.length; i++) {
+            const childItem = renderFolderItem(topFolders[i], topFolders, i);
+            subfolderContainer.appendChild(childItem);
+        }
+
+        favoritesDiv.appendChild(subfolderContainer);
+        folderTree.appendChild(favoritesDiv);
     }
 
-    function renderFolderItem(folder, parentArray, index, indent) {
+    function renderFolderItem(folder, parentArray, index) {
         const div = document.createElement('div');
         div.className = 'folder-item';
         
@@ -561,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < folder.children.length; i++) {
                 const child = folder.children[i];
                 if (child.type === 'folder') {
-                    const childItem = renderFolderItem(child, folder.children, i, indent + '  ');
+                    const childItem = renderFolderItem(child, folder.children, i);
                     subfolders.appendChild(childItem);
                 }
             }
