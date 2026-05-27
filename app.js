@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.15';
+const CURRENT_VERSION = 'V1.0.16';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     selectedFolderName.textContent = selectedFolder.name;
                     updateBookmarksList(selectedFolder.children || []);
                 } else {
-                    selectedFolderName.textContent = '全部书签';
+                    selectedFolderName.textContent = '根文件夹';
                     updateBookmarksList(getAllBookmarks(bookmarks));
                 }
                 return;
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedFolderName.textContent = parent.name;
                 updateBookmarksList(parent.children || []);
             } else {
-                selectedFolderName.textContent = '全部书签';
+                selectedFolderName.textContent = '根文件夹';
                 updateBookmarksList(getAllBookmarks(bookmarks));
             }
         });
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedFolderName.textContent = parent.name;
                 updateBookmarksList(parent.children || []);
             } else {
-                selectedFolderName.textContent = '全部书签';
+                selectedFolderName.textContent = '根文件夹';
                 updateBookmarksList(getAllBookmarks(bookmarks));
             }
         });
@@ -199,12 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             removeFromTree(bookmarks, selectedFolder);
-            selectedFolder = null;
-            selectedFolderName.textContent = '全部书签';
             await saveBookmarks();
             renderFolderTree();
-            updateBookmarksList(getAllBookmarks(bookmarks));
-            if (contentActions) contentActions.classList.add('hidden');
+            selectDefaultFolder();
         });
     }
 
@@ -454,12 +451,12 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContainer.classList.remove('hidden');
     }
 
-    // 初始化默认文件夹（新用户无数据时创建"收藏夹"）
+    // 初始化默认文件夹（新用户无数据时创建"根文件夹"）
     function initDefaultFolder() {
         if (!bookmarks || bookmarks.length === 0) {
             bookmarks = [{
                 type: 'folder',
-                name: '收藏夹',
+                name: '根文件夹',
                 dateAdded: Math.floor(Date.now() / 1000),
                 children: []
             }];
@@ -467,20 +464,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 默认选中收藏夹（效果等于显示全部书签）
+    // 默认选中根文件夹（效果等于显示全部书签）
     function selectDefaultFolder() {
-        // 查找"收藏夹"文件夹，有则选中它，否则选全部
-        const defaultFolder = bookmarks.find(b => b.type === 'folder' && b.name === '收藏夹');
+        const defaultFolder = bookmarks.find(b => b.type === 'folder' && b.name === '根文件夹');
         if (defaultFolder) {
             selectedFolder = defaultFolder;
             selectedFolderName.textContent = defaultFolder.name;
             updateBookmarksList(getAllBookmarks(bookmarks));
             if (contentActions) contentActions.classList.remove('hidden');
-        } else {
-            selectedFolder = null;
-            selectedFolderName.textContent = '全部书签';
-            updateBookmarksList(getAllBookmarks(bookmarks));
-            if (contentActions) contentActions.classList.add('hidden');
         }
     }
 
@@ -663,29 +654,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 渲染函数
     function renderFolderTree() {
         folderTree.innerHTML = '';
-        
-        // 全部书签
-        const allBookmarksItem = document.createElement('div');
-        allBookmarksItem.className = 'folder-item';
-        const allHeader = document.createElement('div');
-        allHeader.className = 'folder-header';
-        allHeader.innerHTML = '<span class="folder-icon">📚</span><span class="folder-name">全部书签</span>';
-        allBookmarksItem.appendChild(allHeader);
-        allBookmarksItem.onclick = () => {
-            selectedFolder = null;
-            selectedFolderName.textContent = '全部书签';
-            const allBookmarks = getAllBookmarks(bookmarks);
-            updateBookmarksList(allBookmarks);
-            updateSelectedState(allBookmarksItem);
-            if (contentActions) contentActions.classList.add('hidden');
-        };
-        
-        if (!selectedFolder) {
-            allBookmarksItem.classList.add('selected');
-            selectedFolderName.textContent = '全部书签';
-        }
-        
-        folderTree.appendChild(allBookmarksItem);
 
         // 渲染用户导入的文件夹树
         const topFolders = bookmarks.filter(item => item.type === 'folder');
