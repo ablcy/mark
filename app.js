@@ -118,7 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
                 showMainContainer();
                 renderFolderTree();
-                updateBookmarksList([]);
+                // 默认显示全部书签
+                selectedFolder = null;
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList(getAllBookmarks(bookmarks));
             } else {
                 alert(data.error || '登录失败');
             }
@@ -638,7 +641,19 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = userData.username;
             currentUserId = userData.id;
             showMainContainer();
-            syncBookmarks();
+            // 先同步服务器数据，再渲染
+            syncBookmarks().then(() => {
+                renderFolderTree();
+                // 默认显示全部书签
+                selectedFolder = null;
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList(getAllBookmarks(bookmarks));
+            }).catch(() => {
+                renderFolderTree();
+                selectedFolder = null;
+                selectedFolderName.textContent = '全部书签';
+                updateBookmarksList(getAllBookmarks(bookmarks));
+            });
         } catch (err) {
             console.log('无法解析保存的用户信息');
         }

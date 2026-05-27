@@ -469,3 +469,116 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+    .top-nav {
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .nav-left {
+        order: 1;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .nav-left .logo {
+        font-size: 18px;
+    }
+
+    .version-badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .nav-center {
+        order: 3;
+        flex-basis: 100%;
+        margin: 0;
+        max-width: none;
+    }
+
+    .nav-right {
+        order: 2;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    .nav-btn {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .main-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .folder-header {
+        padding: 0 12px;
+        height: 36px;
+        min-height: 36px;
+    }
+
+    .folder-tree {
+        padding: 4px 0;
+    }
+
+    .content-area {
+        min-height: 50vh;
+    }
+
+    .content-header {
+        padding: 12px 16px;
+    }
+
+    .content-header h2 {
+        font-size: 16px;
+    }
+
+    .bookmarks-list {
+        padding: 12px 16px;
+        gap: 6px;
+    }
+
+    .bookmark-item {
+        padding: 10px 12px;
+    }
+
+    .bookmark-favicon {
+        width: 24px;
+        height: 24px;
+        margin-right: 10px;
+    }
+
+    .bookmark-info h3 {
+        font-size: 13px;
+    }
+
+    .auth-logo {
+        font-size: 36px;
+        margin-bottom: 20px;
+    }
+
+    .auth-box {
+        max-width: 100%;
+    }
+
+    .auth-form {
+        padding: 20px 16px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: 20px 16px;
+    }
+}
