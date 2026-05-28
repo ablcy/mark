@@ -1151,6 +1151,7 @@ body {
 }
 
 [data-theme="dark"] .content-header {
+    background: var(--bg-primary);
     border-color: var(--border-color);
 }
 
@@ -1161,6 +1162,10 @@ body {
 [data-theme="dark"] .bookmark-item {
     background: var(--bg-card);
     border-color: var(--border-color);
+}
+
+[data-theme="dark"] .bookmarks-list {
+    background: var(--bg-primary);
 }
 
 [data-theme="dark"] .bookmark-item:hover {
@@ -1335,6 +1340,7 @@ body {
 
 [data-theme="dark"] .content-folder-item {
     color: var(--text-primary);
+    background: var(--bg-card);
 }
 
 [data-theme="dark"] .content-folder-item:hover {
@@ -1360,7 +1366,9 @@ body {
 }
 
 [data-theme="dark"] .action-btn {
+    background: var(--bg-card);
     color: var(--text-secondary);
+    border-color: var(--border-color);
 }
 
 [data-theme="dark"] .action-btn:hover {
