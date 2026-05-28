@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.19';
+const CURRENT_VERSION = 'V1.0.20';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -33,6 +33,73 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentActions = document.getElementById('content-actions');
     const addBookmarkBtn = document.getElementById('add-bookmark-btn');
     const addSubfolderBtn = document.getElementById('add-subfolder-btn');
+
+    // ====== 通用输入对话框 ======
+    const inputModal = document.getElementById('input-modal');
+    const inputModalTitle = document.getElementById('input-modal-title');
+    const inputModalField1 = document.getElementById('input-modal-field1');
+    const inputModalField2 = document.getElementById('input-modal-field2');
+    const inputModalCancel = document.getElementById('input-modal-cancel');
+    const inputModalConfirm = document.getElementById('input-modal-confirm');
+
+    let _inputModalResolve = null;
+
+    /**
+     * 显示通用输入对话框
+     * @param {string} title       对话框标题
+     * @param {string} placeholder1  第一个输入框占位符
+     * @param {string} placeholder2  第二个输入框占位符（传 null 则隐藏）
+     * @param {string} default1    第一个输入框默认值
+     * @param {string} default2    第二个输入框默认值
+     * @returns {Promise<{v1:string, v2:string}|null>}  点取消返回 null
+     */
+    function showInputModal(title, placeholder1, placeholder2, default1 = '', default2 = '') {
+        return new Promise((resolve) => {
+            _inputModalResolve = resolve;
+            inputModalTitle.textContent = title;
+            inputModalField1.placeholder = placeholder1 || '';
+            inputModalField1.value = default1;
+            if (placeholder2) {
+                inputModalField2.placeholder = placeholder2;
+                inputModalField2.value = default2;
+                inputModalField2.classList.remove('hidden');
+            } else {
+                inputModalField2.classList.add('hidden');
+                inputModalField2.value = '';
+            }
+            inputModal.classList.remove('hidden');
+            inputModalField1.focus();
+        });
+    }
+
+    function _closeInputModal(result) {
+        inputModal.classList.add('hidden');
+        if (_inputModalResolve) {
+            _inputModalResolve(result);
+            _inputModalResolve = null;
+        }
+    }
+
+    inputModalCancel.addEventListener('click', () => _closeInputModal(null));
+    inputModal.addEventListener('click', (e) => { if (e.target === inputModal) _closeInputModal(null); });
+    inputModalConfirm.addEventListener('click', () => {
+        const v1 = inputModalField1.value.trim();
+        const v2 = inputModalField2.value.trim();
+        if (!v1) { inputModalField1.focus(); return; }
+        _closeInputModal({ v1, v2 });
+    });
+    // Enter 键确认
+    [inputModalField1, inputModalField2].forEach(el => {
+        el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const v1 = inputModalField1.value.trim();
+                const v2 = inputModalField2.value.trim();
+                if (!v1) { inputModalField1.focus(); return; }
+                _closeInputModal({ v1, v2 });
+            }
+            if (e.key === 'Escape') _closeInputModal(null);
+        });
+    });
 
     // 搜索功能
     if (searchInput) {
@@ -69,15 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 添加链接
+    // 添加链接（modal版）
     if (addBookmarkBtn) {
         addBookmarkBtn.addEventListener('click', async () => {
-            const title = prompt('链接标题：');
-            if (!title) return;
-            const rawUrl = prompt('链接地址：');
-            if (!rawUrl) return;
-            // 自动补全协议
-            let url = rawUrl.trim();
+            const result = await showInputModal('添加链接', '标题', '链接地址（https://...）');
+            if (!result || !result.v1) return;
+            const title = result.v1;
+            let url = result.v2.trim();
+            if (!url) return;
             if (!/^https?:\/\//i.test(url) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
                 url = 'https://' + url;
             }
@@ -860,10 +926,10 @@ document.addEventListener('DOMContentLoaded', () => {
             fragment.appendChild(renderContentFolderItem(folders[i]));
         }
 
-        // 再渲染书签
+        // 再渲染书签，传入 items 作为 parentArray（用于删除/插入定位）
         const bookmarkArray = items.filter(item => item.type === 'bookmark');
         for (let i = 0; i < bookmarkArray.length; i++) {
-            fragment.appendChild(renderBookmarkItem(bookmarkArray[i]));
+            fragment.appendChild(renderBookmarkItem(bookmarkArray[i], items));
         }
 
         bookmarksList.appendChild(fragment);
@@ -910,7 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderBookmarkItem(bookmark) {
+    function renderBookmarkItem(bookmark, parentArray) {
         const div = document.createElement('a');
         div.className = 'bookmark-item';
         div.href = bookmark.url;
@@ -918,42 +984,166 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const favicon = document.createElement('img');
         favicon.className = 'bookmark-favicon';
-        // 默认显示内置SVG，Google API加载成功后再替换
         favicon.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3498db"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>');
 
         try {
             const urlObj = new URL(bookmark.url);
             const googleFavicon = 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
             const fallbackFavicon = urlObj.origin + '/favicon.ico';
-
-            // 先用 Google API，失败则尝试网站原生 favicon
             favicon.onerror = function() {
                 if (favicon.src === googleFavicon) {
                     favicon.src = fallbackFavicon;
                 }
-                // 二次失败就保留内置SVG，不再重试
                 favicon.onerror = null;
             };
             favicon.src = googleFavicon;
-        } catch (e) {
-            // URL 解析失败，保持默认SVG
-        }
+        } catch (e) {}
 
         const info = document.createElement('div');
         info.className = 'bookmark-info';
-        
         const title = document.createElement('h3');
         title.textContent = bookmark.title;
-        
         const url = document.createElement('p');
         url.textContent = bookmark.url;
-        
         info.appendChild(title);
         info.appendChild(url);
-        
+
         div.appendChild(favicon);
         div.appendChild(info);
-        
+
+        // ====== 书签菜单栏 ======
+        const menuBtn = document.createElement('button');
+        menuBtn.className = 'bookmark-menu-btn';
+        menuBtn.textContent = '...';
+        menuBtn.title = '更多操作';
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'bookmark-dropdown dropdown-menu hidden';
+
+        const menuItems = [
+            { label: '修改标题', action: 'rename-title' },
+            { label: '修改链接', action: 'rename-url' },
+            { label: '分享链接', action: 'share' },
+            { divider: true },
+            { label: '在此下方添加链接', action: 'add-below' },
+            { divider: true },
+            { label: '删除', action: 'delete', danger: true },
+        ];
+
+        menuItems.forEach(item => {
+            if (item.divider) {
+                const d = document.createElement('div');
+                d.className = 'dropdown-divider';
+                dropdown.appendChild(d);
+                return;
+            }
+            const btn = document.createElement('button');
+            btn.className = 'dropdown-item' + (item.danger ? ' dropdown-item--danger' : '');
+            btn.textContent = item.label;
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropdown.classList.add('hidden');
+
+                if (item.action === 'rename-title') {
+                    const res = await showInputModal('修改标题', '新标题', null, bookmark.title);
+                    if (!res || !res.v1) return;
+                    bookmark.title = res.v1;
+                    title.textContent = res.v1;
+                    await saveBookmarks();
+                }
+                else if (item.action === 'rename-url') {
+                    const res = await showInputModal('修改链接', '新链接地址', null, bookmark.url);
+                    if (!res || !res.v1) return;
+                    let newUrl = res.v1.trim();
+                    if (!/^https?:\/\//i.test(newUrl) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(newUrl)) {
+                        newUrl = 'https://' + newUrl;
+                    }
+                    bookmark.url = newUrl;
+                    url.textContent = newUrl;
+                    div.href = newUrl;
+                    await saveBookmarks();
+                }
+                else if (item.action === 'share') {
+                    if (navigator.share) {
+                        navigator.share({ title: bookmark.title, url: bookmark.url }).catch(() => {});
+                    } else if (navigator.clipboard) {
+                        await navigator.clipboard.writeText(bookmark.url);
+                        alert('链接已复制到剪贴板：' + bookmark.url);
+                    } else {
+                        prompt('复制链接：', bookmark.url);
+                    }
+                }
+                else if (item.action === 'add-below') {
+                    const res = await showInputModal('在此下方添加链接', '标题', '链接地址（https://...）');
+                    if (!res || !res.v1) return;
+                    let newUrl = res.v2.trim();
+                    if (!newUrl) return;
+                    if (!/^https?:\/\//i.test(newUrl) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(newUrl)) {
+                        newUrl = 'https://' + newUrl;
+                    }
+                    const newBookmark = {
+                        type: 'bookmark',
+                        title: res.v1,
+                        url: newUrl,
+                        dateAdded: Math.floor(Date.now() / 1000)
+                    };
+                    // 插入到 bookmark 的后面
+                    if (parentArray) {
+                        const idx = parentArray.indexOf(bookmark);
+                        if (idx !== -1) {
+                            parentArray.splice(idx + 1, 0, newBookmark);
+                        } else {
+                            parentArray.push(newBookmark);
+                        }
+                    } else if (selectedFolder && selectedFolder.children) {
+                        const idx = selectedFolder.children.indexOf(bookmark);
+                        if (idx !== -1) {
+                            selectedFolder.children.splice(idx + 1, 0, newBookmark);
+                        } else {
+                            selectedFolder.children.push(newBookmark);
+                        }
+                    }
+                    await saveBookmarks();
+                    // 刷新当前视图
+                    if (selectedFolder) {
+                        updateBookmarksList(selectedFolder.children || []);
+                    }
+                }
+                else if (item.action === 'delete') {
+                    if (!confirm(`确定要删除书签「${bookmark.title}」吗？`)) return;
+                    // 从 parentArray 或 selectedFolder.children 中删除
+                    const arr = parentArray || (selectedFolder && selectedFolder.children);
+                    if (arr) {
+                        const idx = arr.indexOf(bookmark);
+                        if (idx !== -1) arr.splice(idx, 1);
+                    }
+                    await saveBookmarks();
+                    div.remove();
+                }
+            });
+            dropdown.appendChild(btn);
+        });
+
+        // 三点按钮切换菜单
+        menuBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // 关闭其他所有书签菜单
+            document.querySelectorAll('.bookmark-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.add('hidden');
+            });
+            dropdown.classList.toggle('hidden');
+        });
+
+        div.appendChild(menuBtn);
+        div.appendChild(dropdown);
+
+        // 点击页面其他地方关闭
+        document.addEventListener('click', () => {
+            dropdown.classList.add('hidden');
+        }, { once: false });
+
         return div;
     }
 

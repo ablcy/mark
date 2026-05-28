@@ -33,7 +33,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                <span class="auth-version">V1.0.19</span>
+                <span class="auth-version">V1.0.20</span>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
             <header class="top-nav">
                 <div class="nav-left">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.19</span>
+                    <span id="version-display" class="version-badge">V1.0.20</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
@@ -101,6 +101,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <details open>
+                        <summary>V1.0.20-202605281630 - 2026年5月28日</summary>
+                        <ul>
+                            <li>每个书签右侧新增"..."书签菜单栏</li>
+                            <li>书签菜单：修改标题、修改链接、分享链接、在此下方添加链接、删除</li>
+                            <li>添加链接改为一次性弹窗，同时输入标题和链接，一键确认</li>
+                            <li>分享链接：支持系统分享（手机）或复制链接到剪贴板</li>
+                        </ul>
+                    </details>
                     <details open>
                         <summary>V1.0.19-202605281600 - 2026年5月28日</summary>
                         <ul>
@@ -173,6 +182,21 @@
                         </ul>
                     </details>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用输入对话框 -->
+    <div id="input-modal" class="modal hidden">
+        <div class="modal-content input-modal-content">
+            <h3 id="input-modal-title">添加链接</h3>
+            <div class="input-modal-fields">
+                <input type="text" id="input-modal-field1" placeholder="标题" autocomplete="off">
+                <input type="text" id="input-modal-field2" placeholder="链接地址" autocomplete="off">
+            </div>
+            <div class="input-modal-actions">
+                <button id="input-modal-cancel" class="input-modal-btn input-modal-btn--cancel">取消</button>
+                <button id="input-modal-confirm" class="input-modal-btn input-modal-btn--confirm">确认</button>
             </div>
         </div>
     </div>
