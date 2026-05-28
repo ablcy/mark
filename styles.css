@@ -227,7 +227,8 @@ body {
     font-size: 12px;
     color: #999;
     padding: 12px 0;
-    background: #f5f5f5;
+    margin-top: auto;
+    background: transparent;
     border-top: 1px solid #e8e8e8;
 }
 
