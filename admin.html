@@ -646,7 +646,9 @@
                     data.shares.forEach(s => {
                         const date = new Date(s.created_at);
                         const formattedDate = date.toLocaleString('zh-CN');
-                        const fullUrl = `https://mark.lcy.app/${s.domain || s.code}`;
+                        // domain 为脏数据或空时用 code
+                        const domain = (!s.domain || s.domain === 'mark.lcy.app' || s.domain.startsWith('mark.lcy.app/')) ? null : s.domain;
+                        const fullUrl = `https://mark.lcy.app/${domain || s.code}`;
                         html += `
                             <tr>
                                 <td>${formattedDate}</td>
@@ -654,7 +656,7 @@
                                 <td><code>${escapeHtml(s.code)}</code></td>
                                 <td><a href="${fullUrl}" target="_blank" style="color:#667eea;font-size:13px;">${fullUrl}</a></td>
                                 <td>
-                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(s.domain || '')}')">改域名</button>
+                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(domain || '')}')">改域名</button>
                                     <button class="action-btn delete-btn" onclick="deleteShare('${s.id}', '${escapeHtml(s.code)}')">删除</button>
                                 </td>
                             </tr>
