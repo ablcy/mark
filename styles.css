@@ -270,6 +270,25 @@ body {
     margin: 0;
 }
 
+/* 多选模式下 folder-item 内 checkbox 与 header 同行 */
+.folder-item.multi-select-item {
+    flex-direction: row;
+    align-items: center;
+}
+
+.folder-item.multi-select-item .select-checkbox {
+    margin-right: 6px;
+    margin-left: 6px;
+}
+
+.folder-item.multi-select-item > .folder-header {
+    flex: 1;
+}
+
+.folder-item.multi-select-item > .subfolders {
+    width: 100%;
+}
+
 .folder-item:hover > .folder-header {
     background: #f0f0f0;
 }

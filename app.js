@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.30';
+const CURRENT_VERSION = 'V1.0.31';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -1026,6 +1026,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // 存储 DOM 引用，供高亮使用
         folder._domElement = div;
 
+        // 多选模式 checkbox（放在整个 folder-item 前面）
+        if (multiSelectMode) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'select-checkbox';
+            // 检查是否已选中
+            const isSelected = selectedItems.some(s => s.item === folder);
+            if (isSelected) checkbox.checked = true;
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSelectItem('folder', folder, parentArray, checkbox);
+            });
+            div.appendChild(checkbox);
+            div.classList.add('multi-select-item');
+        }
+
         const header = document.createElement('div');
         header.className = 'folder-header';
         
@@ -1060,7 +1076,9 @@ document.addEventListener('DOMContentLoaded', () => {
         header.appendChild(icon);
         header.appendChild(name);
         
-        header.onclick = () => {
+        header.onclick = (e) => {
+            if (multiSelectMode && e.target.tagName === 'INPUT') return;
+            if (multiSelectMode) return;
             selectedFolder = folder;
             selectedFolderName.textContent = folder.name;
             updateBookmarksList(folder.children || []);
@@ -1150,11 +1168,12 @@ document.addEventListener('DOMContentLoaded', () => {
         multiSelectMode = true;
         selectedItems = [];
         multiSelectBar.classList.remove('hidden');
-        updateMultiSelectUI();
-        // 重新渲染当前视图以显示 checkbox
+        // 重新渲染左侧文件夹树和右侧内容区以显示 checkbox
+        renderFolderTree();
         if (selectedFolder) {
             updateBookmarksList(selectedFolder.children || []);
         }
+        updateMultiSelectUI();
     }
 
     function exitMultiSelectMode() {
@@ -1163,10 +1182,12 @@ document.addEventListener('DOMContentLoaded', () => {
         multiSelectBar.classList.add('hidden');
         // 关闭所有书签菜单
         document.querySelectorAll('.bookmark-dropdown').forEach(d => d.classList.add('hidden'));
-        updateMultiSelectUI();
+        // 重新渲染左侧文件夹树和右侧内容区以移除 checkbox
+        renderFolderTree();
         if (selectedFolder) {
             updateBookmarksList(selectedFolder.children || []);
         }
+        updateMultiSelectUI();
     }
 
     function updateMultiSelectUI() {
@@ -1182,17 +1203,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // 获取当前视图所有可选项
     function getAllSelectableItems() {
         const items = [];
-        // 文件夹
-        document.querySelectorAll('.folder-item').forEach(el => {
-            const index = parseInt(el.dataset.folderIndex, 10);
-            if (!isNaN(index)) {
-                items.push({ type: 'folder', item: bookmarks[index], el });
+        // 递归收集所有文件夹
+        function collectFolders(arr, parentArr) {
+            for (const item of arr) {
+                if (item.type !== 'folder') continue;
+                items.push({ type: 'folder', item: item, parentArray: parentArr });
+                if (item.children) {
+                    collectFolders(item.children, item.children);
+                }
             }
-        });
-        // 书签
+        }
+        collectFolders(bookmarks, bookmarks);
+        // 当前选中文件夹下的书签
         if (selectedFolder && selectedFolder.children) {
-            selectedFolder.children.forEach(bookmark => {
-                items.push({ type: 'bookmark', item: bookmark, parentArray: selectedFolder.children, el: document.querySelector(`[data-bookmark-url="${bookmark.url.replace(/"/g, '\\"')}"]`) });
+            selectedFolder.children.forEach(bm => {
+                if (bm.type === 'bookmark') {
+                    items.push({ type: 'bookmark', item: bm, parentArray: selectedFolder.children });
+                }
             });
         }
         return items;
@@ -1232,10 +1259,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (const sel of selectedItems) {
             if (sel.type === 'folder') {
-                // 递归删除文件夹
-                removeFolderFromArray(sel.parentArray || bookmarks, sel.item);
+                removeFolderFromTree(sel.item);
             } else {
-                // 删除书签
                 const arr = sel.parentArray || (selectedFolder && selectedFolder.children);
                 if (arr) {
                     const idx = arr.indexOf(sel.item);
@@ -1252,9 +1277,20 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('删除成功');
     }
 
-    function removeFolderFromArray(arr, folder) {
-        const idx = arr.indexOf(folder);
-        if (idx !== -1) arr.splice(idx, 1);
+    function removeFolderFromTree(target) {
+        function removeFrom(items) {
+            for (let i = items.length - 1; i >= 0; i--) {
+                if (items[i] === target) {
+                    items.splice(i, 1);
+                    return true;
+                }
+                if (items[i].type === 'folder' && items[i].children) {
+                    if (removeFrom(items[i].children)) return true;
+                }
+            }
+            return false;
+        }
+        removeFrom(bookmarks);
     }
 
     async function batchMove() {
