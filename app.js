@@ -12,7 +12,7 @@ function showToast(msg) {
     toast.textContent = msg;
     toast.classList.add('toast--show');
     clearTimeout(toast._timeout);
-    toast._timeout = setTimeout(() => toast.classList.remove('toast--show'), 2000);
+    toast._timeout = setTimeout(() => toast.classList.remove('toast--show'), 3500);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1276,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.execCommand('copy');
                 document.body.removeChild(ta);
             }
-            showToast('链接已复制到剪贴板');
+            showToast(`已复制：${shareUrl}`);
             exitMultiSelectMode();
         } catch (err) {
             showToast('创建分享失败');

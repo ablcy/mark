@@ -459,19 +459,32 @@ app.get('/:code', async (req, res) => {
 
 // 分享页面渲染
 function renderSharePage(title, items, code) {
-    const itemsHtml = items.map(item => {
-        if (item.type === 'folder') {
-            return `<div class="share-folder">
-                <span class="share-folder-icon">&#x1F4C1;</span>
-                <span>${escapeHtml(item.name || item.title || '')}</span>
-                ${item.children ? `<span class="share-count">(${countItems(item.children)}项)</span>` : ''}
-            </div>`;
-        }
-        return `<a class="share-link" href="${escapeHtml(item.url || '')}" target="_blank" rel="noopener">
-            <span class="share-link-title">${escapeHtml(item.title || '')}</span>
-            <span class="share-link-url">${escapeHtml(item.url || '')}</span>
-        </a>`;
-    }).join('');
+    // 递归渲染分享内容（包括嵌套文件夹）
+    function renderShareItems(list, depth) {
+        if (!list || list.length === 0) return '';
+        const pad = depth * 16;
+        return list.map(item => {
+            if (item.type === 'folder') {
+                const childHtml = item.children && item.children.length > 0
+                    ? renderShareItems(item.children, depth + 1)
+                    : '';
+                const count = countItems(item.children || []);
+                return `<div class="share-folder" onclick="this.classList.toggle('share-folder--open')" style="padding-left:${pad + 16}px">
+                    <span class="share-folder-arrow">&#9654;</span>
+                    <span class="share-folder-icon">&#x1F4C1;</span>
+                    <span>${escapeHtml(item.name || item.title || '')}</span>
+                    ${count > 0 ? `<span class="share-count">${count}项</span>` : ''}
+                </div>
+                <div class="share-folder-children">${childHtml}</div>`;
+            }
+            return `<a class="share-link" href="${escapeHtml(item.url || '')}" target="_blank" rel="noopener" style="padding-left:${pad + 16}px">
+                <span class="share-link-title">${escapeHtml(item.title || '')}</span>
+                <span class="share-link-url">${escapeHtml(item.url || '')}</span>
+            </a>`;
+        }).join('');
+    }
+
+    const itemsHtml = renderShareItems(items, 0);
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -485,14 +498,19 @@ function renderSharePage(title, items, code) {
         .share-header{background:#2c3e50;color:white;padding:20px 24px;text-align:center}
         .share-header h1{font-size:20px;font-weight:500;margin-bottom:4px}
         .share-header .share-meta{font-size:12px;opacity:.7}
-        .share-list{max-width:640px;margin:24px auto;padding:0 16px;display:flex;flex-direction:column;gap:8px}
-        .share-link{display:flex;align-items:center;padding:12px 16px;background:white;border-radius:6px;text-decoration:none;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s}
+        .share-list{max-width:640px;margin:24px auto;padding:0 16px;display:flex;flex-direction:column;gap:4px}
+        .share-link{display:flex;align-items:center;padding:10px 16px;background:white;border-radius:6px;text-decoration:none;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s}
         .share-link:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
         .share-link-title{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .share-link-url{font-size:12px;color:#888;margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
-        .share-folder{display:flex;align-items:center;padding:12px 16px;background:#f0f4ff;border-radius:6px;gap:8px;color:#333}
+        .share-folder{display:flex;align-items:center;padding:10px 16px;background:#f0f4ff;border-radius:6px;gap:8px;color:#333;cursor:pointer;user-select:none;transition:background .1s}
+        .share-folder:hover{background:#dce8ff}
+        .share-folder-arrow{font-size:10px;transition:transform .2s;flex-shrink:0;color:#666}
+        .share-folder--open .share-folder-arrow{transform:rotate(90deg)}
         .share-folder-icon{font-size:18px}
         .share-count{font-size:12px;color:#888;margin-left:auto}
+        .share-folder-children{display:none;flex-direction:column;gap:4px}
+        .share-folder--open+.share-folder-children{display:flex}
         .share-empty{text-align:center;padding:40px;color:#888;font-size:14px}
         .share-footer{text-align:center;padding:20px;color:#999;font-size:12px}
         @media(max-width:768px){.share-link-url{display:none}}
