@@ -518,7 +518,7 @@ app.get('/', (req, res) => {
 app.get('/:code', async (req, res) => {
     const code = req.params.code;
     try {
-        const result = await pool.query('SELECT title, content, created_at FROM shares WHERE code = $1', [code]);
+        const result = await pool.query('SELECT title, content, domain, created_at FROM shares WHERE code = $1', [code]);
         if (result.rows.length === 0) {
             // 不是分享短码，返回 404
             return res.status(404).send('Not Found');
@@ -526,7 +526,7 @@ app.get('/:code', async (req, res) => {
         const share = result.rows[0];
         const items = typeof share.content === 'string' ? JSON.parse(share.content) : share.content;
         // 渲染分享查看页面
-        const html = renderSharePage(share.title, items, code);
+        const html = renderSharePage(share.title, items, code, share.domain || 'mark.lcy.app');
         res.send(html);
     } catch (err) {
         console.error('Share view error:', err);
@@ -535,7 +535,7 @@ app.get('/:code', async (req, res) => {
 });
 
 // 分享页面渲染
-function renderSharePage(title, items, code) {
+function renderSharePage(title, items, code, domain) {
     // 递归渲染分享内容（包括嵌套文件夹）
     function renderShareItems(list, depth) {
         if (!list || list.length === 0) return '';
@@ -600,7 +600,7 @@ function renderSharePage(title, items, code) {
     <div class="share-list">
         ${itemsHtml || '<div class="share-empty">暂无内容</div>'}
     </div>
-    <div class="share-footer">Powered by Mark</div>
+    <div class="share-footer">${escapeHtml(domain)}/${escapeHtml(code)} &middot; Powered by Mark</div>
 </body>
 </html>`;
 }

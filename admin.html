@@ -673,12 +673,13 @@
         }
 
         function editShareDomain(id, currentDomain) {
-            const newDomain = prompt('请输入新域名（不含 https:// 和路径）：', currentDomain);
-            if (!newDomain || newDomain.trim() === '' || newDomain.trim() === currentDomain) return;
+            const suffix = prompt('mark.lcy.app/', currentDomain);
+            if (suffix === null || suffix.trim() === '') return;
+            const newDomain = 'mark.lcy.app/' + suffix.trim();
             fetch(`/api/admin/shares/${id}/domain`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain: newDomain.trim() })
+                body: JSON.stringify({ domain: newDomain })
             }).then(r => r.json()).then(data => {
                 if (data.success) {
                     loadShares();
