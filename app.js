@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectAll: '全选',
             selectedCount: '已选',
             delete: '删除',
+            copy: '拷贝',
             move: '移动',
             share: '分享',
             cancel: '取消',
@@ -128,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectAll: 'Select All',
             selectedCount: 'Selected',
             delete: 'Delete',
+            copy: 'Copy',
             move: 'Move',
             share: 'Share',
             cancel: 'Cancel',
@@ -194,6 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectAllLabel.appendChild(document.createTextNode(' ' + t.selectAll));
         }
         if (multiDeleteBtn) multiDeleteBtn.textContent = t.delete;
+        if (multiCopyBtn) multiCopyBtn.textContent = t.copy;
         if (multiMoveBtn) multiMoveBtn.textContent = t.move;
         if (multiShareBtn) multiShareBtn.textContent = t.share;
         if (multiCancelBtn) multiCancelBtn.textContent = t.cancel;
@@ -238,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const multiSelectBar = document.getElementById('multi-select-bar');
     const multiSelectCount = document.getElementById('multi-select-count');
     const multiDeleteBtn = document.getElementById('multi-delete-btn');
+    const multiCopyBtn = document.getElementById('multi-copy-btn');
     const multiMoveBtn = document.getElementById('multi-move-btn');
     const multiShareBtn = document.getElementById('multi-share-btn');
     const multiCancelBtn = document.getElementById('multi-cancel-btn');
@@ -1499,6 +1503,42 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('移动成功');
     }
 
+    async function batchCopy() {
+        if (selectedItems.length === 0) return;
+        const target = await showFolderPicker();
+        if (!target) return;
+
+        for (const sel of selectedItems) {
+            if (sel.type === 'folder' && isDescendant(target, sel.item)) {
+                showToast(`不能将「${sel.item.name}」拷贝到其子文件夹中`);
+                continue;
+            }
+            const clone = deepCloneItem(sel.item);
+            target.children.push(clone);
+        }
+        await saveBookmarks();
+        exitMultiSelectMode();
+        renderFolderTree();
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
+        showToast('拷贝成功');
+    }
+
+    function deepCloneItem(item) {
+        if (item.type === 'bookmark') {
+            return { type: 'bookmark', title: item.title, url: item.url, favicon: item.favicon };
+        }
+        if (item.type === 'folder') {
+            return {
+                type: 'folder',
+                name: item.name,
+                children: (item.children || []).map(c => deepCloneItem(c))
+            };
+        }
+        return JSON.parse(JSON.stringify(item));
+    }
+
     function isDescendant(parent, folder) {
         if (parent === folder) return true;
         if (!parent.children) return false;
@@ -1662,6 +1702,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (multiDeleteBtn) {
         multiDeleteBtn.addEventListener('click', batchDelete);
+    }
+    if (multiCopyBtn) {
+        multiCopyBtn.addEventListener('click', batchCopy);
     }
     if (multiMoveBtn) {
         multiMoveBtn.addEventListener('click', batchMove);
