@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.31';
+const CURRENT_VERSION = 'V1.0.32';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -1026,7 +1026,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 存储 DOM 引用，供高亮使用
         folder._domElement = div;
 
-        // 多选模式 checkbox（放在整个 folder-item 前面）
+        const header = document.createElement('div');
+        header.className = 'folder-header';
+
+        // 多选模式 checkbox（放在 header 内部）
         if (multiSelectMode) {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -1038,12 +1041,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 toggleSelectItem('folder', folder, parentArray, checkbox);
             });
-            div.appendChild(checkbox);
-            div.classList.add('multi-select-item');
+            header.appendChild(checkbox);
         }
-
-        const header = document.createElement('div');
-        header.className = 'folder-header';
         
         const toggle = document.createElement('span');
         toggle.className = 'folder-toggle';
