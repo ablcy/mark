@@ -1090,6 +1090,10 @@ body {
     --highlight-bg: #3d3520;
 }
 
+[data-theme="dark"] html {
+    background: var(--bg-primary);
+}
+
 [data-theme="dark"] body {
     background: var(--bg-primary);
     color: var(--text-primary);
@@ -1120,6 +1124,10 @@ body {
     color: var(--text-muted);
 }
 
+[data-theme="dark"] .main-layout {
+    background: var(--bg-primary);
+}
+
 [data-theme="dark"] .sidebar {
     background: var(--bg-secondary);
     border-color: var(--border-color);
@@ -1130,6 +1138,14 @@ body {
 }
 
 [data-theme="dark"] .folder-item {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .folder-toggle {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .folder-name {
     color: var(--text-primary);
 }
 
@@ -1157,6 +1173,10 @@ body {
 
 [data-theme="dark"] .content-header h2 {
     color: var(--text-primary);
+}
+
+[data-theme="dark"] .bookmark-favicon {
+    background: transparent;
 }
 
 [data-theme="dark"] .bookmark-item {
@@ -1278,7 +1298,7 @@ body {
     color: var(--text-secondary);
 }
 
-[data-theme="dark"] footer {
+[data-theme="dark"] #main-footer {
     background: var(--bg-secondary);
     color: var(--text-muted);
     border-color: var(--border-color);

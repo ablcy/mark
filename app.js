@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.37';
+const CURRENT_VERSION = 'V1.0.38';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
