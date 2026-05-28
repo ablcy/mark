@@ -637,7 +637,6 @@
                                     <th>创建时间</th>
                                     <th>用户</th>
                                     <th>短码</th>
-                                    <th>域名</th>
                                     <th>完整链接</th>
                                     <th>操作</th>
                                 </tr>
@@ -647,17 +646,15 @@
                     data.shares.forEach(s => {
                         const date = new Date(s.created_at);
                         const formattedDate = date.toLocaleString('zh-CN');
-                        const domainSuffix = (s.domain || 'mark.lcy.app').replace(/^mark\.ly\.app\//i, '') || '';
-                        const fullUrl = `https://mark.lcy.app/${domainSuffix}`;
+                        const fullUrl = `https://mark.lcy.app/${s.domain || s.code}`;
                         html += `
                             <tr>
                                 <td>${formattedDate}</td>
                                 <td>${escapeHtml(s.username || '已删除')}</td>
                                 <td><code>${escapeHtml(s.code)}</code></td>
-                                <td><span class="share-domain-text">${escapeHtml(s.domain || 'mark.lcy.app')}</span></td>
                                 <td><a href="${fullUrl}" target="_blank" style="color:#667eea;font-size:13px;">${fullUrl}</a></td>
                                 <td>
-                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(domainSuffix)}')">改域名</button>
+                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(s.domain || '')}')">改域名</button>
                                     <button class="action-btn delete-btn" onclick="deleteShare('${s.id}', '${escapeHtml(s.code)}')">删除</button>
                                 </td>
                             </tr>

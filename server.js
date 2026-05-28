@@ -107,7 +107,7 @@ async function initDatabase() {
                     code VARCHAR(50) UNIQUE NOT NULL,
                     title VARCHAR(200),
                     content JSONB NOT NULL DEFAULT '[]',
-                    domain VARCHAR(255) DEFAULT 'mark.lcy.app',
+                    domain VARCHAR(255),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `);
@@ -115,14 +115,14 @@ async function initDatabase() {
 
             // 迁移：为旧 shares 表添加 domain 列
             try {
-                await pool.query("ALTER TABLE shares ADD COLUMN IF NOT EXISTS domain VARCHAR(255) DEFAULT 'mark.lcy.app'");
+                await pool.query("ALTER TABLE shares ADD COLUMN IF NOT EXISTS domain VARCHAR(255)");
             } catch (e) {
                 // 列已存在则忽略
             }
 
-            // 迁移：清理脏数据，把 mark.lcy.app/xxx 改为纯后缀
+            // 迁移：清理脏数据，把 mark.lcy.app/xxx 或 mark.lcy.app 改为 NULL
             try {
-                await pool.query("UPDATE shares SET domain = regexp_replace(domain, '^mark\\.lcy\\.app/', '') WHERE domain LIKE 'mark.lcy.app/%'");
+                await pool.query("UPDATE shares SET domain = NULL WHERE domain LIKE 'mark.lcy.app%'");
             } catch (e) {
                 // 忽略迁移错误
             }
