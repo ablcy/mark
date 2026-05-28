@@ -619,7 +619,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 点击版本号显示更新日志
-    const versionDisplay = document.getElementById('version-display');
     if (versionDisplay) {
         versionDisplay.addEventListener('click', () => {
             changelogModal.classList.remove('hidden');
