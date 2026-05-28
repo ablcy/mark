@@ -511,7 +511,6 @@
                             <thead>
                                 <tr>
                                     <th style="width:40px;"></th>
-                                    <th>ID</th>
                                     <th>用户名</th>
                                     <th>创建时间</th>
                                     <th>操作</th>
@@ -521,12 +520,11 @@
                     `;
 
                     data.users.forEach(user => {
-                        const date = new Date(user.createdAt);
+                        const date = new Date(user.created_at);
                         const formattedDate = date.toLocaleString('zh-CN');
                         html += `
                             <tr>
                                 <td><input type="checkbox" class="user-checkbox" value="${user.id}" onclick="toggleUser('${user.id}', this.checked)"></td>
-                                <td>${user.id}</td>
                                 <td>${escapeHtml(user.username)}</td>
                                 <td>${formattedDate}</td>
                                 <td>

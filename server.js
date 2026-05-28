@@ -23,8 +23,34 @@ if (process.env.DATABASE_URL) {
 
 const pool = new Pool(databaseConfig);
 
-// 管理员密码（内存存储，服务重启后重置）
+// 管理员密码（从数据库加载，默认 'admin'）
 let adminPassword = 'admin';
+
+// 从数据库加载管理员密码
+async function loadAdminPassword() {
+    try {
+        const result = await pool.query(
+            "SELECT value FROM admin_settings WHERE key = 'admin_password'"
+        );
+        if (result.rows.length > 0) {
+            // 数据库中存储的是 bcrypt hash
+            adminPassword = result.rows[0].value;
+            console.log('Admin password loaded from database');
+        } else {
+            // 首次启动，存入默认密码 hash
+            const defaultHash = await bcrypt.hash('admin', 10);
+            await pool.query(
+                "INSERT INTO admin_settings (key, value) VALUES ('admin_password', $1) ON CONFLICT (key) DO NOTHING",
+                [defaultHash]
+            );
+            adminPassword = defaultHash;
+            console.log('Default admin password saved to database');
+        }
+    } catch (err) {
+        console.error('Failed to load admin password, using default:', err.message);
+        adminPassword = await bcrypt.hash('admin', 10);
+    }
+}
 
 pool.on('error', (err) => {
     console.error('Unexpected error on idle client', err);
@@ -55,6 +81,14 @@ async function initDatabase() {
                 )
             `);
             console.log('Bookmarks table created or already exists');
+
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS admin_settings (
+                    key VARCHAR(255) PRIMARY KEY,
+                    value TEXT NOT NULL
+                )
+            `);
+            console.log('Admin settings table created or already exists');
             
             console.log('Database tables initialized successfully');
             return true;
@@ -289,25 +323,42 @@ app.post('/api/users/:id/reset-password', async (req, res) => {
 });
 
 // 管理员 API
-app.post('/api/admin/verify', (req, res) => {
+app.post('/api/admin/verify', async (req, res) => {
     const { password } = req.body;
-    if (password === adminPassword) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false, error: '密码错误' });
+    try {
+        const valid = await bcrypt.compare(password, adminPassword);
+        if (valid) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, error: '密码错误' });
+        }
+    } catch (err) {
+        console.error('Admin verify error:', err);
+        res.status(500).json({ error: '服务器错误' });
     }
 });
 
-app.post('/api/admin/change-password', (req, res) => {
+app.post('/api/admin/change-password', async (req, res) => {
     const { oldPassword, newPassword } = req.body;
-    if (oldPassword !== adminPassword) {
-        return res.json({ success: false, error: '原密码错误' });
+    try {
+        const valid = await bcrypt.compare(oldPassword, adminPassword);
+        if (!valid) {
+            return res.json({ success: false, error: '原密码错误' });
+        }
+        if (!newPassword || newPassword.length < 1) {
+            return res.json({ success: false, error: '新密码不能为空' });
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await pool.query(
+            "UPDATE admin_settings SET value = $1 WHERE key = 'admin_password'",
+            [hashedPassword]
+        );
+        adminPassword = hashedPassword;
+        res.json({ success: true, message: '密码修改成功' });
+    } catch (err) {
+        console.error('Admin change password error:', err);
+        res.status(500).json({ error: '修改密码失败' });
     }
-    if (!newPassword || newPassword.length < 1) {
-        return res.json({ success: false, error: '新密码不能为空' });
-    }
-    adminPassword = newPassword;
-    res.json({ success: true, message: '密码修改成功' });
 });
 
 app.get('/admin', (req, res) => {
@@ -331,6 +382,7 @@ async function startServer() {
     
     if (dbInitialized) {
         console.log('Database connection successful');
+        await loadAdminPassword();
     } else {
         console.log('Database connection failed, server will start anyway');
     }

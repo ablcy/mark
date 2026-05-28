@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.20';
+const CURRENT_VERSION = 'V1.0.21';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -31,9 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminBtn = document.getElementById('admin-btn');
     const searchInput = document.querySelector('.search-input');
     const contentActions = document.getElementById('content-actions');
-    const addBookmarkBtn = document.getElementById('add-bookmark-btn');
-    const addSubfolderBtn = document.getElementById('add-subfolder-btn');
-
     // ====== 通用输入对话框 ======
     const inputModal = document.getElementById('input-modal');
     const inputModalTitle = document.getElementById('input-modal-title');
@@ -136,70 +133,113 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 添加链接（modal版）
-    if (addBookmarkBtn) {
-        addBookmarkBtn.addEventListener('click', async () => {
-            const result = await showInputModal('添加链接', '标题', '链接地址（https://...）');
-            if (!result || !result.v1) return;
-            const title = result.v1;
-            let url = result.v2.trim();
-            if (!url) return;
-            if (!/^https?:\/\//i.test(url) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
-                url = 'https://' + url;
-            }
-            const parent = selectedFolder;
-            const newBookmark = {
-                type: 'bookmark',
-                title: title,
-                url: url,
-                dateAdded: Math.floor(Date.now() / 1000)
-            };
-            if (parent) {
-                if (!parent.children) parent.children = [];
-                parent.children.push(newBookmark);
-            } else {
-                bookmarks.push(newBookmark);
-            }
-            await saveBookmarks();
-            renderFolderTree();
-            if (parent) {
-                selectedFolderName.textContent = parent.name;
-                updateBookmarksList(parent.children || []);
-            } else {
-                selectedFolderName.textContent = '根文件夹';
-                updateBookmarksList(getAllBookmarks(bookmarks));
-            }
-        });
+    // 添加链接（从文件夹菜单触发，添加到当前选中文件夹内）
+    async function addBookmarkToCurrentFolder() {
+        const result = await showInputModal('添加链接', '标题', '链接地址（https://...）');
+        if (!result || !result.v1) return;
+        const title = result.v1;
+        let url = result.v2.trim();
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url) && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(url)) {
+            url = 'https://' + url;
+        }
+        const parent = selectedFolder;
+        const newBookmark = {
+            type: 'bookmark',
+            title: title,
+            url: url,
+            dateAdded: Math.floor(Date.now() / 1000)
+        };
+        if (parent) {
+            if (!parent.children) parent.children = [];
+            parent.children.push(newBookmark);
+        } else {
+            bookmarks.push(newBookmark);
+        }
+        await saveBookmarks();
+        renderFolderTree();
+        if (parent) {
+            selectedFolderName.textContent = parent.name;
+            updateBookmarksList(parent.children || []);
+        } else {
+            selectedFolderName.textContent = '根文件夹';
+            updateBookmarksList(getAllBookmarks(bookmarks));
+        }
     }
 
-    // 添加子文件夹
-    if (addSubfolderBtn) {
-        addSubfolderBtn.addEventListener('click', async () => {
-            const name = prompt('文件夹名称：');
-            if (!name) return;
-            const parent = selectedFolder;
-            const newFolder = {
-                type: 'folder',
-                name: name,
-                dateAdded: Math.floor(Date.now() / 1000),
-                children: []
-            };
-            if (parent) {
-                if (!parent.children) parent.children = [];
-                parent.children.push(newFolder);
-            } else {
-                bookmarks.push(newFolder);
+    // 新建子文件夹（在选中文件夹内创建）
+    async function addSubfolderToCurrentFolder() {
+        const name = prompt('子文件夹名称：');
+        if (!name) return;
+        const parent = selectedFolder;
+        const newFolder = {
+            type: 'folder',
+            name: name,
+            dateAdded: Math.floor(Date.now() / 1000),
+            children: []
+        };
+        if (parent) {
+            if (!parent.children) parent.children = [];
+            parent.children.push(newFolder);
+        } else {
+            bookmarks.push(newFolder);
+        }
+        await saveBookmarks();
+        renderFolderTree();
+        if (parent) {
+            selectedFolderName.textContent = parent.name;
+            updateBookmarksList(parent.children || []);
+        } else {
+            selectedFolderName.textContent = '根文件夹';
+            updateBookmarksList(getAllBookmarks(bookmarks));
+        }
+    }
+
+    // 新建同级文件夹（在选中文件夹的父级中创建）
+    async function addSiblingFolder() {
+        if (!selectedFolder) {
+            alert('请先在左侧选中一个文件夹！');
+            return;
+        }
+        const name = prompt('同级文件夹名称：');
+        if (!name) return;
+
+        const newFolder = {
+            type: 'folder',
+            name: name,
+            dateAdded: Math.floor(Date.now() / 1000),
+            children: []
+        };
+
+        // 找 selectedFolder 所在的父级数组
+        function findParentArray(items, target) {
+            for (const item of items) {
+                if (item.type === 'folder' && item.children) {
+                    if (item.children.includes(target)) return item.children;
+                    const found = findParentArray(item.children, target);
+                    if (found) return found;
+                }
             }
-            await saveBookmarks();
-            renderFolderTree();
-            if (parent) {
-                selectedFolderName.textContent = parent.name;
-                updateBookmarksList(parent.children || []);
-            } else {
-                selectedFolderName.textContent = '根文件夹';
-                updateBookmarksList(getAllBookmarks(bookmarks));
-            }
-        });
+            return null;
+        }
+
+        const parentArray = findParentArray(bookmarks, selectedFolder)
+            || (bookmarks.includes(selectedFolder) ? bookmarks : null);
+
+        if (parentArray) {
+            const idx = parentArray.indexOf(selectedFolder);
+            parentArray.splice(idx + 1, 0, newFolder);
+        } else {
+            // fallback: 加到根级
+            bookmarks.push(newFolder);
+        }
+
+        await saveBookmarks();
+        renderFolderTree();
+        // 保持当前选中不变，刷新内容区
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
     }
 
     // 三点菜单
@@ -222,6 +262,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         moreMenuDropdown.addEventListener('click', (e) => {
             e.stopPropagation();
+        });
+    }
+
+    // 菜单-添加链接
+    const menuAddBookmarkBtn = document.getElementById('menu-add-bookmark-btn');
+    if (menuAddBookmarkBtn) {
+        menuAddBookmarkBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            addBookmarkToCurrentFolder();
+        });
+    }
+
+    // 菜单-新建子文件夹
+    const menuAddSubfolderBtn = document.getElementById('menu-add-subfolder-btn');
+    if (menuAddSubfolderBtn) {
+        menuAddSubfolderBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            addSubfolderToCurrentFolder();
+        });
+    }
+
+    // 菜单-新建同级文件夹
+    const menuAddSiblingBtn = document.getElementById('menu-add-sibling-btn');
+    if (menuAddSiblingBtn) {
+        menuAddSiblingBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            addSiblingFolder();
         });
     }
 
