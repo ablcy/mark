@@ -666,10 +666,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     updateBookmarksList(getAllBookmarks(bookmarks));
                 }
-                alert('成功导入 ' + countBookmarks(importedBookmarks) + ' 个书签！');
+                showToast('成功导入 ' + countBookmarks(importedBookmarks) + ' 个书签');
             };
             reader.onerror = () => {
-                alert('文件读取失败！');
+                showToast('文件读取失败');
             };
             reader.readAsText(file);
             document.body.removeChild(input);
