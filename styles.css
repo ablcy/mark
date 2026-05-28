@@ -542,6 +542,15 @@ body {
     white-space: nowrap;
 }
 
+/* 搜索高亮 */
+.search-highlight {
+    background: #ffeaa7;
+    color: #2d3436;
+    padding: 1px 2px;
+    border-radius: 2px;
+    font-weight: 500;
+}
+
 .empty-state {
     text-align: center;
     padding: 60px 20px;

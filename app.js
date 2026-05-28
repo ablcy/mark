@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.32';
+const CURRENT_VERSION = 'V1.0.33';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             const allFiltered = [...matchedFolders, ...filtered];
             selectedFolderName.textContent = `搜索："${searchInput.value.trim()}"`;
-            updateBookmarksList(allFiltered);
+            updateBookmarksList(allFiltered, keyword);
         });
     }
 
@@ -1132,7 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return folder.children.filter(item => item.type === 'bookmark');
     }
 
-    function updateBookmarksList(items) {
+    function updateBookmarksList(items, highlightKeyword) {
         bookmarksList.innerHTML = '';
 
         if (!items || items.length === 0) {
@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 再渲染书签，传入 items 作为 parentArray（用于删除/插入定位）
         const bookmarkArray = items.filter(item => item.type === 'bookmark');
         for (let i = 0; i < bookmarkArray.length; i++) {
-            fragment.appendChild(renderBookmarkItem(bookmarkArray[i], items));
+            fragment.appendChild(renderBookmarkItem(bookmarkArray[i], items, highlightKeyword));
         }
 
         bookmarksList.appendChild(fragment);
@@ -1547,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function renderBookmarkItem(bookmark, parentArray) {
+    function renderBookmarkItem(bookmark, parentArray, highlightKeyword) {
         const div = document.createElement('a');
         div.className = 'bookmark-item';
         div.href = bookmark.url;
@@ -1572,10 +1572,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const info = document.createElement('div');
         info.className = 'bookmark-info';
+
+        // 高亮匹配关键词
+        function highlightText(text, keyword) {
+            if (!keyword) return text;
+            const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escaped})`, 'gi');
+            return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        }
+
         const title = document.createElement('h3');
-        title.textContent = bookmark.title;
+        title.innerHTML = highlightKeyword ? highlightText(bookmark.title, highlightKeyword) : bookmark.title;
         const url = document.createElement('p');
-        url.textContent = bookmark.url;
+        url.innerHTML = highlightKeyword ? highlightText(bookmark.url, highlightKeyword) : bookmark.url;
         info.appendChild(title);
         info.appendChild(url);
 
