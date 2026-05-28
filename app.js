@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.22';
+const CURRENT_VERSION = 'V1.0.24';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let bookmarks = [];
     let selectedFolder = null;
 
+    // 多选状态
+    let multiSelectMode = false;
+    let selectedItems = []; // {type: 'folder'|'bookmark', item: ..., parentArray: ...}
+
     // 初始化版本号显示
     const versionDisplay = document.getElementById('version-display');
     if (versionDisplay) {
@@ -45,6 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const adminBtn = document.getElementById('admin-btn');
     const searchInput = document.querySelector('.search-input');
     const contentActions = document.getElementById('content-actions');
+
+    // 多选操作栏
+    const multiSelectBar = document.getElementById('multi-select-bar');
+    const multiSelectCount = document.getElementById('multi-select-count');
+    const multiDeleteBtn = document.getElementById('multi-delete-btn');
+    const multiMoveBtn = document.getElementById('multi-move-btn');
+    const multiShareBtn = document.getElementById('multi-share-btn');
+    const multiCancelBtn = document.getElementById('multi-cancel-btn');
     // ====== 通用输入对话框 ======
     const inputModal = document.getElementById('input-modal');
     const inputModalTitle = document.getElementById('input-modal-title');
@@ -262,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuImportBtn = document.getElementById('menu-import-btn');
     const menuExportBtn = document.getElementById('menu-export-btn');
     const menuRenameBtn = document.getElementById('menu-rename-btn');
+    const menuMultiSelectBtn = document.getElementById('menu-multi-select-btn');
 
     if (moreMenuBtn && moreMenuDropdown) {
         // 点击三点按钮切换菜单
@@ -337,6 +350,14 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFolderName.textContent = selectedFolder.name;
             // 刷新内容区
             updateBookmarksList(selectedFolder.children || []);
+        });
+    }
+
+    // 菜单-多选
+    if (menuMultiSelectBtn) {
+        menuMultiSelectBtn.addEventListener('click', () => {
+            moreMenuDropdown.classList.add('hidden');
+            enterMultiSelectMode();
         });
     }
 
@@ -1004,6 +1025,278 @@ document.addEventListener('DOMContentLoaded', () => {
         bookmarksList.appendChild(fragment);
     }
 
+    // ====== 多选功能 ======
+
+    function enterMultiSelectMode() {
+        if (multiSelectMode) return;
+        multiSelectMode = true;
+        selectedItems = [];
+        multiSelectBar.classList.remove('hidden');
+        updateMultiSelectUI();
+        // 重新渲染当前视图以显示 checkbox
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
+    }
+
+    function exitMultiSelectMode() {
+        multiSelectMode = false;
+        selectedItems = [];
+        multiSelectBar.classList.add('hidden');
+        // 关闭所有书签菜单
+        document.querySelectorAll('.bookmark-dropdown').forEach(d => d.classList.add('hidden'));
+        updateMultiSelectUI();
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
+    }
+
+    function updateMultiSelectUI() {
+        multiSelectCount.textContent = `已选 ${selectedItems.length} 项`;
+    }
+
+    function toggleSelectItem(type, item, parentArray, checkboxEl) {
+        const idx = selectedItems.findIndex(s => s.item === item);
+        if (idx !== -1) {
+            selectedItems.splice(idx, 1);
+            if (checkboxEl) checkboxEl.checked = false;
+        } else {
+            selectedItems.push({ type, item, parentArray });
+            if (checkboxEl) checkboxEl.checked = true;
+        }
+        updateMultiSelectUI();
+    }
+
+    async function batchDelete() {
+        if (selectedItems.length === 0) return;
+        if (!confirm(`确定要删除选中的 ${selectedItems.length} 项吗？此操作不可撤销。`)) return;
+
+        for (const sel of selectedItems) {
+            if (sel.type === 'folder') {
+                // 递归删除文件夹
+                removeFolderFromArray(sel.parentArray || bookmarks, sel.item);
+            } else {
+                // 删除书签
+                const arr = sel.parentArray || (selectedFolder && selectedFolder.children);
+                if (arr) {
+                    const idx = arr.indexOf(sel.item);
+                    if (idx !== -1) arr.splice(idx, 1);
+                }
+            }
+        }
+        await saveBookmarks();
+        exitMultiSelectMode();
+        renderFolderTree();
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
+        showToast('删除成功');
+    }
+
+    function removeFolderFromArray(arr, folder) {
+        const idx = arr.indexOf(folder);
+        if (idx !== -1) arr.splice(idx, 1);
+    }
+
+    async function batchMove() {
+        if (selectedItems.length === 0) return;
+        // 弹出文件夹树选择器
+        const target = await showFolderPicker();
+        if (!target) return;
+
+        for (const sel of selectedItems) {
+            const srcArr = sel.parentArray || (selectedFolder && selectedFolder.children);
+            if (!srcArr) continue;
+            const idx = srcArr.indexOf(sel.item);
+            if (idx === -1) continue;
+            // 不能移动到自己的子文件夹里
+            if (sel.type === 'folder' && isDescendant(target, sel.item)) {
+                showToast(`不能将「${sel.item.name}」移动到其子文件夹中`);
+                continue;
+            }
+            srcArr.splice(idx, 1);
+            target.children.push(sel.item);
+        }
+        await saveBookmarks();
+        exitMultiSelectMode();
+        renderFolderTree();
+        if (selectedFolder) {
+            updateBookmarksList(selectedFolder.children || []);
+        }
+        showToast('移动成功');
+    }
+
+    function isDescendant(parent, folder) {
+        if (parent === folder) return true;
+        if (!parent.children) return false;
+        for (const child of parent.children) {
+            if (child.type === 'folder' && isDescendant(child, folder)) return true;
+        }
+        return false;
+    }
+
+    function showFolderPicker() {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal';
+            overlay.innerHTML = `
+                <div class="modal-content folder-picker-content">
+                    <h3>选择目标文件夹</h3>
+                    <div class="folder-picker-tree" id="folder-picker-tree"></div>
+                    <div class="input-modal-actions" style="margin-top:16px">
+                        <button class="input-modal-btn input-modal-btn--cancel" id="fp-cancel">取消</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const treeContainer = overlay.querySelector('#folder-picker-tree');
+            renderFolderPickerTree(treeContainer, bookmarks, 0);
+
+            overlay.querySelector('#fp-cancel').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                resolve(null);
+            });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    function renderFolderPickerTree(container, folders, depth) {
+        folders.forEach(folder => {
+            if (folder.type !== 'folder') return;
+            const item = document.createElement('div');
+            item.className = 'folder-picker-item';
+            item.style.paddingLeft = `${depth * 16 + 12}px`;
+            item.innerHTML = `<span style="font-size:16px">&#x1F4C1;</span> ${folder.name}`;
+            item.addEventListener('click', () => {
+                // 关闭弹窗
+                const overlay = item.closest('.modal');
+                if (overlay) document.body.removeChild(overlay);
+                // resolve 被外层闭包捕获，这里用事件方式传递
+                resolveFolderPicker(folder);
+            });
+            container.appendChild(item);
+            if (folder.children) {
+                renderFolderPickerTree(container, folder.children, depth + 1);
+            }
+        });
+    }
+
+    // 全局变量传递 folder picker 结果
+    let _folderPickerResolve = null;
+    function resolveFolderPicker(folder) {
+        if (_folderPickerResolve) {
+            _folderPickerResolve(folder);
+            _folderPickerResolve = null;
+        }
+    }
+
+    // 修改 showFolderPicker 使用全局 resolve
+    // 覆盖之前的 showFolderPicker
+    const _origShowFolderPicker = showFolderPicker;
+    showFolderPicker = function() {
+        return new Promise((resolve) => {
+            _folderPickerResolve = resolve;
+            const overlay = document.createElement('div');
+            overlay.className = 'modal';
+            overlay.innerHTML = `
+                <div class="modal-content folder-picker-content">
+                    <h3>选择目标文件夹</h3>
+                    <div class="folder-picker-tree" id="folder-picker-tree"></div>
+                    <div class="input-modal-actions" style="margin-top:16px">
+                        <button class="input-modal-btn input-modal-btn--cancel" id="fp-cancel">取消</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const treeContainer = overlay.querySelector('#folder-picker-tree');
+            renderFolderPickerTree(treeContainer, bookmarks, 0);
+
+            overlay.querySelector('#fp-cancel').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                _folderPickerResolve = null;
+                resolve(null);
+            });
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    document.body.removeChild(overlay);
+                    _folderPickerResolve = null;
+                    resolve(null);
+                }
+            });
+        });
+    };
+
+    async function batchShare() {
+        if (selectedItems.length === 0) return;
+        const res = await showInputModal('分享', '输入短码（字母或数字）', null, '');
+        if (!res || !res.v1) return;
+        const code = res.v1.trim();
+        if (!code) return;
+
+        // 构建分享内容
+        const shareItems = selectedItems.map(s => {
+            if (s.type === 'folder') {
+                return { type: 'folder', name: s.item.name, children: s.item.children || [] };
+            }
+            return { type: 'bookmark', title: s.item.title, url: s.item.url };
+        });
+
+        try {
+            const resp = await fetch(`${API_URL}/share/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    code: code,
+                    title: selectedFolder ? selectedFolder.name : '书签分享',
+                    content: shareItems
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                showToast(data.error || '创建分享失败');
+                return;
+            }
+            const shareUrl = `https://mark.lcy.app/${code}`;
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(shareUrl);
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = shareUrl;
+                ta.style.position = 'fixed'; ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            showToast('链接已复制到剪贴板');
+            exitMultiSelectMode();
+        } catch (err) {
+            showToast('创建分享失败');
+        }
+    }
+
+    // 多选操作栏事件绑定
+    if (multiCancelBtn) {
+        multiCancelBtn.addEventListener('click', exitMultiSelectMode);
+    }
+    if (multiDeleteBtn) {
+        multiDeleteBtn.addEventListener('click', batchDelete);
+    }
+    if (multiMoveBtn) {
+        multiMoveBtn.addEventListener('click', batchMove);
+    }
+    if (multiShareBtn) {
+        multiShareBtn.addEventListener('click', batchShare);
+    }
+
     // 渲染内容区的子文件夹（可点击进入）
     function renderContentFolderItem(folder) {
         const div = document.createElement('div');
@@ -1026,7 +1319,22 @@ document.addEventListener('DOMContentLoaded', () => {
         div.appendChild(name);
         div.appendChild(count);
 
-        div.onclick = () => {
+        // 多选模式 checkbox
+        if (multiSelectMode) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'select-checkbox';
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSelectItem('folder', folder, null, checkbox);
+            });
+            div.insertBefore(checkbox, div.firstChild);
+            div.classList.add('multi-select-item');
+        }
+
+        div.onclick = (e) => {
+            if (multiSelectMode && e.target.tagName === 'INPUT') return;
+            if (multiSelectMode) return;
             selectedFolder = folder;
             selectedFolderName.textContent = folder.name;
             updateBookmarksList(folder.children || []);
@@ -1080,6 +1388,25 @@ document.addEventListener('DOMContentLoaded', () => {
         div.appendChild(favicon);
         div.appendChild(info);
 
+        // 多选模式 checkbox
+        if (multiSelectMode) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'select-checkbox';
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSelectItem('bookmark', bookmark, parentArray, checkbox);
+            });
+            div.insertBefore(checkbox, div.firstChild);
+            div.classList.add('multi-select-item');
+            // 多选模式下禁止跳转链接
+            div.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'INPUT') {
+                    e.preventDefault();
+                }
+            });
+        }
+
         // ====== 书签菜单栏 ======
         const menuBtn = document.createElement('button');
         menuBtn.className = 'bookmark-menu-btn';
@@ -1096,6 +1423,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { divider: true },
             { label: '在此下方添加链接', action: 'add-below' },
             { divider: true },
+            { label: '多选', action: 'multi-select' },
             { label: '删除', action: 'delete', danger: true },
         ];
 
@@ -1194,6 +1522,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     await saveBookmarks();
                     div.remove();
+                }
+                else if (item.action === 'multi-select') {
+                    enterMultiSelectMode();
                 }
             });
             dropdown.appendChild(btn);

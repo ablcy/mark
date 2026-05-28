@@ -9,7 +9,17 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '.')));
+// 自定义静态文件托管：让分享短码路由优先于静态文件
+const staticDir = path.join(__dirname, '.');
+const staticFiles = new Set(['favicon.png', 'favicon.ico', 'app.js', 'styles.css', 'admin.html', 'index.html', 'share.html', 'mark.png', 'mark1.png']);
+app.use((req, res, next) => {
+    const urlPath = req.path.replace(/^\//, '');
+    // 如果是已知静态文件或 api/admin 路由，直接走 express.static
+    if (staticFiles.has(urlPath) || req.path.startsWith('/api/') || req.path === '/admin' || req.path === '/') {
+        return express.static(staticDir)(req, res, next);
+    }
+    next();
+});
 
 const databaseConfig = {
     connectionString: process.env.DATABASE_URL
@@ -89,6 +99,18 @@ async function initDatabase() {
                 )
             `);
             console.log('Admin settings table created or already exists');
+
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS shares (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                    code VARCHAR(50) UNIQUE NOT NULL,
+                    title VARCHAR(200),
+                    content JSONB NOT NULL DEFAULT '[]',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            console.log('Shares table created or already exists');
             
             console.log('Database tables initialized successfully');
             return true;
@@ -365,9 +387,143 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// ====== 分享功能 ======
+
+// 已知路由列表，避免分享短码冲突
+const KNOWN_PATHS = new Set(['admin', 'api', 'favicon.png', 'favicon.ico', 'index.html', 'app.js', 'styles.css', 'admin.html', 'share.html']);
+
+app.post('/api/share/create', async (req, res) => {
+    const { userId, code, title, content } = req.body;
+    if (!userId || !code || !content) {
+        return res.status(400).json({ error: '参数不完整' });
+    }
+    // 检查是否与已知路径冲突
+    if (KNOWN_PATHS.has(code.toLowerCase())) {
+        return res.status(400).json({ error: '短码与系统路径冲突，请换一个' });
+    }
+    try {
+        // 检查是否已存在
+        const exist = await pool.query('SELECT id FROM shares WHERE code = $1', [code]);
+        if (exist.rows.length > 0) {
+            return res.status(409).json({ error: '该短码已被使用，请换一个' });
+        }
+        await pool.query(
+            'INSERT INTO shares (user_id, code, title, content) VALUES ($1, $2, $3, $4)',
+            [userId, code, title || '', JSON.stringify(content)]
+        );
+        res.json({ success: true, code });
+    } catch (err) {
+        console.error('Share create error:', err);
+        res.status(500).json({ error: '创建分享失败' });
+    }
+});
+
+app.get('/api/share/:code', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT title, content, created_at FROM shares WHERE code = $1', [req.params.code]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: '分享不存在' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Share get error:', err);
+        res.status(500).json({ error: '获取分享失败' });
+    }
+});
+
+// 分享查看页面 - 放在所有 API 路由之后，静态文件之前需要特殊处理
+// 改为在 express.static 之前用条件判断
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// 分享短码路由（匹配所有非静态文件、非 API 的路径）
+app.get('/:code', async (req, res) => {
+    const code = req.params.code;
+    try {
+        const result = await pool.query('SELECT title, content, created_at FROM shares WHERE code = $1', [code]);
+        if (result.rows.length === 0) {
+            // 不是分享短码，返回 404
+            return res.status(404).send('Not Found');
+        }
+        const share = result.rows[0];
+        const items = typeof share.content === 'string' ? JSON.parse(share.content) : share.content;
+        // 渲染分享查看页面
+        const html = renderSharePage(share.title, items, code);
+        res.send(html);
+    } catch (err) {
+        console.error('Share view error:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// 分享页面渲染
+function renderSharePage(title, items, code) {
+    const itemsHtml = items.map(item => {
+        if (item.type === 'folder') {
+            return `<div class="share-folder">
+                <span class="share-folder-icon">&#x1F4C1;</span>
+                <span>${escapeHtml(item.name || item.title || '')}</span>
+                ${item.children ? `<span class="share-count">(${countItems(item.children)}项)</span>` : ''}
+            </div>`;
+        }
+        return `<a class="share-link" href="${escapeHtml(item.url || '')}" target="_blank" rel="noopener">
+            <span class="share-link-title">${escapeHtml(item.title || '')}</span>
+            <span class="share-link-url">${escapeHtml(item.url || '')}</span>
+        </a>`;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${escapeHtml(title || '分享')} - Mark</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;min-height:100vh}
+        .share-header{background:#2c3e50;color:white;padding:20px 24px;text-align:center}
+        .share-header h1{font-size:20px;font-weight:500;margin-bottom:4px}
+        .share-header .share-meta{font-size:12px;opacity:.7}
+        .share-list{max-width:640px;margin:24px auto;padding:0 16px;display:flex;flex-direction:column;gap:8px}
+        .share-link{display:flex;align-items:center;padding:12px 16px;background:white;border-radius:6px;text-decoration:none;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s}
+        .share-link:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+        .share-link-title{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .share-link-url{font-size:12px;color:#888;margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+        .share-folder{display:flex;align-items:center;padding:12px 16px;background:#f0f4ff;border-radius:6px;gap:8px;color:#333}
+        .share-folder-icon{font-size:18px}
+        .share-count{font-size:12px;color:#888;margin-left:auto}
+        .share-empty{text-align:center;padding:40px;color:#888;font-size:14px}
+        .share-footer{text-align:center;padding:20px;color:#999;font-size:12px}
+        @media(max-width:768px){.share-link-url{display:none}}
+    </style>
+</head>
+<body>
+    <div class="share-header">
+        <h1>${escapeHtml(title || '分享')}</h1>
+        <div class="share-meta">来自 Mark 书签分享</div>
+    </div>
+    <div class="share-list">
+        ${itemsHtml || '<div class="share-empty">暂无内容</div>'}
+    </div>
+    <div class="share-footer">Powered by Mark</div>
+</body>
+</html>`;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function countItems(children) {
+    let count = 0;
+    for (const c of children) {
+        if (c.type === 'bookmark') count++;
+        else if (c.type === 'folder') count += 1 + countItems(c.children || []);
+    }
+    return count;
+}
 
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);

@@ -872,3 +872,94 @@ body {
 .toast--show {
     opacity: 1;
 }
+
+/* 多选操作栏 */
+.multi-select-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    background: #2c3e50;
+    color: white;
+    font-size: 14px;
+    position: sticky;
+    top: 60px;
+    z-index: 99;
+}
+
+.multi-select-bar.hidden {
+    display: none;
+}
+
+.multi-select-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.multi-select-btn {
+    padding: 6px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    background: transparent;
+    color: white;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.multi-select-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.multi-select-btn--danger:hover {
+    background: rgba(231, 76, 60, 0.3);
+    border-color: rgba(231, 76, 60, 0.6);
+}
+
+.multi-select-btn--cancel {
+    opacity: 0.7;
+}
+
+/* 多选 checkbox */
+.select-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: #3498db;
+}
+
+.multi-select-item {
+    cursor: default;
+}
+
+/* 文件夹选择器 */
+.folder-picker-content {
+    max-width: 400px;
+}
+
+.folder-picker-tree {
+    max-height: 50vh;
+    overflow-y: auto;
+    margin-top: 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.folder-picker-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background 0.1s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.folder-picker-item:hover {
+    background: #e8f0fe;
+}
+
+.folder-picker-item:last-child {
+    border-bottom: none;
+}

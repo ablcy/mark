@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                <span class="auth-version">V1.0.22</span>
+                            <span class="auth-version">V1.0.24</span>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.22</span>
+                    <span id="version-display" class="version-badge">V1.0.24</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
@@ -56,6 +56,16 @@
                     <button id="logout-btn" class="nav-btn">退出</button>
                 </div>
             </header>
+            <!-- 多选操作栏 -->
+            <div id="multi-select-bar" class="multi-select-bar hidden">
+                <span id="multi-select-count">已选 0 项</span>
+                <div class="multi-select-actions">
+                    <button id="multi-delete-btn" class="multi-select-btn multi-select-btn--danger">删除</button>
+                    <button id="multi-move-btn" class="multi-select-btn">移动</button>
+                    <button id="multi-share-btn" class="multi-select-btn">分享</button>
+                    <button id="multi-cancel-btn" class="multi-select-btn multi-select-btn--cancel">取消</button>
+                </div>
+            </div>
             <div class="main-layout">
                 <!-- 左侧文件夹树 -->
                 <aside class="sidebar">
@@ -84,6 +94,7 @@
                                     <button id="menu-rename-btn" class="dropdown-item">修改名称</button>
                                     <button id="menu-flatten-btn" class="dropdown-item">去层</button>
                                     <div class="dropdown-divider"></div>
+                                    <button id="menu-multi-select-btn" class="dropdown-item">多选</button>
                                     <button id="menu-delete-btn" class="dropdown-item dropdown-item--danger">删除收藏夹</button>
                                 </div>
                             </div>
@@ -104,6 +115,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.0.24 - 2026年5月28日</h3>
+                        <ul>
+                            <li>新增多选功能：文件夹菜单和书签菜单均支持多选</li>
+                            <li>多选操作：批量删除、批量移动到其他文件夹</li>
+                            <li>分享功能：选中内容生成短链接 mark.lcy.app/短码，复制到剪贴板</li>
+                            <li>分享页面：其他人访问短链接可查看分享的文件夹/书签内容</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.0.22 - 2026年5月28日</h3>
                         <ul>
