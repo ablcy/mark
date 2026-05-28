@@ -133,6 +133,35 @@ app.post('/api/register', async (req, res) => {
     if (!username || !password) {
         return res.status(400).json({ error: '用户名和密码不能为空' });
     }
+
+    // 检查注册限额
+    try {
+        const limitResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_limit'");
+        const limit = limitResult.rows.length > 0 ? parseInt(limitResult.rows[0].value, 10) : 10;
+        if (limit === 0) {
+            return res.status(403).json({ error: '当前不允许注册新用户' });
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const countResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
+        const storedDate = countResult.rows.length > 0 ? countResult.rows[0].value : '';
+        let todayCount = 0;
+        if (storedDate === today) {
+            const cnt = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_today'");
+            todayCount = cnt.rows.length > 0 ? parseInt(cnt.rows[0].value, 10) : 0;
+        } else {
+            // 新的一天，重置计数
+            await pool.query("INSERT INTO admin_settings (key, value) VALUES ('registration_count_date', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [today]);
+            await pool.query("INSERT INTO admin_settings (key, value) VALUES ('registration_count_today', '0') ON CONFLICT (key) DO UPDATE SET value = '0'");
+        }
+
+        if (todayCount >= limit) {
+            return res.status(403).json({ error: '已经超过每天注册用户限制，请24小时后重新申请注册' });
+        }
+    } catch (err) {
+        console.error('Register limit check error:', err);
+        return res.status(500).json({ error: '服务器错误' });
+    }
     
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -148,6 +177,11 @@ app.post('/api/register', async (req, res) => {
             'INSERT INTO bookmarks (user_id, data) VALUES ($1, $2)',
             [user.id, '[]']
         );
+
+        // 增加今日注册计数
+        const today = new Date().toISOString().split('T')[0];
+        await pool.query("INSERT INTO admin_settings (key, value) VALUES ('registration_count_date', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [today]);
+        await pool.query("UPDATE admin_settings SET value = (COALESCE((SELECT value::int FROM admin_settings WHERE key = 'registration_count_today'), 0) + 1)::text WHERE key = 'registration_count_today'");
         
         res.json({ success: true, message: '注册成功' });
     } catch (err) {
@@ -301,6 +335,14 @@ app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
+
+        // 释放注册名额
+        const today = new Date().toISOString().split('T')[0];
+        const countDateResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
+        const storedDate = countDateResult.rows.length > 0 ? countDateResult.rows[0].value : '';
+        if (storedDate === today) {
+            await pool.query("UPDATE admin_settings SET value = GREATEST(COALESCE((SELECT value::int FROM admin_settings WHERE key = 'registration_count_today'), 1) - 1, 0)::text WHERE key = 'registration_count_today'");
+        }
         
         res.json({ success: true, message: '用户已删除' });
     } catch (err) {
@@ -319,6 +361,13 @@ app.post('/api/users/batch-delete', async (req, res) => {
         for (const id of ids) {
             await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
             await pool.query('DELETE FROM users WHERE id = $1', [id]);
+        }
+        // 释放注册名额
+        const today = new Date().toISOString().split('T')[0];
+        const countDateResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
+        const storedDate = countDateResult.rows.length > 0 ? countDateResult.rows[0].value : '';
+        if (storedDate === today) {
+            await pool.query("UPDATE admin_settings SET value = GREATEST(COALESCE((SELECT value::int FROM admin_settings WHERE key = 'registration_count_today'), 1) - $1, 0)::text WHERE key = 'registration_count_today'", [ids.length]);
         }
         res.json({ success: true, message: `已删除 ${ids.length} 个用户` });
     } catch (err) {
@@ -380,6 +429,41 @@ app.post('/api/admin/change-password', async (req, res) => {
     } catch (err) {
         console.error('Admin change password error:', err);
         res.status(500).json({ error: '修改密码失败' });
+    }
+});
+
+// 获取/更新注册限额
+app.get('/api/admin/registration-limit', async (req, res) => {
+    try {
+        const limitResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_limit'");
+        const countDateResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
+        const countResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_today'");
+
+        const limit = limitResult.rows.length > 0 ? parseInt(limitResult.rows[0].value, 10) : 10;
+        const today = new Date().toISOString().split('T')[0];
+        const storedDate = countDateResult.rows.length > 0 ? countDateResult.rows[0].value : '';
+        const todayCount = storedDate === today
+            ? (countResult.rows.length > 0 ? parseInt(countResult.rows[0].value, 10) : 0)
+            : 0;
+
+        res.json({ success: true, limit, todayCount });
+    } catch (err) {
+        console.error('Get registration limit error:', err);
+        res.status(500).json({ error: '获取失败' });
+    }
+});
+
+app.post('/api/admin/registration-limit', async (req, res) => {
+    const { limit } = req.body;
+    if (limit === undefined || limit === null || limit < 0) {
+        return res.status(400).json({ error: '请输入有效数字' });
+    }
+    try {
+        await pool.query("INSERT INTO admin_settings (key, value) VALUES ('registration_limit', $1) ON CONFLICT (key) DO UPDATE SET value = $1", [String(limit)]);
+        res.json({ success: true, limit: parseInt(limit, 10) });
+    } catch (err) {
+        console.error('Update registration limit error:', err);
+        res.status(500).json({ error: '更新失败' });
     }
 });
 
@@ -478,8 +562,8 @@ function renderSharePage(title, items, code) {
                 <div class="share-folder-children">${childHtml}</div>`;
             }
             return `<a class="share-link" href="${escapeHtml(item.url || '')}" target="_blank" rel="noopener" style="padding-left:${pad + 16}px">
-                <span class="share-link-title">${escapeHtml(item.title || '')}</span>
-                <span class="share-link-url">${escapeHtml(item.url || '')}</span>
+                <div class="share-link-title">${escapeHtml(item.title || '')}</div>
+                <div class="share-link-url">${escapeHtml(item.url || '')}</div>
             </a>`;
         }).join('');
     }
@@ -499,10 +583,10 @@ function renderSharePage(title, items, code) {
         .share-header h1{font-size:20px;font-weight:500;margin-bottom:4px}
         .share-header .share-meta{font-size:12px;opacity:.7}
         .share-list{max-width:640px;margin:24px auto;padding:0 16px;display:flex;flex-direction:column;gap:4px}
-        .share-link{display:flex;align-items:center;padding:10px 16px;background:white;border-radius:6px;text-decoration:none;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s}
+        .share-link{display:flex;flex-direction:column;padding:12px 16px;background:white;border-radius:6px;text-decoration:none;color:#333;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:box-shadow .15s;gap:4px}
         .share-link:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
-        .share-link-title{font-size:14px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .share-link-url{font-size:12px;color:#888;margin-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px}
+        .share-link-title{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .share-link-url{font-size:12px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         .share-folder{display:flex;align-items:center;padding:10px 16px;background:#f0f4ff;border-radius:6px;gap:8px;color:#333;cursor:pointer;user-select:none;transition:background .1s}
         .share-folder:hover{background:#dce8ff}
         .share-folder-arrow{font-size:10px;transition:transform .2s;flex-shrink:0;color:#666}
@@ -513,7 +597,6 @@ function renderSharePage(title, items, code) {
         .share-folder--open+.share-folder-children{display:flex}
         .share-empty{text-align:center;padding:40px;color:#888;font-size:14px}
         .share-footer{text-align:center;padding:20px;color:#999;font-size:12px}
-        @media(max-width:768px){.share-link-url{display:none}}
     </style>
 </head>
 <body>
