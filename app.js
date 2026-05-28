@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.35';
+const CURRENT_VERSION = 'V1.0.36';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -1734,25 +1734,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const favicon = document.createElement('img');
         favicon.className = 'bookmark-favicon';
-        favicon.src = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#3498db"><path d="M13.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.5"/><polyline points="14 3 21 10"/><line x1="10" y1="14" x2="21" y2="3"/></svg>');
+        // 初始状态：透明占位，不显示任何默认图标
+        favicon.style.opacity = '0';
 
         try {
             const urlObj = new URL(bookmark.url);
             const googleFavicon = 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
             const fallbackFavicon = urlObj.origin + '/favicon.ico';
-            const defaultSvg = favicon.src; // 保存默认 SVG
-            favicon.onerror = function() {
-                if (favicon.src === googleFavicon) {
-                    favicon.src = fallbackFavicon;
-                } else {
-                    // fallback 也失败，显示空白
-                    favicon.src = '';
-                    favicon.style.visibility = 'hidden';
-                }
+
+            // 先用 Google favicon，加载成功后显示
+            const img = new Image();
+            img.onload = function() {
+                favicon.src = googleFavicon;
+                favicon.style.opacity = '1';
             };
-            favicon.src = googleFavicon;
+            img.onerror = function() {
+                // Google 失败，尝试 fallback
+                const img2 = new Image();
+                img2.onload = function() {
+                    favicon.src = fallbackFavicon;
+                    favicon.style.opacity = '1';
+                };
+                img2.onerror = function() {
+                    // 都失败，保持透明与背景融为一体
+                };
+                img2.src = fallbackFavicon;
+            };
+            img.src = googleFavicon;
         } catch (e) {
-            favicon.style.visibility = 'hidden';
+            // URL 解析失败，保持透明
         }
 
         const info = document.createElement('div');

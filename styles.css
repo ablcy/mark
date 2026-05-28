@@ -1129,6 +1129,10 @@ body {
     color: var(--text-primary);
 }
 
+[data-theme="dark"] .folder-item {
+    color: var(--text-primary);
+}
+
 [data-theme="dark"] .folder-item:hover > .folder-header {
     background: var(--bg-hover);
 }
