@@ -1096,7 +1096,7 @@ body {
 
 [data-theme="dark"] body {
     background: var(--bg-primary);
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .top-nav {
@@ -1105,12 +1105,12 @@ body {
 }
 
 [data-theme="dark"] .nav-left .logo {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .nav-btn {
     background: var(--bg-card);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1120,7 +1120,7 @@ body {
 
 [data-theme="dark"] .search-input {
     background: var(--bg-input);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1138,19 +1138,19 @@ body {
 }
 
 [data-theme="dark"] .folder-header {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .folder-item {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .folder-toggle {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .folder-name {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .folder-item:hover > .folder-header {
@@ -1162,7 +1162,7 @@ body {
 }
 
 [data-theme="dark"] .sidebar-title {
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1176,7 +1176,7 @@ body {
 }
 
 [data-theme="dark"] .content-header h2 {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .bookmark-favicon {
@@ -1197,20 +1197,20 @@ body {
 }
 
 [data-theme="dark"] .bookmark-info h3 {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .bookmark-info p {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .bookmark-menu-btn {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .bookmark-menu-btn:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .dropdown-menu {
@@ -1220,7 +1220,7 @@ body {
 }
 
 [data-theme="dark"] .dropdown-item {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .dropdown-item:hover {
@@ -1249,20 +1249,20 @@ body {
 
 [data-theme="dark"] .modal-content {
     background: var(--bg-card);
-    color: var(--text-primary);
+    color: var(--text-muted);
     box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 [data-theme="dark"] .modal-content .close {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .modal-content .close:hover {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .auth-wrapper {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .auth-box {
@@ -1271,7 +1271,7 @@ body {
 }
 
 [data-theme="dark"] .auth-tabs button {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .auth-tabs button.active {
@@ -1281,7 +1281,7 @@ body {
 
 [data-theme="dark"] .auth-form input {
     background: var(--bg-input);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1299,7 +1299,7 @@ body {
 
 [data-theme="dark"] .version-badge {
     background: var(--bg-hover);
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] #main-footer {
@@ -1322,22 +1322,22 @@ body {
 }
 
 [data-theme="dark"] .changelog-entry li {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .input-modal-content input {
     background: var(--bg-input);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
 [data-theme="dark"] .input-modal-btn--cancel {
     background: var(--bg-hover);
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .shares-modal-content h2 {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .share-item {
@@ -1345,7 +1345,7 @@ body {
 }
 
 [data-theme="dark"] .share-item-title {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .share-item-time {
@@ -1354,7 +1354,7 @@ body {
 
 [data-theme="dark"] .share-item-btn {
     background: var(--bg-hover);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1363,7 +1363,7 @@ body {
 }
 
 [data-theme="dark"] .content-folder-item {
-    color: var(--text-primary);
+    color: var(--text-muted);
     background: var(--bg-card);
 }
 
@@ -1372,11 +1372,11 @@ body {
 }
 
 [data-theme="dark"] .content-folder-name {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .content-folder-count {
-    color: var(--text-primary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .folder-picker-tree {
@@ -1384,7 +1384,7 @@ body {
 }
 
 [data-theme="dark"] .folder-picker-item {
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
@@ -1399,7 +1399,7 @@ body {
 
 [data-theme="dark"] .action-btn {
     background: var(--bg-card);
-    color: var(--text-primary);
+    color: var(--text-muted);
     border-color: var(--border-color);
 }
 
