@@ -607,7 +607,7 @@ function renderSharePage(title, items, code, domain) {
     <div class="share-list">
         ${itemsHtml || '<div class="share-empty">暂无内容</div>'}
     </div>
-    <div class="share-footer">mark.lcy.app/${domain ? escapeHtml(domain) + '/' : ''}${escapeHtml(code)} &middot; Powered by Mark</div>
+    <div class="share-footer">mark.lcy.app/${domain ? escapeHtml(domain) : escapeHtml(code)} &middot; Powered by Mark</div>
 </body>
 </html>`;
 }
