@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.0.28</span>
+                            <span class="auth-version">V1.0.29</span>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.28</span>
+                    <span id="version-display" class="version-badge">V1.0.29</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
@@ -59,6 +59,9 @@
             </header>
             <!-- 多选操作栏 -->
             <div id="multi-select-bar" class="multi-select-bar hidden">
+                <label class="multi-select-all-label">
+                    <input type="checkbox" id="multi-select-all-check" onclick="toggleSelectAll()"> 全选
+                </label>
                 <span id="multi-select-count">已选 0 项</span>
                 <div class="multi-select-actions">
                     <button id="multi-delete-btn" class="multi-select-btn multi-select-btn--danger">删除</button>

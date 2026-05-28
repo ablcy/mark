@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.28';
+const CURRENT_VERSION = 'V1.0.29';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -14,6 +14,9 @@ function showToast(msg) {
     clearTimeout(toast._timeout);
     toast._timeout = setTimeout(() => toast.classList.remove('toast--show'), 3500);
 }
+
+// 全选（挂到 window 供 onclick 调用）
+function toggleSelectAll() { if (window._markToggleSelectAll) window._markToggleSelectAll(); }
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -674,12 +677,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 加载我的短链接（复用 admin API，前端过滤当前用户）
     async function loadMyShares() {
-        if (!currentUserId) return;
+        if (!currentUserId) {
+            sharesList.innerHTML = '<div class="empty-state">请先登录</div>';
+            return;
+        }
         sharesList.innerHTML = '<div class="loading">加载中...</div>';
         try {
             const res = await fetch('/api/admin/shares');
+            if (!res.ok) {
+                sharesList.innerHTML = `<div class="empty-state">加载失败 (${res.status})</div>`;
+                return;
+            }
             const data = await res.json();
-            if (data.success) {
+            if (data.success && data.shares) {
                 const myShares = data.shares.filter(s => s.user_id === currentUserId);
                 if (myShares.length > 0) {
                     let html = '';
@@ -705,10 +715,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     sharesList.innerHTML = '<div class="empty-state">暂无短链接</div>';
                 }
             } else {
-                sharesList.innerHTML = '<div class="empty-state">加载失败</div>';
+                sharesList.innerHTML = `<div class="empty-state">加载失败: ${data.error || '未知错误'}</div>`;
             }
         } catch (err) {
-            sharesList.innerHTML = '<div class="empty-state">加载失败</div>';
+            sharesList.innerHTML = `<div class="empty-state">网络错误: ${err.message}</div>`;
         }
     }
 
@@ -1133,7 +1143,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateMultiSelectUI() {
         multiSelectCount.textContent = `已选 ${selectedItems.length} 项`;
+        const selectAllCheckbox = document.getElementById('multi-select-all-check');
+        if (selectAllCheckbox) {
+            const allItems = getAllSelectableItems();
+            selectAllCheckbox.checked = allItems.length > 0 && selectedItems.length === allItems.length;
+            selectAllCheckbox.indeterminate = selectedItems.length > 0 && selectedItems.length < allItems.length;
+        }
     }
+
+    // 获取当前视图所有可选项
+    function getAllSelectableItems() {
+        const items = [];
+        // 文件夹
+        document.querySelectorAll('.folder-item').forEach(el => {
+            const index = parseInt(el.dataset.folderIndex, 10);
+            if (!isNaN(index)) {
+                items.push({ type: 'folder', item: bookmarks[index], el });
+            }
+        });
+        // 书签
+        if (selectedFolder && selectedFolder.children) {
+            selectedFolder.children.forEach(bookmark => {
+                items.push({ type: 'bookmark', item: bookmark, parentArray: selectedFolder.children, el: document.querySelector(`[data-bookmark-url="${bookmark.url.replace(/"/g, '\\"')}"]`) });
+            });
+        }
+        return items;
+    }
+
+    // 全选/取消全选
+    function toggleSelectAll() {
+        const allItems = getAllSelectableItems();
+        if (selectedItems.length === allItems.length) {
+            // 取消全选
+            selectedItems = [];
+            document.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = false);
+        } else {
+            // 全选
+            selectedItems = allItems.map(a => ({ type: a.type, item: a.item, parentArray: a.parentArray || null }));
+            document.querySelectorAll('.select-checkbox').forEach(cb => cb.checked = true);
+        }
+        updateMultiSelectUI();
+    }
+    window._markToggleSelectAll = toggleSelectAll;
 
     function toggleSelectItem(type, item, parentArray, checkboxEl) {
         const idx = selectedItems.findIndex(s => s.item === item);

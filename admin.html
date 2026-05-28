@@ -342,6 +342,7 @@
             <div class="table-header">
                 <h2>短链接管理</h2>
                 <div class="header-actions">
+                    <button class="action-btn delete-btn" onclick="batchDeleteShares()" id="batchDeleteSharesBtn" style="display:none;">批量删除</button>
                     <button class="refresh-btn" onclick="loadShares()">刷新</button>
                 </div>
             </div>
@@ -634,6 +635,7 @@
                         <table>
                             <thead>
                                 <tr>
+                                    <th style="width:40px;"><input type="checkbox" id="shareSelectAll" onclick="toggleShareSelectAll()"></th>
                                     <th>创建时间</th>
                                     <th>用户</th>
                                     <th>短码</th>
@@ -643,12 +645,13 @@
                             </thead>
                             <tbody>
                     `;
-                    data.shares.forEach(s => {
+                    data.shares.forEach((s, idx) => {
                         const date = new Date(s.created_at);
                         const formattedDate = date.toLocaleString('zh-CN');
                         const fullUrl = `https://mark.lcy.app/${s.code}`;
                         html += `
                             <tr>
+                                <td><input type="checkbox" class="share-checkbox" data-id="${s.id}" onchange="updateShareSelectUI()"></td>
                                 <td>${formattedDate}</td>
                                 <td>${escapeHtml(s.username || '已删除')}</td>
                                 <td><code>${escapeHtml(s.code)}</code></td>
@@ -699,6 +702,33 @@
             } catch (err) {
                 alert('网络错误');
             }
+        }
+
+        // ====== 短链接多选 ======
+
+        function toggleShareSelectAll() {
+            const selectAll = document.getElementById('shareSelectAll');
+            document.querySelectorAll('.share-checkbox').forEach(cb => cb.checked = selectAll.checked);
+            updateShareSelectUI();
+        }
+
+        function updateShareSelectUI() {
+            const checked = document.querySelectorAll('.share-checkbox:checked');
+            document.getElementById('batchDeleteSharesBtn').style.display = checked.length > 0 ? 'inline-block' : 'none';
+        }
+
+        function getSelectedShareIds() {
+            return Array.from(document.querySelectorAll('.share-checkbox:checked')).map(cb => parseInt(cb.dataset.id, 10));
+        }
+
+        async function batchDeleteShares() {
+            const ids = getSelectedShareIds();
+            if (ids.length === 0) return;
+            if (!confirm(`确定要删除选中的 ${ids.length} 条短链接吗？`)) return;
+            for (const id of ids) {
+                await fetch(`/api/admin/shares/${id}`, { method: 'DELETE' });
+            }
+            loadShares();
         }
     </script>
 </body>
