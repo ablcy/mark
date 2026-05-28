@@ -335,14 +335,6 @@ app.delete('/api/users/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
         await pool.query('DELETE FROM users WHERE id = $1', [id]);
-
-        // 释放注册名额
-        const today = new Date().toISOString().split('T')[0];
-        const countDateResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
-        const storedDate = countDateResult.rows.length > 0 ? countDateResult.rows[0].value : '';
-        if (storedDate === today) {
-            await pool.query("UPDATE admin_settings SET value = GREATEST(COALESCE((SELECT value::int FROM admin_settings WHERE key = 'registration_count_today'), 1) - 1, 0)::text WHERE key = 'registration_count_today'");
-        }
         
         res.json({ success: true, message: '用户已删除' });
     } catch (err) {
@@ -361,13 +353,6 @@ app.post('/api/users/batch-delete', async (req, res) => {
         for (const id of ids) {
             await pool.query('DELETE FROM bookmarks WHERE user_id = $1', [id]);
             await pool.query('DELETE FROM users WHERE id = $1', [id]);
-        }
-        // 释放注册名额
-        const today = new Date().toISOString().split('T')[0];
-        const countDateResult = await pool.query("SELECT value FROM admin_settings WHERE key = 'registration_count_date'");
-        const storedDate = countDateResult.rows.length > 0 ? countDateResult.rows[0].value : '';
-        if (storedDate === today) {
-            await pool.query("UPDATE admin_settings SET value = GREATEST(COALESCE((SELECT value::int FROM admin_settings WHERE key = 'registration_count_today'), 1) - $1, 0)::text WHERE key = 'registration_count_today'", [ids.length]);
         }
         res.json({ success: true, message: `已删除 ${ids.length} 个用户` });
     } catch (err) {
