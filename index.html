@@ -13,6 +13,7 @@
         <div id="auth-container">
             <div class="auth-wrapper">
                 <h1 class="auth-logo">Mark</h1>
+                <img class="auth-logo-img" src="favicon.png" alt="Mark Logo">
                 <div class="auth-box">
                     <div class="auth-tabs">
                         <button id="login-tab" class="active">登录</button>
@@ -33,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                <span class="auth-version">V1.0.21</span>
+                <span class="auth-version">V1.0.22</span>
             </div>
         </div>
 
@@ -43,7 +44,8 @@
             <header class="top-nav">
                 <div class="nav-left">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.21</span>
+                    <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
+                    <span id="version-display" class="version-badge">V1.0.22</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
@@ -78,7 +80,6 @@
                                     <div class="dropdown-divider"></div>
                                     <button id="menu-import-btn" class="dropdown-item">导入</button>
                                     <button id="menu-export-btn" class="dropdown-item">导出</button>
-                                    <button id="menu-sync-btn" class="dropdown-item">同步</button>
                                     <div class="dropdown-divider"></div>
                                     <button id="menu-rename-btn" class="dropdown-item">修改名称</button>
                                     <button id="menu-flatten-btn" class="dropdown-item">去层</button>
@@ -103,6 +104,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.0.22 - 2026年5月28日</h3>
+                        <ul>
+                            <li>同步改为后台自动静默执行，不再弹出提示</li>
+                            <li>菜单栏移除同步按钮</li>
+                            <li>登录界面标题上方添加 Mark logo</li>
+                            <li>顶部导航栏 Mark 左侧添加 logo</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.0.21 - 2026年5月28日</h3>
                         <ul>

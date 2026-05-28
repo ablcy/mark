@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.21';
+const CURRENT_VERSION = 'V1.0.22';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -247,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const moreMenuDropdown = document.getElementById('more-menu-dropdown');
     const menuImportBtn = document.getElementById('menu-import-btn');
     const menuExportBtn = document.getElementById('menu-export-btn');
-    const menuSyncBtn = document.getElementById('menu-sync-btn');
     const menuRenameBtn = document.getElementById('menu-rename-btn');
 
     if (moreMenuBtn && moreMenuDropdown) {
@@ -305,14 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
         menuExportBtn.addEventListener('click', () => {
             moreMenuDropdown.classList.add('hidden');
             exportBookmarks();
-        });
-    }
-
-    // 菜单-同步
-    if (menuSyncBtn) {
-        menuSyncBtn.addEventListener('click', () => {
-            moreMenuDropdown.classList.add('hidden');
-            syncBookmarks();
         });
     }
 
@@ -706,12 +697,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     selectDefaultFolder();
                 }
-                alert('同步成功！');
-            } else {
-                alert('同步失败');
             }
         } catch (err) {
-            alert('同步失败，请检查网络连接');
+            console.log('后台同步失败', err);
         }
     }
 

@@ -44,6 +44,13 @@ body {
     font-weight: bold;
 }
 
+.nav-logo-img {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
 .version-badge {
     background: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.8);
@@ -116,7 +123,14 @@ body {
     font-size: 48px;
     font-weight: bold;
     color: #2c3e50;
-    margin-bottom: 32px;
+    margin-bottom: 8px;
+}
+
+.auth-logo-img {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    border-radius: 8px;
 }
 
 .auth-copyright {
@@ -815,7 +829,13 @@ body {
 
     .auth-logo {
         font-size: 36px;
-        margin-bottom: 20px;
+        margin-bottom: 6px;
+    }
+
+    .auth-logo-img {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 12px;
     }
 
     .auth-box {
