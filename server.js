@@ -625,7 +625,7 @@ function countItems(children) {
 app.get('/api/admin/shares', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT s.id, s.code, s.title, s.domain, s.created_at, u.username
+            SELECT s.id, s.code, s.title, s.domain, s.created_at, s.user_id, u.username
             FROM shares s
             LEFT JOIN users u ON s.user_id = u.id
             ORDER BY s.created_at DESC

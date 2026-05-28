@@ -672,20 +672,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 加载我的短链接
+    // 加载我的短链接（复用 admin API，前端过滤当前用户）
     async function loadMyShares() {
         if (!currentUserId) return;
         sharesList.innerHTML = '<div class="loading">加载中...</div>';
         try {
-            const res = await fetch(`/api/my-shares?userId=${currentUserId}`);
+            const res = await fetch('/api/admin/shares');
             const data = await res.json();
-            if (data.success && data.shares.length > 0) {
-                let html = '';
-                data.shares.forEach(s => {
-                    const date = new Date(s.created_at);
-                    const formattedDate = date.toLocaleString('zh-CN');
-                    const fullUrl = `https://mark.lcy.app/${s.code}`;
-                    html += `
+            if (data.success) {
+                const myShares = data.shares.filter(s => s.user_id === currentUserId);
+                if (myShares.length > 0) {
+                    let html = '';
+                    myShares.forEach(s => {
+                        const date = new Date(s.created_at);
+                        const formattedDate = date.toLocaleString('zh-CN');
+                        const fullUrl = `https://mark.lcy.app/${s.code}`;
+                        html += `
                         <div class="share-item">
                             <div class="share-item-info">
                                 <div class="share-item-title">${escapeHtml(s.title || '未命名')}</div>
@@ -697,21 +699,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="share-item-btn share-item-btn--danger" onclick="deleteMyShare(${s.id}, '${escapeHtml(s.code)}')">删除</button>
                             </div>
                         </div>`;
-                });
-                sharesList.innerHTML = html;
+                    });
+                    sharesList.innerHTML = html;
+                } else {
+                    sharesList.innerHTML = '<div class="empty-state">暂无短链接</div>';
+                }
             } else {
-                sharesList.innerHTML = '<div class="empty-state">暂无短链接</div>';
+                sharesList.innerHTML = '<div class="empty-state">加载失败</div>';
             }
         } catch (err) {
             sharesList.innerHTML = '<div class="empty-state">加载失败</div>';
         }
     }
 
-    // 删除短链接
+    // 删除短链接（复用 admin API）
     async function deleteMyShare(id, code) {
         if (!confirm(`确定删除短链接 "${code}" 吗？`)) return;
         try {
-            const res = await fetch(`/api/my-shares/${id}?userId=${currentUserId}`, { method: 'DELETE' });
+            const res = await fetch(`/api/admin/shares/${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.success) {
                 loadMyShares();
