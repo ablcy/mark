@@ -518,7 +518,9 @@ app.get('/', (req, res) => {
 app.get('/:code', async (req, res) => {
     const code = req.params.code;
     try {
-        const result = await pool.query('SELECT title, content, domain, created_at FROM shares WHERE code = $1', [code]);
+        const result = await pool.query(`SELECT s.title, s.content, s.domain, s.created_at, u.username
+            FROM shares s LEFT JOIN users u ON s.user_id = u.id
+            WHERE s.code = $1`, [code]);
         if (result.rows.length === 0) {
             // 不是分享短码，返回 404
             return res.status(404).send('Not Found');
@@ -526,7 +528,7 @@ app.get('/:code', async (req, res) => {
         const share = result.rows[0];
         const items = typeof share.content === 'string' ? JSON.parse(share.content) : share.content;
         // 渲染分享查看页面
-        const html = renderSharePage(share.title, items, code, share.domain || '');
+        const html = renderSharePage(share.title, items, code, share.domain || '', share.username || '用户');
         res.send(html);
     } catch (err) {
         console.error('Share view error:', err);
@@ -535,7 +537,7 @@ app.get('/:code', async (req, res) => {
 });
 
 // 分享页面渲染
-function renderSharePage(title, items, code, domain) {
+function renderSharePage(title, items, code, domain, username) {
     // 递归渲染分享内容（包括嵌套文件夹）
     function renderShareItems(list, depth) {
         if (!list || list.length === 0) return '';
@@ -595,7 +597,7 @@ function renderSharePage(title, items, code, domain) {
 <body>
     <div class="share-header">
         <h1>${escapeHtml(title || '分享')}</h1>
-        <div class="share-meta">来自 Mark 书签分享</div>
+        <div class="share-meta">来自 Mark 用户 ${escapeHtml(username)} 分享</div>
     </div>
     <div class="share-list">
         ${itemsHtml || '<div class="share-empty">暂无内容</div>'}
