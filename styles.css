@@ -759,60 +759,62 @@ body {
 /* 手机端适配 */
 @media (max-width: 768px) {
     .top-nav {
-        flex-wrap: wrap;
-        padding: 8px 12px;
+        padding: 8px 10px;
         gap: 6px;
     }
 
     .nav-left {
-        order: 1;
-        flex: 1;
+        flex: 0 0 auto;
         min-width: 0;
     }
 
     .nav-left .logo {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .version-badge {
-        font-size: 10px;
-        padding: 2px 6px;
+        font-size: 9px;
+        padding: 2px 5px;
     }
 
     .nav-center {
-        order: 3;
-        flex-basis: 100%;
-        margin: 0;
-        max-width: none;
+        flex: 1;
+        margin: 0 8px;
+        max-width: 160px;
+        min-width: 0;
     }
 
     .nav-right {
-        order: 2;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: flex-end;
-        gap: 4px;
+        gap: 3px;
     }
 
     .nav-btn {
-        padding: 6px 10px;
+        padding: 5px 8px;
         font-size: 11px;
     }
 
     .main-layout {
-        flex-direction: column;
+        height: calc(100vh - 48px);
     }
 
     .sidebar {
-        width: 100%;
-        max-height: 40vh;
-        border-right: none;
-        border-bottom: 1px solid #e8e8e8;
+        width: 140px;
+        min-width: 140px;
+        height: calc(100vh - 48px);
+    }
+
+    .sidebar-title {
+        padding: 10px 12px;
+        font-size: 13px;
     }
 
     .folder-header {
-        padding: 0 12px;
-        height: 36px;
-        min-height: 36px;
+        padding: 0 8px;
+        height: 32px;
+        min-height: 32px;
+        font-size: 13px;
     }
 
     .folder-tree {
@@ -820,34 +822,38 @@ body {
     }
 
     .content-area {
-        min-height: 50vh;
+        min-height: 0;
     }
 
     .content-header {
-        padding: 12px 16px;
+        padding: 10px 12px;
     }
 
     .content-header h2 {
-        font-size: 16px;
+        font-size: 14px;
     }
 
     .bookmarks-list {
-        padding: 12px 16px;
+        padding: 10px 12px;
         gap: 6px;
     }
 
     .bookmark-item {
-        padding: 10px 12px;
+        padding: 8px 10px;
     }
 
     .bookmark-favicon {
-        width: 24px;
-        height: 24px;
-        margin-right: 10px;
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
     }
 
     .bookmark-info h3 {
-        font-size: 13px;
+        font-size: 12px;
+    }
+
+    .bookmark-info p {
+        font-size: 11px;
     }
 
     .auth-logo {
