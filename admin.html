@@ -673,9 +673,10 @@
         }
 
         function editShareDomain(id, currentDomain) {
-            const suffix = prompt('mark.lcy.app/', currentDomain);
-            if (suffix === null || suffix.trim() === '') return;
-            const newDomain = 'mark.lcy.app/' + suffix.trim();
+            const suffix = (currentDomain || '').replace(/^mark\.ly\.app\//i, '') || '';
+            const newSuffix = prompt('mark.lcy.app/', suffix);
+            if (newSuffix === null || newSuffix.trim() === '') return;
+            const newDomain = 'mark.lcy.app/' + newSuffix.trim();
             fetch(`/api/admin/shares/${id}/domain`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
