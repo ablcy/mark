@@ -1076,15 +1076,15 @@ body {
 
 /* ====== 暗色主题 ====== */
 [data-theme="dark"] {
-    --bg-primary: #1a1a2e;
-    --bg-secondary: #16213e;
-    --bg-card: #1e2a3a;
-    --bg-hover: #2a3a4a;
-    --bg-input: #2a2a3e;
-    --text-primary: #e0e0e0;
-    --text-secondary: #aaa;
-    --text-muted: #777;
-    --border-color: #2a3a4a;
+    --bg-primary: #121212;
+    --bg-secondary: #1a1a1a;
+    --bg-card: #1e1e1e;
+    --bg-hover: #2a2a2a;
+    --bg-input: #2a2a2a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #c0c0c0;
+    --text-muted: #999;
+    --border-color: #333;
     --accent: #3498db;
     --danger: #e74c3c;
     --highlight-bg: #3d3520;
@@ -1367,6 +1367,14 @@ body {
     background: var(--bg-hover);
 }
 
+[data-theme="dark"] .content-folder-name {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .content-folder-count {
+    color: var(--text-secondary);
+}
+
 [data-theme="dark"] .folder-picker-tree {
     border-color: var(--border-color);
 }
@@ -1382,7 +1390,7 @@ body {
 
 [data-theme="dark"] .toast {
     background: rgba(255,255,255,0.9);
-    color: #1a1a2e;
+    color: #121212;
 }
 
 [data-theme="dark"] .action-btn {
