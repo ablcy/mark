@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.0.29</span>
+                            <span class="auth-version">V1.0.30</span>
             </div>
         </div>
 
@@ -45,13 +45,13 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.29</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.0.30</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
                 </div>
                 <div class="nav-right">
-                    <button id="changelog-btn" class="nav-btn">日志</button>
+                    <button id="multi-select-nav-btn" class="nav-btn">多选</button>
                     <button id="shares-btn" class="nav-btn">短链接</button>
                     <button id="admin-btn" class="nav-btn">管理</button>
                     <button id="logout-btn" class="nav-btn">退出</button>
@@ -98,7 +98,6 @@
                                     <button id="menu-rename-btn" class="dropdown-item">修改名称</button>
                                     <button id="menu-flatten-btn" class="dropdown-item">去层</button>
                                     <div class="dropdown-divider"></div>
-                                    <button id="menu-multi-select-btn" class="dropdown-item">多选</button>
                                     <button id="menu-delete-btn" class="dropdown-item dropdown-item--danger">删除收藏夹</button>
                                 </div>
                             </div>
@@ -119,6 +118,51 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.0.30 - 2026年5月28日</h3>
+                        <ul>
+                            <li>多选入口移至导航栏（短链接左侧），文件夹/书签菜单移除多选</li>
+                            <li>日志按钮隐藏，点击版本号显示更新日志</li>
+                            <li>补全 V1.0.25-V1.0.29 更新日志</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>V1.0.29 - 2026年5月28日</h3>
+                        <ul>
+                            <li>多选功能新增全选/取消全选按钮</li>
+                            <li>后台短链接管理新增 checkbox 多选 + 批量删除</li>
+                            <li>前端短链接加载增加错误详情展示</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>V1.0.28 - 2026年5月28日</h3>
+                        <ul>
+                            <li>前端新增短链接管理入口（导航栏"短链接"按钮）</li>
+                            <li>用户可查看/复制/删除/修改自己的短链接</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>V1.0.27 - 2026年5月28日</h3>
+                        <ul>
+                            <li>管理员界面新增短链接管理模块（列表/改短码/删除）</li>
+                            <li>分享页显示分享者用户名</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>V1.0.26 - 2026年5月28日</h3>
+                        <ul>
+                            <li>管理员面板新增注册限制（默认10/天，可修改，00:00重置）</li>
+                            <li>分享页链接排版优化（标题上/链接下），文件夹可展开</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>V1.0.25 - 2026年5月28日</h3>
+                        <ul>
+                            <li>分享 toast 显示完整链接</li>
+                            <li>分享页文件夹可展开查看内部链接</li>
+                            <li>分享链接统一复制到剪贴板</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.0.24 - 2026年5月28日</h3>
                         <ul>

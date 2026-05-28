@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.29';
+const CURRENT_VERSION = 'V1.0.30';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -281,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuImportBtn = document.getElementById('menu-import-btn');
     const menuExportBtn = document.getElementById('menu-export-btn');
     const menuRenameBtn = document.getElementById('menu-rename-btn');
-    const menuMultiSelectBtn = document.getElementById('menu-multi-select-btn');
+    const multiSelectNavBtn = document.getElementById('multi-select-nav-btn');
 
     if (moreMenuBtn && moreMenuDropdown) {
         // 点击三点按钮切换菜单
@@ -357,14 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFolderName.textContent = selectedFolder.name;
             // 刷新内容区
             updateBookmarksList(selectedFolder.children || []);
-        });
-    }
-
-    // 菜单-多选
-    if (menuMultiSelectBtn) {
-        menuMultiSelectBtn.addEventListener('click', () => {
-            moreMenuDropdown.classList.add('hidden');
-            enterMultiSelectMode();
         });
     }
 
@@ -626,11 +618,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.reset();
     });
 
-    // 更新日志模态框
-    if (changelogBtn) {
-        changelogBtn.addEventListener('click', () => {
+    // 点击版本号显示更新日志
+    const versionDisplay = document.getElementById('version-display');
+    if (versionDisplay) {
+        versionDisplay.addEventListener('click', () => {
             changelogModal.classList.remove('hidden');
         });
+        versionDisplay.style.cursor = 'pointer';
     }
 
     const closeBtn = changelogModal.querySelector('.close');
@@ -652,6 +646,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminBtn) {
         adminBtn.addEventListener('click', () => {
             window.open('/admin', '_blank');
+        });
+    }
+
+    // 导航栏多选
+    if (multiSelectNavBtn) {
+        multiSelectNavBtn.addEventListener('click', () => {
+            if (multiSelectMode) {
+                exitMultiSelectMode();
+            } else {
+                enterMultiSelectMode();
+            }
         });
     }
 
@@ -1578,7 +1583,6 @@ document.addEventListener('DOMContentLoaded', () => {
             { divider: true },
             { label: '在此下方添加链接', action: 'add-below' },
             { divider: true },
-            { label: '多选', action: 'multi-select' },
             { label: '删除', action: 'delete', danger: true },
         ];
 
@@ -1677,9 +1681,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     await saveBookmarks();
                     div.remove();
-                }
-                else if (item.action === 'multi-select') {
-                    enterMultiSelectMode();
                 }
             });
             dropdown.appendChild(btn);
