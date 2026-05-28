@@ -637,19 +637,28 @@ app.get('/api/admin/shares', async (req, res) => {
     }
 });
 
-// 修改短链接域名
+// 修改短链接短码
 app.post('/api/admin/shares/:id/domain', async (req, res) => {
     const { id } = req.params;
     const { domain } = req.body;
     if (!domain || domain.trim() === '') {
-        return res.status(400).json({ error: '域名不能为空' });
+        return res.status(400).json({ error: '短码不能为空' });
     }
     try {
-        await pool.query('UPDATE shares SET domain = $1 WHERE id = $2', [domain.trim(), id]);
-        res.json({ success: true, domain: domain.trim() });
+        // 检查是否与已知路径冲突
+        if (KNOWN_PATHS.has(domain.trim().toLowerCase())) {
+            return res.status(400).json({ error: '短码与系统路径冲突，请换一个' });
+        }
+        // 检查是否已存在
+        const exist = await pool.query('SELECT id FROM shares WHERE code = $1 AND id != $2', [domain.trim(), id]);
+        if (exist.rows.length > 0) {
+            return res.status(409).json({ error: '该短码已被使用，请换一个' });
+        }
+        await pool.query('UPDATE shares SET code = $1, domain = $1 WHERE id = $2', [domain.trim(), id]);
+        res.json({ success: true, code: domain.trim() });
     } catch (err) {
-        console.error('Update share domain error:', err);
-        res.status(500).json({ error: '更新域名失败' });
+        console.error('Update share code error:', err);
+        res.status(500).json({ error: '更新短码失败' });
     }
 });
 
