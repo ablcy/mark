@@ -1092,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const menuItems = [
             { label: '修改标题', action: 'rename-title' },
             { label: '修改链接', action: 'rename-url' },
-            { label: '分享链接', action: 'share' },
+            { label: '复制链接', action: 'share' },
             { divider: true },
             { label: '在此下方添加链接', action: 'add-below' },
             { divider: true },
