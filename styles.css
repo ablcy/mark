@@ -966,3 +966,94 @@ body {
 .folder-picker-item:last-child {
     border-bottom: none;
 }
+
+/* 短链接管理弹窗 */
+.shares-modal-content {
+    max-width: 560px;
+}
+
+.shares-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.share-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.share-item:last-child {
+    border-bottom: none;
+}
+
+.share-item-info {
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
+}
+
+.share-item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.share-item-url {
+    font-size: 12px;
+    color: #667eea;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.share-item-time {
+    font-size: 11px;
+    color: #999;
+}
+
+.share-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.share-item-btn {
+    padding: 4px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    color: #555;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.share-item-btn:hover {
+    background: #f0f0f0;
+}
+
+.share-item-btn--danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.share-item-btn--danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.shares-list .loading,
+.shares-list .empty-state {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 14px;
+}

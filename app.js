@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.24';
+const CURRENT_VERSION = 'V1.0.28';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -47,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedFolderName = document.getElementById('selected-folder-name');
     const changelogModal = document.getElementById('changelog-modal');
     const adminBtn = document.getElementById('admin-btn');
+    const sharesBtn = document.getElementById('shares-btn');
+    const sharesModal = document.getElementById('shares-modal');
+    const sharesModalClose = document.getElementById('shares-modal-close');
+    const sharesList = document.getElementById('shares-list');
     const searchInput = document.querySelector('.search-input');
     const contentActions = document.getElementById('content-actions');
 
@@ -646,6 +650,77 @@ document.addEventListener('DOMContentLoaded', () => {
         adminBtn.addEventListener('click', () => {
             window.open('/admin', '_blank');
         });
+    }
+
+    // 短链接管理
+    if (sharesBtn) {
+        sharesBtn.addEventListener('click', () => {
+            sharesModal.classList.remove('hidden');
+            loadMyShares();
+        });
+    }
+    if (sharesModalClose) {
+        sharesModalClose.addEventListener('click', () => {
+            sharesModal.classList.add('hidden');
+        });
+    }
+    if (sharesModal) {
+        sharesModal.addEventListener('click', (e) => {
+            if (e.target === sharesModal) {
+                sharesModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // 加载我的短链接
+    async function loadMyShares() {
+        if (!currentUserId) return;
+        sharesList.innerHTML = '<div class="loading">加载中...</div>';
+        try {
+            const res = await fetch(`/api/my-shares?userId=${currentUserId}`);
+            const data = await res.json();
+            if (data.success && data.shares.length > 0) {
+                let html = '';
+                data.shares.forEach(s => {
+                    const date = new Date(s.created_at);
+                    const formattedDate = date.toLocaleString('zh-CN');
+                    const fullUrl = `https://mark.lcy.app/${s.code}`;
+                    html += `
+                        <div class="share-item">
+                            <div class="share-item-info">
+                                <div class="share-item-title">${escapeHtml(s.title || '未命名')}</div>
+                                <div class="share-item-url">${fullUrl}</div>
+                                <div class="share-item-time">${formattedDate}</div>
+                            </div>
+                            <div class="share-item-actions">
+                                <button class="share-item-btn" onclick="navigator.clipboard.writeText('${fullUrl}');showToast('已复制：${fullUrl}')">复制</button>
+                                <button class="share-item-btn share-item-btn--danger" onclick="deleteMyShare(${s.id}, '${escapeHtml(s.code)}')">删除</button>
+                            </div>
+                        </div>`;
+                });
+                sharesList.innerHTML = html;
+            } else {
+                sharesList.innerHTML = '<div class="empty-state">暂无短链接</div>';
+            }
+        } catch (err) {
+            sharesList.innerHTML = '<div class="empty-state">加载失败</div>';
+        }
+    }
+
+    // 删除短链接
+    async function deleteMyShare(id, code) {
+        if (!confirm(`确定删除短链接 "${code}" 吗？`)) return;
+        try {
+            const res = await fetch(`/api/my-shares/${id}?userId=${currentUserId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                loadMyShares();
+            } else {
+                alert(data.error || '删除失败');
+            }
+        } catch (err) {
+            alert('网络错误');
+        }
     }
 
     // 辅助函数

@@ -637,6 +637,40 @@ app.get('/api/admin/shares', async (req, res) => {
     }
 });
 
+// 获取当前用户的短链接
+app.get('/api/my-shares', async (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
+    try {
+        const result = await pool.query(
+            'SELECT id, code, title, created_at FROM shares WHERE user_id = $1 ORDER BY created_at DESC',
+            [userId]
+        );
+        res.json({ success: true, shares: result.rows });
+    } catch (err) {
+        console.error('Get my shares error:', err);
+        res.status(500).json({ error: '获取短链接失败' });
+    }
+});
+
+// 用户删除自己的短链接
+app.delete('/api/my-shares/:id', async (req, res) => {
+    const { id } = req.params;
+    const userId = req.query.userId;
+    if (!userId) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
+    try {
+        await pool.query('DELETE FROM shares WHERE id = $1 AND user_id = $2', [id, userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete my share error:', err);
+        res.status(500).json({ error: '删除短链接失败' });
+    }
+});
+
 // 修改短链接短码
 app.post('/api/admin/shares/:id/domain', async (req, res) => {
     const { id } = req.params;

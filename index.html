@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.0.24</span>
+                            <span class="auth-version">V1.0.28</span>
             </div>
         </div>
 
@@ -45,13 +45,14 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.24</span>
+                    <span id="version-display" class="version-badge">V1.0.28</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
                 </div>
                 <div class="nav-right">
                     <button id="changelog-btn" class="nav-btn">日志</button>
+                    <button id="shares-btn" class="nav-btn">短链接</button>
                     <button id="admin-btn" class="nav-btn">管理</button>
                     <button id="logout-btn" class="nav-btn">退出</button>
                 </div>
@@ -238,6 +239,17 @@
             <div class="input-modal-actions">
                 <button id="input-modal-cancel" class="input-modal-btn input-modal-btn--cancel">取消</button>
                 <button id="input-modal-confirm" class="input-modal-btn input-modal-btn--confirm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 短链接管理弹窗 -->
+    <div id="shares-modal" class="modal hidden">
+        <div class="modal-content shares-modal-content">
+            <span class="close" id="shares-modal-close">&times;</span>
+            <h2>短链接管理</h2>
+            <div id="shares-list" class="shares-list">
+                <div class="loading">加载中...</div>
             </div>
         </div>
     </div>
