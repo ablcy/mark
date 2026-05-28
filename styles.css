@@ -625,7 +625,7 @@ body {
 }
 
 .bookmark-menu-btn {
-    display: none;
+    display: block;
     background: none;
     border: none;
     cursor: pointer;
@@ -850,4 +850,25 @@ body {
         width: 95%;
         padding: 20px 16px;
     }
+}
+
+/* Toast 提示 */
+.toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.toast--show {
+    opacity: 1;
 }

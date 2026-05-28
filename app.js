@@ -1,6 +1,20 @@
 // 当前版本号 - 每次发布时自动更新
 const CURRENT_VERSION = 'V1.0.22';
 
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('toast--show');
+    clearTimeout(toast._timeout);
+    toast._timeout = setTimeout(() => toast.classList.remove('toast--show'), 2000);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
 
@@ -1120,14 +1134,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     await saveBookmarks();
                 }
                 else if (item.action === 'share') {
-                    if (navigator.share) {
-                        navigator.share({ title: bookmark.title, url: bookmark.url }).catch(() => {});
-                    } else if (navigator.clipboard) {
+                    if (navigator.clipboard) {
                         await navigator.clipboard.writeText(bookmark.url);
-                        alert('链接已复制到剪贴板：' + bookmark.url);
                     } else {
-                        prompt('复制链接：', bookmark.url);
+                        const ta = document.createElement('textarea');
+                        ta.value = bookmark.url;
+                        ta.style.position = 'fixed';
+                        ta.style.left = '-9999px';
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
                     }
+                    showToast('已复制到剪贴板');
                 }
                 else if (item.action === 'add-below') {
                     const res = await showInputModal('在此下方添加链接', '标题', '链接地址（https://...）');
