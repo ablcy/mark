@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.33';
+const CURRENT_VERSION = 'V1.0.34';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 搜索功能
+    // 搜索功能（始终全局搜索）
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             const keyword = searchInput.value.trim().toLowerCase();
@@ -146,22 +146,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            // 在当前视图范围内搜索
-            const source = selectedFolder
-                ? (selectedFolder.children || [])
-                : getAllBookmarks(bookmarks);
-            const filtered = source.filter(item =>
+            // 全局搜索：遍历所有书签和文件夹
+            const allItems = getAllBookmarks(bookmarks);
+            const filtered = allItems.filter(item =>
                 item.type === 'bookmark' && (
                     item.title.toLowerCase().includes(keyword) ||
                     item.url.toLowerCase().includes(keyword)
                 )
             );
-            // 同时搜索文件夹名称
-            const matchedFolders = source.filter(item =>
+            // 同时搜索文件夹名称（全局）
+            const matchedFolders = bookmarks.filter(item =>
                 item.type === 'folder' && item.name.toLowerCase().includes(keyword)
             );
             const allFiltered = [...matchedFolders, ...filtered];
-            selectedFolderName.textContent = `搜索："${searchInput.value.trim()}"`;
+            selectedFolderName.textContent = `全局搜索："${searchInput.value.trim()}"`;
             updateBookmarksList(allFiltered, keyword);
         });
     }
