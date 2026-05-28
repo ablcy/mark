@@ -33,7 +33,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                <span class="auth-version">V1.0.18</span>
+                <span class="auth-version">V1.0.19</span>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
             <header class="top-nav">
                 <div class="nav-left">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge">V1.0.18</span>
+                    <span id="version-display" class="version-badge">V1.0.19</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
@@ -79,6 +79,7 @@
                                     <button id="menu-sync-btn" class="dropdown-item">同步</button>
                                     <div class="dropdown-divider"></div>
                                     <button id="menu-rename-btn" class="dropdown-item">修改名称</button>
+                                    <button id="menu-flatten-btn" class="dropdown-item">去层</button>
                                     <div class="dropdown-divider"></div>
                                     <button id="menu-delete-btn" class="dropdown-item dropdown-item--danger">删除收藏夹</button>
                                 </div>
@@ -100,6 +101,14 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <details open>
+                        <summary>V1.0.19-202605281600 - 2026年5月28日</summary>
+                        <ul>
+                            <li>三点菜单新增"去层"功能</li>
+                            <li>去层：将选中文件夹的所有子内容提升到上一级，删除该文件夹壳</li>
+                            <li>例：文件夹A→B→C，去层B后变为A直接包含C</li>
+                        </ul>
+                    </details>
                     <details open>
                         <summary>V1.0.18-202605280200 - 2026年5月28日</summary>
                         <ul>

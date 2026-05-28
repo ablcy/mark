@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.18';
+const CURRENT_VERSION = 'V1.0.19';
 
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
@@ -199,6 +199,56 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFolderName.textContent = selectedFolder.name;
             // 刷新内容区
             updateBookmarksList(selectedFolder.children || []);
+        });
+    }
+
+    // 菜单-去层（把选中文件夹的所有子内容提升到父文件夹，然后删除该文件夹壳）
+    const menuFlattenBtn = document.getElementById('menu-flatten-btn');
+    if (menuFlattenBtn) {
+        menuFlattenBtn.addEventListener('click', async () => {
+            moreMenuDropdown.classList.add('hidden');
+            if (!selectedFolder) {
+                alert('请在左侧选中要去层的文件夹！');
+                return;
+            }
+            if (selectedFolder.name === '根文件夹') {
+                alert('根文件夹不能去层！');
+                return;
+            }
+
+            // 找到父级数组（selectedFolder 在哪个 children 里）
+            function findParentArray(items, target) {
+                for (const item of items) {
+                    if (item.type === 'folder' && item.children) {
+                        if (item.children.includes(target)) return item.children;
+                        const found = findParentArray(item.children, target);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+
+            const parentArray = findParentArray(bookmarks, selectedFolder)
+                || (bookmarks.includes(selectedFolder) ? bookmarks : null);
+
+            if (!parentArray) {
+                alert('找不到父文件夹，操作失败！');
+                return;
+            }
+
+            const folderName = selectedFolder.name;
+            if (!confirm(`确定要去层文件夹「${folderName}」？\n其所有子内容将提升到上一级，文件夹本身将被删除。`)) return;
+
+            // 找到 selectedFolder 在 parentArray 中的位置
+            const idx = parentArray.indexOf(selectedFolder);
+            // 把 selectedFolder 的 children 展开插入到同一位置
+            const children = selectedFolder.children || [];
+            parentArray.splice(idx, 1, ...children);
+
+            await saveBookmarks();
+            renderFolderTree();
+            // 去层后选中父文件夹或回到根文件夹
+            selectDefaultFolder();
         });
     }
 
