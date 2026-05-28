@@ -119,6 +119,13 @@ async function initDatabase() {
             } catch (e) {
                 // 列已存在则忽略
             }
+
+            // 迁移：清理脏数据，把 mark.lcy.app/xxx 改为纯后缀
+            try {
+                await pool.query("UPDATE shares SET domain = regexp_replace(domain, '^mark\\.lcy\\.app/', '') WHERE domain LIKE 'mark.lcy.app/%'");
+            } catch (e) {
+                // 忽略迁移错误
+            }
             
             console.log('Database tables initialized successfully');
             return true;
@@ -526,7 +533,7 @@ app.get('/:code', async (req, res) => {
         const share = result.rows[0];
         const items = typeof share.content === 'string' ? JSON.parse(share.content) : share.content;
         // 渲染分享查看页面
-        const html = renderSharePage(share.title, items, code, share.domain || 'mark.lcy.app');
+        const html = renderSharePage(share.title, items, code, share.domain || '');
         res.send(html);
     } catch (err) {
         console.error('Share view error:', err);
@@ -600,7 +607,7 @@ function renderSharePage(title, items, code, domain) {
     <div class="share-list">
         ${itemsHtml || '<div class="share-empty">暂无内容</div>'}
     </div>
-    <div class="share-footer">${escapeHtml(domain)}/${escapeHtml(code)} &middot; Powered by Mark</div>
+    <div class="share-footer">mark.lcy.app/${domain ? escapeHtml(domain) + '/' : ''}${escapeHtml(code)} &middot; Powered by Mark</div>
 </body>
 </html>`;
 }

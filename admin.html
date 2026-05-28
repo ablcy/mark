@@ -647,7 +647,8 @@
                     data.shares.forEach(s => {
                         const date = new Date(s.created_at);
                         const formattedDate = date.toLocaleString('zh-CN');
-                        const fullUrl = `https://${escapeHtml(s.domain || 'mark.lcy.app')}/${escapeHtml(s.code)}`;
+                        const domainSuffix = (s.domain || 'mark.lcy.app').replace(/^mark\.ly\.app\//i, '') || '';
+                        const fullUrl = `https://mark.lcy.app/${domainSuffix ? domainSuffix + '/' : ''}${escapeHtml(s.code)}`;
                         html += `
                             <tr>
                                 <td>${formattedDate}</td>
@@ -656,7 +657,7 @@
                                 <td><span class="share-domain-text">${escapeHtml(s.domain || 'mark.lcy.app')}</span></td>
                                 <td><a href="${fullUrl}" target="_blank" style="color:#667eea;font-size:13px;">${fullUrl}</a></td>
                                 <td>
-                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(s.domain || 'mark.lcy.app')}')">改域名</button>
+                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(domainSuffix)}')">改域名</button>
                                     <button class="action-btn delete-btn" onclick="deleteShare('${s.id}', '${escapeHtml(s.code)}')">删除</button>
                                 </td>
                             </tr>
@@ -673,14 +674,12 @@
         }
 
         function editShareDomain(id, currentDomain) {
-            const suffix = (currentDomain || '').replace(/^mark\.ly\.app\//i, '') || '';
-            const newSuffix = prompt('mark.lcy.app/', suffix);
+            const newSuffix = prompt('mark.lcy.app/', currentDomain);
             if (newSuffix === null || newSuffix.trim() === '') return;
-            const newDomain = 'mark.lcy.app/' + newSuffix.trim();
             fetch(`/api/admin/shares/${id}/domain`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ domain: newDomain })
+                body: JSON.stringify({ domain: newSuffix.trim() })
             }).then(r => r.json()).then(data => {
                 if (data.success) {
                     loadShares();
