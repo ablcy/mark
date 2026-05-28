@@ -700,13 +700,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         html += `
                         <div class="share-item">
                             <div class="share-item-info">
-                                <div class="share-item-title">${escapeHtml(s.title || '未命名')}</div>
+                                <div class="share-item-title">${s.title || '未命名'}</div>
                                 <div class="share-item-url">${fullUrl}</div>
                                 <div class="share-item-time">${formattedDate}</div>
                             </div>
                             <div class="share-item-actions">
                                 <button class="share-item-btn" onclick="navigator.clipboard.writeText('${fullUrl}');showToast('已复制：${fullUrl}')">复制</button>
-                                <button class="share-item-btn share-item-btn--danger" onclick="deleteMyShare(${s.id}, '${escapeHtml(s.code)}')">删除</button>
+                                <button class="share-item-btn share-item-btn--danger" onclick="deleteMyShare(${s.id}, '${s.code}')">删除</button>
                             </div>
                         </div>`;
                     });
