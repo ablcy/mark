@@ -239,9 +239,9 @@ body {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    height: calc(100vh - 56px);
     position: sticky;
     top: 0;
-    height: 100%;
 }
 
 .sidebar-title {
