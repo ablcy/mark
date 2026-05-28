@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.0.34';
+const CURRENT_VERSION = 'V1.0.35';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -56,6 +56,183 @@ document.addEventListener('DOMContentLoaded', () => {
     const sharesList = document.getElementById('shares-list');
     const searchInput = document.querySelector('.search-input');
     const contentActions = document.getElementById('content-actions');
+    const langBtn = document.getElementById('lang-btn');
+    const themeBtn = document.getElementById('theme-btn');
+
+    // ====== 语言与主题切换 ======
+    let currentLang = localStorage.getItem('mark_lang') || 'zh';
+    let currentTheme = localStorage.getItem('mark_theme') || 'light';
+
+    const i18n = {
+        zh: {
+            searchPlaceholder: '搜索书签...',
+            login: '登录',
+            register: '注册',
+            loginBtn: '登录',
+            registerBtn: '注册',
+            username: '用户名',
+            password: '密码',
+            confirmPassword: '确认密码',
+            multiSelect: '多选',
+            shares: '短链接',
+            admin: '管理',
+            logout: '退出',
+            rootFolder: '根文件夹',
+            allBookmarks: '全部书签',
+            addBookmark: '添加链接',
+            addSubfolder: '新建子文件夹',
+            addSibling: '新建同级文件夹',
+            import: '导入',
+            export: '导出',
+            rename: '修改名称',
+            flatten: '去层',
+            deleteFolder: '删除收藏夹',
+            sync: '同步',
+            selectAll: '全选',
+            selectedCount: '已选',
+            delete: '删除',
+            move: '移动',
+            share: '分享',
+            cancel: '取消',
+            noContent: '暂无内容',
+            searchPrefix: '全局搜索',
+            changelogTitle: '更新日志',
+            shareTitle: '短链接管理',
+            loading: '加载中...',
+            versionBadgeTitle: '点击查看更新日志'
+        },
+        en: {
+            searchPlaceholder: 'Search bookmarks...',
+            login: 'Login',
+            register: 'Register',
+            loginBtn: 'Login',
+            registerBtn: 'Register',
+            username: 'Username',
+            password: 'Password',
+            confirmPassword: 'Confirm Password',
+            multiSelect: 'Multi',
+            shares: 'Shares',
+            admin: 'Admin',
+            logout: 'Logout',
+            rootFolder: 'Root',
+            allBookmarks: 'All Bookmarks',
+            addBookmark: 'Add Link',
+            addSubfolder: 'New Subfolder',
+            addSibling: 'New Sibling',
+            import: 'Import',
+            export: 'Export',
+            rename: 'Rename',
+            flatten: 'Flatten',
+            deleteFolder: 'Delete Folder',
+            sync: 'Sync',
+            selectAll: 'Select All',
+            selectedCount: 'Selected',
+            delete: 'Delete',
+            move: 'Move',
+            share: 'Share',
+            cancel: 'Cancel',
+            noContent: 'No content',
+            searchPrefix: 'Search',
+            changelogTitle: 'Changelog',
+            shareTitle: 'Share Links',
+            loading: 'Loading...',
+            versionBadgeTitle: 'Click to view changelog'
+        }
+    };
+
+    function applyLanguage() {
+        const t = i18n[currentLang];
+        if (searchInput) searchInput.placeholder = t.searchPlaceholder;
+        if (loginTab) loginTab.textContent = t.login;
+        if (registerTab) registerTab.textContent = t.register;
+        if (loginForm) loginForm.querySelector('button').textContent = t.loginBtn;
+        if (registerForm) registerForm.querySelector('button').textContent = t.registerBtn;
+        if (loginForm) loginForm.querySelector('input[type="text"]').placeholder = t.username;
+        if (loginForm) loginForm.querySelector('input[type="password"]').placeholder = t.password;
+        if (registerForm) {
+            const regInputs = registerForm.querySelectorAll('input');
+            if (regInputs[0]) regInputs[0].placeholder = t.username;
+            if (regInputs[1]) regInputs[1].placeholder = t.password;
+            if (regInputs[2]) regInputs[2].placeholder = t.confirmPassword;
+        }
+        if (langBtn) langBtn.textContent = currentLang === 'zh' ? '中' : 'En';
+        if (multiSelectNavBtn) multiSelectNavBtn.textContent = t.multiSelect;
+        if (sharesBtn) sharesBtn.textContent = t.shares;
+        if (adminBtn) adminBtn.textContent = t.admin;
+        if (logoutBtn) logoutBtn.textContent = t.logout;
+        if (versionDisplay) versionDisplay.title = t.versionBadgeTitle;
+        // 侧边栏标题
+        const sidebarTitle = document.querySelector('.sidebar-title');
+        if (sidebarTitle) {
+            sidebarTitle.innerHTML = `<span class="folder-icon">📂</span>${t.rootFolder}`;
+        }
+        // 菜单项
+        const menuAddBookmark = document.getElementById('menu-add-bookmark-btn');
+        const menuAddSubfolder = document.getElementById('menu-add-subfolder-btn');
+        const menuAddSibling = document.getElementById('menu-add-sibling-btn');
+        const menuImport = document.getElementById('menu-import-btn');
+        const menuExport = document.getElementById('menu-export-btn');
+        const menuRename = document.getElementById('menu-rename-btn');
+        const menuFlatten = document.getElementById('menu-flatten-btn');
+        const menuDelete = document.getElementById('menu-delete-btn');
+        const menuSync = document.getElementById('menu-sync-btn');
+        if (menuAddBookmark) menuAddBookmark.textContent = t.addBookmark;
+        if (menuAddSubfolder) menuAddSubfolder.textContent = t.addSubfolder;
+        if (menuAddSibling) menuAddSibling.textContent = t.addSibling;
+        if (menuImport) menuImport.textContent = t.import;
+        if (menuExport) menuExport.textContent = t.export;
+        if (menuRename) menuRename.textContent = t.rename;
+        if (menuFlatten) menuFlatten.textContent = t.flatten;
+        if (menuDelete) menuDelete.textContent = t.deleteFolder;
+        if (menuSync) menuSync.textContent = t.sync;
+        // 多选栏
+        const selectAllLabel = document.querySelector('.multi-select-all-label');
+        if (selectAllLabel) {
+            const cb = selectAllLabel.querySelector('input');
+            selectAllLabel.innerHTML = '';
+            if (cb) selectAllLabel.appendChild(cb);
+            selectAllLabel.appendChild(document.createTextNode(' ' + t.selectAll));
+        }
+        if (multiDeleteBtn) multiDeleteBtn.textContent = t.delete;
+        if (multiMoveBtn) multiMoveBtn.textContent = t.move;
+        if (multiShareBtn) multiShareBtn.textContent = t.share;
+        if (multiCancelBtn) multiCancelBtn.textContent = t.cancel;
+        // 更新当前显示
+        if (!searchInput || !searchInput.value.trim()) {
+            if (selectedFolder) {
+                selectedFolderName.textContent = selectedFolder.name;
+            } else {
+                selectedFolderName.textContent = t.allBookmarks;
+            }
+        }
+    }
+
+    function applyTheme() {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        if (themeBtn) {
+            const isLight = currentTheme === 'light';
+            themeBtn.innerHTML = isLight
+                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            themeBtn.title = isLight ? 'Switch to dark' : 'Switch to light';
+        }
+    }
+
+    if (langBtn) {
+        langBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            localStorage.setItem('mark_lang', currentLang);
+            applyLanguage();
+        });
+    }
+
+    if (themeBtn) {
+        themeBtn.addEventListener('click', () => {
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('mark_theme', currentTheme);
+            applyTheme();
+        });
+    }
 
     // 多选操作栏
     const multiSelectBar = document.getElementById('multi-select-bar');
@@ -280,6 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuExportBtn = document.getElementById('menu-export-btn');
     const menuRenameBtn = document.getElementById('menu-rename-btn');
     const multiSelectNavBtn = document.getElementById('multi-select-nav-btn');
+
+    // 初始化语言和主题
+    applyLanguage();
+    applyTheme();
 
     if (moreMenuBtn && moreMenuDropdown) {
         // 点击三点按钮切换菜单
@@ -1559,14 +1740,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const urlObj = new URL(bookmark.url);
             const googleFavicon = 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
             const fallbackFavicon = urlObj.origin + '/favicon.ico';
+            const defaultSvg = favicon.src; // 保存默认 SVG
             favicon.onerror = function() {
                 if (favicon.src === googleFavicon) {
                     favicon.src = fallbackFavicon;
+                } else {
+                    // fallback 也失败，显示空白
+                    favicon.src = '';
+                    favicon.style.visibility = 'hidden';
                 }
-                favicon.onerror = null;
             };
             favicon.src = googleFavicon;
-        } catch (e) {}
+        } catch (e) {
+            favicon.style.visibility = 'hidden';
+        }
 
         const info = document.createElement('div');
         info.className = 'bookmark-info';

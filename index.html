@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.0.34</span>
+                            <span class="auth-version">V1.0.35</span>
             </div>
         </div>
 
@@ -45,12 +45,16 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.0.34</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.0.35</span>
                 </div>
                 <div class="nav-center">
                     <input type="text" class="search-input" placeholder="搜索书签...">
                 </div>
                 <div class="nav-right">
+                    <button id="lang-btn" class="nav-btn" title="切换语言">中</button>
+                    <button id="theme-btn" class="nav-btn" title="切换主题">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    </button>
                     <button id="multi-select-nav-btn" class="nav-btn">多选</button>
                     <button id="shares-btn" class="nav-btn">短链接</button>
                     <button id="admin-btn" class="nav-btn">管理</button>
@@ -118,6 +122,14 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.0.35 - 2026年5月28日</h3>
+                        <ul>
+                            <li>新增中英文切换（导航栏"中/En"按钮，默认中文）</li>
+                            <li>新增浅色/暗色主题切换（导航栏日月图标，默认浅色）</li>
+                            <li>修复 favicon 加载失败时显示为空白</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.0.34 - 2026年5月28日</h3>
                         <ul>
