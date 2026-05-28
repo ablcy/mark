@@ -1104,14 +1104,18 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
+[data-theme="dark"] .nav-left .logo {
+    color: var(--text-primary);
+}
+
 [data-theme="dark"] .nav-btn {
-    color: var(--text-secondary);
+    background: var(--bg-card);
+    color: var(--text-primary);
     border-color: var(--border-color);
 }
 
 [data-theme="dark"] .nav-btn:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
 }
 
 [data-theme="dark"] .search-input {
@@ -1142,7 +1146,7 @@ body {
 }
 
 [data-theme="dark"] .folder-toggle {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .folder-name {
@@ -1197,11 +1201,11 @@ body {
 }
 
 [data-theme="dark"] .bookmark-info p {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .bookmark-menu-btn {
-    color: var(--text-muted);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .bookmark-menu-btn:hover {
@@ -1250,7 +1254,7 @@ body {
 }
 
 [data-theme="dark"] .modal-content .close {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .modal-content .close:hover {
@@ -1267,7 +1271,7 @@ body {
 }
 
 [data-theme="dark"] .auth-tabs button {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .auth-tabs button.active {
@@ -1295,7 +1299,7 @@ body {
 
 [data-theme="dark"] .version-badge {
     background: var(--bg-hover);
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] #main-footer {
@@ -1318,7 +1322,7 @@ body {
 }
 
 [data-theme="dark"] .changelog-entry li {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .input-modal-content input {
@@ -1329,7 +1333,7 @@ body {
 
 [data-theme="dark"] .input-modal-btn--cancel {
     background: var(--bg-hover);
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .shares-modal-content h2 {
@@ -1350,7 +1354,7 @@ body {
 
 [data-theme="dark"] .share-item-btn {
     background: var(--bg-hover);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     border-color: var(--border-color);
 }
 
@@ -1372,7 +1376,7 @@ body {
 }
 
 [data-theme="dark"] .content-folder-count {
-    color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .folder-picker-tree {
@@ -1395,11 +1399,10 @@ body {
 
 [data-theme="dark"] .action-btn {
     background: var(--bg-card);
-    color: var(--text-secondary);
+    color: var(--text-primary);
     border-color: var(--border-color);
 }
 
 [data-theme="dark"] .action-btn:hover {
     background: var(--bg-hover);
-    color: var(--text-primary);
 }
