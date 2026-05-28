@@ -706,6 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             </div>
                             <div class="share-item-actions">
                                 <button class="share-item-btn" onclick="navigator.clipboard.writeText('${fullUrl}');showToast('已复制：${fullUrl}')">复制</button>
+                                <button class="share-item-btn" onclick="editMyShare(${s.id}, '${s.code}')">改短码</button>
                                 <button class="share-item-btn share-item-btn--danger" onclick="deleteMyShare(${s.id}, '${s.code}')">删除</button>
                             </div>
                         </div>`;
@@ -732,6 +733,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadMyShares();
             } else {
                 alert(data.error || '删除失败');
+            }
+        } catch (err) {
+            alert('网络错误');
+        }
+    }
+
+    // 修改短码
+    async function editMyShare(id, currentCode) {
+        const newCode = prompt('mark.lcy.app/', currentCode);
+        if (newCode === null || newCode.trim() === '' || newCode.trim() === currentCode) return;
+        try {
+            const res = await fetch(`/api/admin/shares/${id}/domain`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain: newCode.trim() })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadMyShares();
+            } else {
+                alert(data.error || '修改失败');
             }
         } catch (err) {
             alert('网络错误');
