@@ -107,10 +107,18 @@ async function initDatabase() {
                     code VARCHAR(50) UNIQUE NOT NULL,
                     title VARCHAR(200),
                     content JSONB NOT NULL DEFAULT '[]',
+                    domain VARCHAR(255) DEFAULT 'mark.lcy.app',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             `);
             console.log('Shares table created or already exists');
+
+            // 迁移：为旧 shares 表添加 domain 列
+            try {
+                await pool.query("ALTER TABLE shares ADD COLUMN IF NOT EXISTS domain VARCHAR(255) DEFAULT 'mark.lcy.app'");
+            } catch (e) {
+                // 列已存在则忽略
+            }
             
             console.log('Database tables initialized successfully');
             return true;
@@ -610,6 +618,52 @@ function countItems(children) {
     }
     return count;
 }
+
+// ====== 管理员短链接管理 ======
+
+// 获取所有短链接
+app.get('/api/admin/shares', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT s.id, s.code, s.title, s.domain, s.created_at, u.username
+            FROM shares s
+            LEFT JOIN users u ON s.user_id = u.id
+            ORDER BY s.created_at DESC
+        `);
+        res.json({ success: true, shares: result.rows });
+    } catch (err) {
+        console.error('Get shares error:', err);
+        res.status(500).json({ error: '获取短链接列表失败' });
+    }
+});
+
+// 修改短链接域名
+app.post('/api/admin/shares/:id/domain', async (req, res) => {
+    const { id } = req.params;
+    const { domain } = req.body;
+    if (!domain || domain.trim() === '') {
+        return res.status(400).json({ error: '域名不能为空' });
+    }
+    try {
+        await pool.query('UPDATE shares SET domain = $1 WHERE id = $2', [domain.trim(), id]);
+        res.json({ success: true, domain: domain.trim() });
+    } catch (err) {
+        console.error('Update share domain error:', err);
+        res.status(500).json({ error: '更新域名失败' });
+    }
+});
+
+// 删除短链接
+app.delete('/api/admin/shares/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM shares WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete share error:', err);
+        res.status(500).json({ error: '删除短链接失败' });
+    }
+});
 
 app.use((err, req, res, next) => {
     console.error('Unhandled error:', err);

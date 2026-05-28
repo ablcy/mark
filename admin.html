@@ -337,6 +337,18 @@
                 <div class="loading">加载中...</div>
             </div>
         </div>
+
+        <div class="table-container" style="margin-top:20px;">
+            <div class="table-header">
+                <h2>短链接管理</h2>
+                <div class="header-actions">
+                    <button class="refresh-btn" onclick="loadShares()">刷新</button>
+                </div>
+            </div>
+            <div id="sharesContainer">
+                <div class="loading">加载中...</div>
+            </div>
+        </div>
     </div>
 
     <!-- 修改管理员密码模态框 -->
@@ -372,6 +384,7 @@
                     document.body.style.alignItems = 'flex-start';
                     loadUsers();
                     loadRegLimit();
+                    loadShares();
                 } else {
                     errorEl.textContent = data.error || '密码错误';
                 }
@@ -602,6 +615,88 @@
                     alert('限额已更新');
                 } else {
                     alert(data.error || '更新失败');
+                }
+            } catch (err) {
+                alert('网络错误');
+            }
+        }
+
+        // ====== 短链接管理 ======
+
+        async function loadShares() {
+            const container = document.getElementById('sharesContainer');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+            try {
+                const res = await fetch('/api/admin/shares');
+                const data = await res.json();
+                if (data.success && data.shares.length > 0) {
+                    let html = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>创建时间</th>
+                                    <th>用户</th>
+                                    <th>短码</th>
+                                    <th>域名</th>
+                                    <th>完整链接</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    data.shares.forEach(s => {
+                        const date = new Date(s.created_at);
+                        const formattedDate = date.toLocaleString('zh-CN');
+                        const fullUrl = `https://${escapeHtml(s.domain || 'mark.lcy.app')}/${escapeHtml(s.code)}`;
+                        html += `
+                            <tr>
+                                <td>${formattedDate}</td>
+                                <td>${escapeHtml(s.username || '已删除')}</td>
+                                <td><code>${escapeHtml(s.code)}</code></td>
+                                <td><span class="share-domain-text">${escapeHtml(s.domain || 'mark.lcy.app')}</span></td>
+                                <td><a href="${fullUrl}" target="_blank" style="color:#667eea;font-size:13px;">${fullUrl}</a></td>
+                                <td>
+                                    <button class="action-btn reset-pwd-btn" onclick="editShareDomain('${s.id}', '${escapeHtml(s.domain || 'mark.lcy.app')}')">改域名</button>
+                                    <button class="action-btn delete-btn" onclick="deleteShare('${s.id}', '${escapeHtml(s.code)}')">删除</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="empty-state">暂无短链接</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        function editShareDomain(id, currentDomain) {
+            const newDomain = prompt('请输入新域名（不含 https:// 和路径）：', currentDomain);
+            if (!newDomain || newDomain.trim() === '' || newDomain.trim() === currentDomain) return;
+            fetch(`/api/admin/shares/${id}/domain`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain: newDomain.trim() })
+            }).then(r => r.json()).then(data => {
+                if (data.success) {
+                    loadShares();
+                } else {
+                    alert(data.error || '更新失败');
+                }
+            }).catch(() => alert('网络错误'));
+        }
+
+        async function deleteShare(id, code) {
+            if (!confirm(`确定要删除短链接 "${code}" 吗？`)) return;
+            try {
+                const res = await fetch(`/api/admin/shares/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    loadShares();
+                } else {
+                    alert(data.error || '删除失败');
                 }
             } catch (err) {
                 alert('网络错误');
