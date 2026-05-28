@@ -738,6 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('网络错误');
         }
     }
+    window.deleteMyShare = deleteMyShare;
 
     // 修改短码
     async function editMyShare(id, currentCode) {
@@ -759,6 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('网络错误');
         }
     }
+    window.editMyShare = editMyShare;
 
     // 辅助函数
     function showAuthContainer() {
