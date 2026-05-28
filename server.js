@@ -119,13 +119,6 @@ async function initDatabase() {
             } catch (e) {
                 // 列已存在则忽略
             }
-
-            // 迁移：清理脏数据，把 mark.lcy.app/xxx 或 mark.lcy.app 改为 NULL
-            try {
-                await pool.query("UPDATE shares SET domain = NULL WHERE domain LIKE 'mark.lcy.app%'");
-            } catch (e) {
-                // 忽略迁移错误
-            }
             
             console.log('Database tables initialized successfully');
             return true;
@@ -686,6 +679,13 @@ async function startServer() {
     if (dbInitialized) {
         console.log('Database connection successful');
         await loadAdminPassword();
+        // 每次启动清理 shares 脏数据
+        try {
+            await pool.query("UPDATE shares SET domain = NULL WHERE domain LIKE 'mark.lcy.app%'");
+            console.log('Cleaned share domain data');
+        } catch (e) {
+            // 忽略
+        }
     } else {
         console.log('Database connection failed, server will start anyway');
     }
