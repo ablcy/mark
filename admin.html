@@ -272,9 +272,88 @@
             color: white;
         }
 
-        @media (max-width: 600px) {
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .auth-panel {
+                max-width: 100%;
+                border-radius: 0;
+                padding: 32px 20px;
+                min-height: 100vh;
+            }
+
+            .container {
+                padding: 20px 12px;
+            }
+
+            header h1 {
+                font-size: 1.6rem;
+            }
+
+            header .toolbar {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .toolbar .btn-sm {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+
+            .stat-card {
+                padding: 14px 10px;
+            }
+
+            .stat-card .number {
+                font-size: 1.8rem;
+            }
+
+            .table-header {
+                padding: 12px 14px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .table-header h2 {
+                font-size: 0.95rem;
+            }
+
             .table-container {
                 overflow-x: auto;
+            }
+
+            table {
+                min-width: 480px;
+            }
+
+            th, td {
+                padding: 8px 10px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+
+            .action-btn {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .table-container > div[style*="padding"] {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -543,8 +622,8 @@
                             <thead>
                                 <tr>
                                     <th style="width:40px;"></th>
+                                    <th>注册时间</th>
                                     <th>用户名</th>
-                                    <th>创建时间</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -557,8 +636,8 @@
                         html += `
                             <tr>
                                 <td><input type="checkbox" class="user-checkbox" value="${user.id}" onclick="toggleUser('${user.id}', this.checked)"></td>
-                                <td>${escapeHtml(user.username)}</td>
                                 <td>${formattedDate}</td>
+                                <td>${escapeHtml(user.username)}</td>
                                 <td>
                                     <button class="action-btn reset-pwd-btn" onclick="resetUserPassword('${user.id}', '${escapeHtml(user.username)}')">修改密码</button>
                                     <button class="action-btn delete-btn" onclick="deleteUser('${user.id}', '${escapeHtml(user.username)}')">删除</button>
