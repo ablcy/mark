@@ -119,6 +119,15 @@ async function initDatabase() {
             } catch (e) {
                 // 列已存在则忽略
             }
+
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS user_preferences (
+                    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                    preferences JSONB NOT NULL DEFAULT '{}',
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+            console.log('User preferences table created or already exists');
             
             console.log('Database tables initialized successfully');
             return true;
@@ -700,6 +709,54 @@ app.post('/api/admin/shares/:id/domain', async (req, res) => {
 
 // 删除短链接
 app.delete('/api/admin/shares/:id', async (req, res) => {
+
+// 获取用户偏好
+app.get('/api/preferences/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const result = await pool.query(
+            'SELECT preferences FROM user_preferences WHERE user_id = $1',
+            [userId]
+        );
+        const preferences = result.rows.length > 0 ? result.rows[0].preferences : {};
+        res.json({ success: true, preferences });
+    } catch (err) {
+        console.error('Get preferences error:', err);
+        res.status(500).json({ error: '获取偏好失败' });
+    }
+});
+
+// 保存用户偏好
+app.post('/api/save-preference', async (req, res) => {
+    const { userId, key, value } = req.body;
+    if (!userId || !key) {
+        return res.status(400).json({ error: '参数不完整' });
+    }
+    try {
+        const result = await pool.query(
+            'SELECT preferences FROM user_preferences WHERE user_id = $1',
+            [userId]
+        );
+        let preferences = result.rows.length > 0 ? result.rows[0].preferences : {};
+        if (value === undefined || value === null) {
+            delete preferences[key];
+        } else {
+            preferences[key] = value;
+        }
+        await pool.query(
+            `INSERT INTO user_preferences (user_id, preferences, updated_at)
+             VALUES ($1, $2, CURRENT_TIMESTAMP)
+             ON CONFLICT (user_id)
+             DO UPDATE SET preferences = $2, updated_at = CURRENT_TIMESTAMP`,
+            [userId, JSON.stringify(preferences)]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Save preference error:', err);
+        res.status(500).json({ error: '保存偏好失败' });
+    }
+});
+
     const { id } = req.params;
     try {
         await pool.query('DELETE FROM shares WHERE id = $1', [id]);

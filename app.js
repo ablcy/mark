@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.0';
+const CURRENT_VERSION = 'V1.2.2';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const sharesModalClose = document.getElementById('shares-modal-close');
     const sharesList = document.getElementById('shares-list');
     const searchInput = document.querySelector('.search-input');
+    const searchModeBtn = document.getElementById('search-mode-btn');
     const contentActions = document.getElementById('content-actions');
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
@@ -62,6 +63,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
     let currentTheme = localStorage.getItem('mark_theme') || 'light';
+    let searchMode = 'bookmark';    // 'bookmark' | 'bing'
+
+    // 偏好管理
+    async function loadPreferences() {
+        if (!currentUserId) return;
+        try {
+            const resp = await fetch(`${API_URL}/preferences/${currentUserId}`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.success && data.preferences) {
+                if (data.preferences.searchMode) {
+                    searchMode = data.preferences.searchMode;
+                    updateSearchModeUI();
+                }
+            }
+        } catch (e) {
+            console.log('加载偏好失败');
+        }
+    }
+
+    async function savePreference(key, value) {
+        if (!currentUserId) return;
+        try {
+            await fetch(`${API_URL}/save-preference`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId, key, value })
+            });
+        } catch (e) {
+            console.log('保存偏好失败');
+        }
+    }
+
+    function updateSearchModeUI() {
+        const t = i18n[currentLang];
+        if (searchMode === 'bing') {
+            searchModeBtn.textContent = 'Bing';
+            searchModeBtn.classList.add('bing-mode');
+            searchInput.placeholder = '搜索 Bing...';
+        } else {
+            searchModeBtn.textContent = '书签';
+            searchModeBtn.classList.remove('bing-mode');
+            searchInput.placeholder = t.searchPlaceholder;
+        }
+    }
 
     const i18n = {
         zh: {
@@ -144,7 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applyLanguage() {
         const t = i18n[currentLang];
-        if (searchInput) searchInput.placeholder = t.searchPlaceholder;
+        if (searchInput) {
+            if (searchMode !== 'bing') {
+                searchInput.placeholder = t.searchPlaceholder;
+            }
+        }
         if (loginTab) loginTab.textContent = t.login;
         if (registerTab) registerTab.textContent = t.register;
         if (loginForm) loginForm.querySelector('button').textContent = t.loginBtn;
@@ -312,12 +362,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 搜索功能（始终全局搜索）
+    // 搜索模式切换按钮
+    if (searchModeBtn) {
+        searchModeBtn.addEventListener('click', () => {
+            searchMode = searchMode === 'bookmark' ? 'bing' : 'bookmark';
+            updateSearchModeUI();
+            savePreference('searchMode', searchMode);
+            // 切换回书签模式时恢复当前目录显示
+            if (searchMode === 'bookmark') {
+                searchInput.value = '';
+                if (selectedFolder) {
+                    selectedFolderName.textContent = selectedFolder.name;
+                    updateBookmarksList(selectedFolder.children || []);
+                } else {
+                    selectedFolderName.textContent = '根文件夹';
+                    updateBookmarksList(getAllBookmarks(bookmarks));
+                }
+            }
+        });
+    }
+
+    // 搜索功能
     if (searchInput) {
         searchInput.addEventListener('input', () => {
+            if (searchMode === 'bing') return;
             const keyword = searchInput.value.trim().toLowerCase();
             if (!keyword) {
-                // 搜索框为空，恢复当前选中文件夹的显示
                 if (selectedFolder) {
                     selectedFolderName.textContent = selectedFolder.name;
                     updateBookmarksList(selectedFolder.children || []);
@@ -327,7 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             }
-            // 全局搜索：遍历所有书签和文件夹
             const allItems = getAllBookmarks(bookmarks);
             const filtered = allItems.filter(item =>
                 item.type === 'bookmark' && (
@@ -335,13 +404,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.url.toLowerCase().includes(keyword)
                 )
             );
-            // 同时搜索文件夹名称（全局）
             const matchedFolders = bookmarks.filter(item =>
                 item.type === 'folder' && item.name.toLowerCase().includes(keyword)
             );
             const allFiltered = [...matchedFolders, ...filtered];
             selectedFolderName.textContent = `全局搜索："${searchInput.value.trim()}"`;
             updateBookmarksList(allFiltered, keyword);
+        });
+
+        // Enter 键：Bing 模式下跳转搜索
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            const keyword = searchInput.value.trim();
+            if (!keyword) return;
+            if (searchMode === 'bing') {
+                window.open(`https://www.bing.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+            }
         });
     }
 
@@ -781,6 +859,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderFolderTree();
                 // 默认选中收藏夹
                 selectDefaultFolder();
+                // 加载用户偏好（搜索引擎等）
+                loadPreferences();
             } else {
                 alert(data.error || '登录失败');
             }
@@ -2002,6 +2082,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 initDefaultFolder();
                 renderFolderTree();
                 selectDefaultFolder();
+                loadPreferences();
             }).catch(() => {
                 initDefaultFolder();
                 renderFolderTree();
