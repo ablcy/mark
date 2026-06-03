@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.0';
+const CURRENT_VERSION = 'v3.0.1';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -59,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentActions = document.getElementById('content-actions');
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
+    const navMenuBtn = document.getElementById('nav-menu-btn');
+    const navMenuDropdown = document.getElementById('nav-menu-dropdown');
 
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
@@ -264,10 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', currentTheme);
         if (themeBtn) {
             const isLight = currentTheme === 'light';
-            themeBtn.innerHTML = isLight
-                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-            themeBtn.title = isLight ? 'Switch to dark' : 'Switch to light';
+            const svg = isLight
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            themeBtn.innerHTML = svg + ' <span>主题</span>';
+            themeBtn.title = isLight ? '切换暗色主题' : '切换亮色主题';
         }
     }
 
@@ -1161,6 +1164,19 @@ document.addEventListener('DOMContentLoaded', () => {
         sharesModal.addEventListener('click', (e) => {
             if (e.target === sharesModal) {
                 sharesModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // ... 菜单 toggle
+    if (navMenuBtn && navMenuDropdown) {
+        navMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navMenuDropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!navMenuBtn.contains(e.target) && !navMenuDropdown.contains(e.target)) {
+                navMenuDropdown.classList.add('hidden');
             }
         });
     }
