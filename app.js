@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.4';
+const CURRENT_VERSION = 'V1.2.5';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -402,8 +402,33 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSuggestionIdx = -1;
     }
 
+    function isURL(str) {
+        // 带协议的直接识别
+        if (/^https?:\/\//i.test(str)) return true;
+        // 常见域名格式: example.com, www.example.com, example.com/path
+        if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
+        // localhost
+        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
+        return false;
+    }
+
+    function navigateTo(str) {
+        let url = str;
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+        }
+        window.open(url, '_blank');
+        hideSuggestions();
+        searchInput.value = '';
+    }
+
     function doBingSearch(query) {
         if (!query) return;
+        // 检测是否为网址，是则直接跳转
+        if (isURL(query)) {
+            navigateTo(query);
+            return;
+        }
         window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
         hideSuggestions();
         searchInput.value = '';
@@ -432,10 +457,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchBingSuggestions(query) {
         try {
-            const resp = await fetch(`${API_URL}/bing-suggestions?query=${encodeURIComponent(query)}`);
+            // DuckDuckGo 联想 API 支持 CORS，无需代理
+            const resp = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`);
             if (!resp.ok) return [];
             const data = await resp.json();
-            return Array.isArray(data) ? data : [];
+            // DDG 格式: [{"phrase":"..."}, ...]
+            return Array.isArray(data) ? data.map(item => item.phrase) : [];
         } catch {
             return [];
         }
