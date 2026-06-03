@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.5';
+const CURRENT_VERSION = 'V2.0.0';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -59,6 +59,303 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentActions = document.getElementById('content-actions');
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
+
+    // ====== 浏览器入口界面（V2.0.0）======
+    const browserContainer = document.getElementById('browser-container');
+    const browserSearchInput = document.getElementById('browser-search-input');
+    const browserSuggestionsDropdown = document.getElementById('browser-suggestions-dropdown');
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const menuDrawer = document.getElementById('menu-drawer');
+    const menuDrawerOverlay = document.getElementById('menu-drawer-overlay');
+    const menuDrawerPanel = document.getElementById('menu-drawer-panel');
+    const quickAccessGrid = document.getElementById('quick-access-grid');
+    const browserVersionDisplay = document.getElementById('browser-version-display');
+    const browserBackBtn = document.getElementById('browser-back-btn');
+    const authBackBtn = document.getElementById('auth-back-btn');
+
+    if (browserVersionDisplay) {
+        browserVersionDisplay.textContent = CURRENT_VERSION;
+        browserVersionDisplay.addEventListener('click', () => {
+            changelogModal.classList.remove('hidden');
+        });
+    }
+    if (versionDisplay) versionDisplay.textContent = CURRENT_VERSION;
+
+    // ---- 快捷方式存储 ----
+    const SHORTCUTS_KEY = 'mark_shortcuts';
+    function getShortcuts() {
+        try { return JSON.parse(localStorage.getItem(SHORTCUTS_KEY) || '[]'); }
+        catch { return []; }
+    }
+    function saveShortcuts(arr) {
+        localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(arr));
+    }
+
+    // ---- 快捷方式渲染 ----
+    function renderQuickAccess() {
+        if (!quickAccessGrid) return;
+        const shortcuts = getShortcuts();
+        let bookmarkItems = [];
+        if (currentUser && bookmarks.length > 0) {
+            const flat = [];
+            function walk(nodes) {
+                for (const n of nodes) {
+                    if (n.type === 'bookmark') flat.push(n);
+                    if (n.children) walk(n.children);
+                }
+            }
+            walk(bookmarks);
+            bookmarkItems = flat.slice(0, 9);
+        }
+
+        let html = '';
+        bookmarkItems.forEach(bm => {
+            const icon = getFaviconUrl(bm.url);
+            html += `<a class="quick-access-item" href="${escapeUrl(bm.url)}" target="_blank" title="${escapeHtml(bm.title)}">
+                <div class="quick-access-icon-wrap"><img src="${icon}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'qa-fallback\\' style=\\'background:'+stringToColor('${escapeAttr(bm.title)}')+'\\'>'+'${escapeAttr(bm.title)}'.charAt(0).toUpperCase()+'</div>'"></div>
+                <span class="quick-access-name">${escapeHtml(bm.title)}</span>
+            </a>`;
+        });
+        shortcuts.forEach((sc, i) => {
+            html += `<a class="quick-access-item" href="${escapeUrl(sc.url)}" target="_blank" title="${escapeHtml(sc.name)}">
+                <div class="quick-access-icon-wrap"><img src="${sc.favicon || ''}" alt="" loading="lazy" onerror="this.parentElement.innerHTML=this.parentElement.innerHTML"><div class="qa-remove" onclick="event.preventDefault();event.stopPropagation();window._markRemoveShortcut(${i})">&times;</div></div>
+                <span class="quick-access-name">${escapeHtml(sc.name)}</span>
+            </a>`;
+        });
+        html += `<div class="quick-access-item qa-add" id="qa-add-btn" title="添加快捷方式">
+            <div class="quick-access-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+            <span class="quick-access-name">添加快捷方式</span>
+        </div>`;
+
+        quickAccessGrid.innerHTML = html;
+
+        // 绑定添加按钮
+        const addBtn = document.getElementById('qa-add-btn');
+        if (addBtn) addBtn.addEventListener('click', showShortcutModal);
+
+        // 移除函数挂到 window
+        window._markRemoveShortcut = function(i) {
+            const sc = getShortcuts();
+            sc.splice(i, 1);
+            saveShortcuts(sc);
+            renderQuickAccess();
+        };
+    }
+
+    function getFaviconUrl(url) {
+        try { const u = new URL(url); return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`; }
+        catch { return ''; }
+    }
+    function escapeUrl(str) {
+        if (!str) return '#';
+        if (/^https?:\/\//i.test(str)) return str;
+        return 'https://' + str;
+    }
+    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+    function escapeAttr(str) { return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function stringToColor(str) {
+        let hash = 0; for (let i=0;i<str.length;i++) { hash=str.charCodeAt(i)+((hash<<5)-hash); }
+        const h = Math.abs(hash) % 360;
+        return `hsl(${h},55%,48%)`;
+    }
+
+    // ---- 添加快捷方式弹窗 ----
+    function showShortcutModal() {
+        const old = document.querySelector('.qa-modal-overlay');
+        if (old) old.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'qa-modal-overlay';
+        overlay.innerHTML = `<div class="qa-modal-box">
+            <h3>添加快捷方式</h3>
+            <input type="text" id="qa-name" placeholder="名称" autocomplete="off">
+            <input type="text" id="qa-url" placeholder="网址 (例: github.com)" autocomplete="off">
+            <div class="qa-modal-actions">
+                <button class="qa-modal-btn qa-modal-btn--cancel">取消</button>
+                <button class="qa-modal-btn qa-modal-btn--confirm">添加</button>
+            </div>
+        </div>`;
+        document.body.appendChild(overlay);
+
+        const nameInp = overlay.querySelector('#qa-name');
+        const urlInp = overlay.querySelector('#qa-url');
+        overlay.querySelector('.qa-modal-btn--cancel').onclick = ()=>overlay.remove();
+        overlay.onclick = e => { if (e.target===overlay) overlay.remove(); };
+        overlay.querySelector('.qa-modal-btn--confirm').onclick = ()=>{
+            const name = nameInp.value.trim();
+            const rawUrl = urlInp.value.trim();
+            if (!name || !rawUrl) { showToast('名称和网址不能为空'); return; }
+            const fullUrl = escapeUrl(rawUrl);
+            const sc = getShortcuts();
+            sc.push({ name, url: fullUrl, favicon: getFaviconUrl(fullUrl) });
+            saveShortcuts(sc);
+            renderQuickAccess();
+            overlay.remove();
+        };
+        nameInp.focus();
+    }
+
+    // ---- 菜单抽屉 ----
+    function openMenu() {
+        menuDrawer.classList.remove('hidden');
+    }
+    function closeMenu() {
+        menuDrawer.classList.add('hidden');
+    }
+    if (hamburgerBtn) hamburgerBtn.addEventListener('click', openMenu);
+    if (menuDrawerOverlay) menuDrawerOverlay.addEventListener('click', closeMenu);
+
+    // 菜单项点击
+    menuDrawerPanel.querySelectorAll('.menu-drawer-item').forEach(item => {
+        item.addEventListener('click', () => {
+            closeMenu();
+            const action = item.dataset.action;
+            if (action === 'profile') {
+                if (currentUser) {
+                    browserContainer.classList.add('hidden');
+                    mainContainer.classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+                } else {
+                    browserContainer.classList.add('hidden');
+                    mainContainer.classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+                }
+            } else if (action === 'bookmarks') {
+                if (currentUser) {
+                    browserContainer.classList.add('hidden');
+                    authContainer.classList.add('hidden');
+                    mainContainer.classList.remove('hidden');
+                    initDefaultFolder();
+                    renderFolderTree();
+                    selectDefaultFolder();
+                } else {
+                    // 未登录则引导去"我的"
+                    browserContainer.classList.add('hidden');
+                    mainContainer.classList.add('hidden');
+                    authContainer.classList.remove('hidden');
+                    showToast('请先登录');
+                }
+            }
+        });
+    });
+
+    // ---- 返回浏览器 ----
+    function goToBrowser() {
+        browserContainer.classList.remove('hidden');
+        authContainer.classList.add('hidden');
+        mainContainer.classList.add('hidden');
+        renderQuickAccess();
+    }
+    if (browserBackBtn) browserBackBtn.addEventListener('click', goToBrowser);
+    if (authBackBtn) authBackBtn.addEventListener('click', goToBrowser);
+
+    // ---- 浏览器搜索 ----
+    if (browserSearchInput && browserSuggestionsDropdown) {
+        let browserActiveIndex = -1;
+        function hideBrowserSuggestions() {
+            browserSuggestionsDropdown.innerHTML = '';
+            browserSuggestionsDropdown.classList.remove('show');
+            browserActiveIndex = -1;
+        }
+        function showBrowserSuggestions(html) {
+            browserSuggestionsDropdown.innerHTML = html;
+            browserSuggestionsDropdown.classList.add('show');
+            browserActiveIndex = -1;
+        }
+        function getBrowserActiveQuery() {
+            const items = browserSuggestionsDropdown.querySelectorAll('.suggestion-item');
+            for (const it of items) {
+                if (it.classList.contains('active')) return it.dataset.query;
+            }
+            return null;
+        }
+        function updateBrowserActiveSuggestion(delta) {
+            const items = browserSuggestionsDropdown.querySelectorAll('.suggestion-item');
+            if (items.length === 0) return;
+            items.forEach(it => it.classList.remove('active'));
+            browserActiveIndex = (browserActiveIndex + delta + items.length) % items.length;
+            items[browserActiveIndex].classList.add('active');
+            items[browserActiveIndex].scrollIntoView({ block: 'nearest' });
+        }
+
+        // 联想词获取
+        async function fetchBrowserSuggestions(query) {
+            try {
+                const resp = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`);
+                if (!resp.ok) return [];
+                const data = await resp.json();
+                return Array.isArray(data) ? data.map(item => item.phrase) : [];
+            } catch { return []; }
+        }
+
+        // URL 检测
+        function isBrowserURL(str) {
+            if (/^https?:\/\//i.test(str)) return true;
+            if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
+            if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
+            return false;
+        }
+
+        // 搜索/导航
+        function doBrowserSearch(keyword) {
+            if (!keyword) return;
+            if (isBrowserURL(keyword)) {
+                let url = keyword;
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                window.open(url, '_blank');
+            } else {
+                window.open(`https://www.bing.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+            }
+            hideBrowserSuggestions();
+            browserSearchInput.value = '';
+        }
+
+        browserSearchInput.addEventListener('input', async () => {
+            const query = browserSearchInput.value.trim();
+            if (!query) { hideBrowserSuggestions(); return; }
+            const suggestions = await fetchBrowserSuggestions(query);
+            let html = '';
+            if (suggestions.length > 0) {
+                suggestions.forEach(s => {
+                    html += `<div class="suggestion-item" data-query="${escapeAttr(s)}">
+                        <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+                        <span class="suggestion-text">${escapeHtml(s)}</span>
+                    </div>`;
+                });
+            } else {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(query)}">
+                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+                    <span class="suggestion-text">搜索 "${escapeHtml(query)}"</span>
+                </div>`;
+            }
+            showBrowserSuggestions(html);
+        });
+
+        browserSearchInput.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { hideBrowserSuggestions(); return; }
+            if (e.key === 'ArrowDown') { e.preventDefault(); updateBrowserActiveSuggestion(1); return; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); updateBrowserActiveSuggestion(-1); return; }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const active = getBrowserActiveQuery();
+                const keyword = active || browserSearchInput.value.trim();
+                if (keyword) doBrowserSearch(keyword);
+            }
+        });
+
+        browserSuggestionsDropdown.addEventListener('click', e => {
+            const item = e.target.closest('.suggestion-item');
+            if (item && item.dataset.query) {
+                doBrowserSearch(item.dataset.query);
+            }
+        });
+
+        document.addEventListener('click', e => {
+            if (!browserSuggestionsDropdown.contains(e.target) && e.target !== browserSearchInput) {
+                hideBrowserSuggestions();
+            }
+        });
+    }
 
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
@@ -1109,7 +1406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserId = null;
         bookmarks = [];
         selectedFolder = null;
-        showAuthContainer();
+        goToBrowser();
         loginForm.reset();
     });
 
@@ -1265,11 +1562,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function showAuthContainer() {
         authContainer.classList.remove('hidden');
         mainContainer.classList.add('hidden');
+        browserContainer.classList.add('hidden');
     }
 
     function showMainContainer() {
         authContainer.classList.add('hidden');
         mainContainer.classList.remove('hidden');
+        browserContainer.classList.add('hidden');
     }
 
     // 初始化默认文件夹（新用户无数据时创建"根文件夹"）
@@ -2301,27 +2600,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    // 检查是否有保存的登录信息
+    // 检查是否有保存的登录信息（仅恢复会话，不自动进入书签管理）
     const savedUser = localStorage.getItem('mark_current_user');
     if (savedUser) {
         try {
             const userData = JSON.parse(savedUser);
             currentUser = userData.username;
             currentUserId = userData.id;
-            showMainContainer();
-            // 先同步服务器数据，再渲染
+            // 后台同步书签数据（用于浏览器界面快捷入口）
             syncBookmarks().then(() => {
                 initDefaultFolder();
-                renderFolderTree();
-                selectDefaultFolder();
+                renderQuickAccess();
                 loadPreferences();
             }).catch(() => {
                 initDefaultFolder();
-                renderFolderTree();
-                selectDefaultFolder();
+                renderQuickAccess();
             });
         } catch (err) {
             console.log('无法解析保存的用户信息');
         }
+    } else {
+        // 未登录也渲染快捷方式
+        renderQuickAccess();
     }
 });
