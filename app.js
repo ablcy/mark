@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.3';
+const CURRENT_VERSION = 'v3.0.4';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -2188,6 +2188,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         div.onclick = (e) => {
+            // 点击菜单按钮或菜单本身不触发进入文件夹
+            if (e.target.closest('.dropdown-menu')) return;
+            if (e.target.closest('.content-folder-menu-btn')) return;
             if (multiSelectMode && e.target.tagName === 'INPUT') return;
             if (multiSelectMode) return;
             selectedFolder = folder;
