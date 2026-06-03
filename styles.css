@@ -261,6 +261,168 @@ body {
     color: #bbb;
 }
 
+/* ================================================================
+   个人信息界面
+   ================================================================ */
+#profile-container {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    background: #f5f7fa;
+}
+#profile-container.hidden {
+    display: none !important;
+}
+.profile-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+}
+.profile-box {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 28px;
+}
+.profile-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 24px;
+    text-align: center;
+}
+.profile-section {
+    margin-bottom: 20px;
+}
+.profile-label {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 8px;
+    display: block;
+}
+.profile-current-user {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    padding: 8px 12px;
+    background: #f5f7fa;
+    border-radius: 6px;
+}
+.profile-field-row {
+    display: flex;
+    gap: 10px;
+}
+.profile-field-row input {
+    flex: 1;
+}
+.profile-box input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.profile-box input:focus {
+    border-color: #4da3d4;
+}
+.profile-box input::placeholder {
+    color: #aaa;
+}
+.profile-btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    color: #555;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+.profile-btn:hover {
+    background: #f0f0f0;
+}
+.profile-btn--primary {
+    width: 100%;
+    background: #4da3d4;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    font-size: 15px;
+    margin-top: 4px;
+}
+.profile-btn--primary:hover {
+    background: #3d93c4;
+}
+.profile-divider {
+    height: 1px;
+    background: #eee;
+    margin: 24px 0;
+}
+.profile-msg {
+    font-size: 13px;
+    margin-top: 8px;
+    text-align: center;
+}
+.profile-msg--success { color: #27ae60; }
+.profile-msg--error { color: #e74c3c; }
+
+[data-theme="dark"] #profile-container {
+    background: #1a1a2e;
+}
+[data-theme="dark"] .profile-box {
+    background: #2a2a3e;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+[data-theme="dark"] .profile-title {
+    color: #eee;
+}
+[data-theme="dark"] .profile-label {
+    color: #999;
+}
+[data-theme="dark"] .profile-current-user {
+    background: #3a3a4e;
+    color: #eee;
+}
+[data-theme="dark"] .profile-box input {
+    background: #1e1e30;
+    border-color: #444;
+    color: #eee;
+}
+[data-theme="dark"] .profile-box input::placeholder { color: #666; }
+[data-theme="dark"] .profile-btn {
+    background: #3a3a4e;
+    border-color: #555;
+    color: #ddd;
+}
+[data-theme="dark"] .profile-btn:hover { background: #4a4a5e; }
+[data-theme="dark"] .profile-btn--primary {
+    background: #3d93c4;
+    color: #fff;
+}
+[data-theme="dark"] .profile-btn--primary:hover { background: #3498db; }
+[data-theme="dark"] .profile-divider { background: #444; }
+[data-theme="dark"] .profile-msg--success { color: #2ecc71; }
+[data-theme="dark"] .profile-msg--error { color: #e74c3c; }
+
+/* 移动端 */
+@media (max-width: 768px) {
+    .profile-box {
+        padding: 24px 18px;
+        max-width: 100%;
+    }
+}
+
 .auth-box {
     background: white;
     border-radius: 8px;

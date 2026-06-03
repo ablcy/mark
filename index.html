@@ -38,7 +38,7 @@
                 </div>
             </main>
             <footer class="browser-footer">
-                <span class="browser-version" id="browser-version-display">V2.0.0</span>
+                <span class="browser-version" id="browser-version-display">V2.0.1</span>
             </footer>
         </div>
 
@@ -78,7 +78,7 @@
                     </button>
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">V2.0.0</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">V2.0.1</span>
                 </div>
                 <div class="nav-center">
                     <button id="search-mode-btn" class="search-mode-btn" title="切换搜索引擎">书签</button>
@@ -175,7 +175,41 @@
                     </form>
                 </div>
                 <p class="auth-copyright">&copy; 2026 Li Chengyan. All Rights Reserved.</p>
-                <span class="auth-version">V2.0.0</span>
+                <span class="auth-version">V2.0.1</span>
+            </div>
+        </div>
+
+        <!-- ========== 个人信息界面（已登录用户）========== -->
+        <div id="profile-container" class="hidden">
+            <div class="profile-wrapper">
+                <button id="profile-back-btn" class="auth-back-btn" title="返回浏览器">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="m15 18-6-6 6-6"/>
+                    </svg>
+                </button>
+                <div class="profile-box">
+                    <h2 class="profile-title">个人信息</h2>
+                    <div class="profile-section">
+                        <label class="profile-label">当前账号</label>
+                        <div class="profile-current-user" id="profile-current-user"></div>
+                    </div>
+                    <div class="profile-section">
+                        <label class="profile-label">修改用户名</label>
+                        <div class="profile-field-row">
+                            <input type="text" id="profile-new-username" placeholder="新用户名" autocomplete="off">
+                            <button id="profile-update-username-btn" class="profile-btn">修改</button>
+                        </div>
+                    </div>
+                    <div class="profile-divider"></div>
+                    <div class="profile-section">
+                        <label class="profile-label">修改密码</label>
+                        <input type="password" id="profile-old-password" placeholder="当前密码" autocomplete="off">
+                        <input type="password" id="profile-new-password" placeholder="新密码" autocomplete="off">
+                        <input type="password" id="profile-confirm-password" placeholder="确认新密码" autocomplete="off">
+                        <button id="profile-update-password-btn" class="profile-btn profile-btn--primary">修改密码</button>
+                    </div>
+                </div>
+                <p class="auth-copyright">&copy; 2026 Li Chengyan. All Rights Reserved.</p>
             </div>
         </div>
 
@@ -185,6 +219,14 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V2.0.1 - 2026年6月3日</h3>
+                        <ul>
+                            <li>修复浏览器界面搜索联想不显示问题（统一使用共享搜索函数，新增防抖、搜索历史、聚焦展示）</li>
+                            <li>书签界面搜索同样支持搜索联想和历史</li>
+                            <li>登录后点击「我的」进入个人信息界面，可修改用户名和密码</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V2.0.0 - 2026年6月3日</h3>
                         <ul>

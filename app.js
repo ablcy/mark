@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V2.0.0';
+const CURRENT_VERSION = 'V2.0.1';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -60,6 +60,105 @@ document.addEventListener('DOMContentLoaded', () => {
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
 
+    // ====== 搜索共享函数（URL检测、搜索历史、联想词）======
+    function _isURL(str) {
+        if (/^https?:\/\//i.test(str)) return true;
+        if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
+        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
+        return false;
+    }
+    function _navigateTo(str) {
+        let url = str;
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        window.open(url, '_blank');
+    }
+
+    // URL域名提取
+    function getFaviconUrl(url) {
+        try { const u = new URL(url); return 'https://www.google.com/s2/favicons?domain=' + u.hostname + '&sz=64'; }
+        catch { return ''; }
+    }
+    function escapeUrl(str) {
+        if (!str) return '#';
+        if (/^https?:\/\//i.test(str)) return str;
+        return 'https://' + str;
+    }
+    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+    function escapeAttr(str) { return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function stringToColor(str) {
+        let hash = 0; for (let i=0;i<str.length;i++) { hash=str.charCodeAt(i)+((hash<<5)-hash); }
+        const h = Math.abs(hash) % 360;
+        return 'hsl('+h+',55%,48%)';
+    }
+
+    // 搜索历史（localStorage）
+    const MAX_HISTORY = 6;
+    function getSearchHistory() {
+        try { return JSON.parse(localStorage.getItem('mark_bing_history') || '[]'); }
+        catch { return []; }
+    }
+    function saveSearchHistory(query) {
+        let hist = getSearchHistory();
+        hist = hist.filter(h => h !== query);
+        hist.unshift(query);
+        if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+        localStorage.setItem('mark_bing_history', JSON.stringify(hist));
+    }
+    function clearSearchHistory() {
+        localStorage.removeItem('mark_bing_history');
+    }
+
+    // DuckDuckGo 联想词（CORS 友好）
+    async function fetchBingSuggestions(query) {
+        try {
+            const resp = await fetch('https://duckduckgo.com/ac/?q='+encodeURIComponent(query)+'&type=json&pretty=0');
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            return Array.isArray(data) ? data.map(item => item.phrase) : [];
+        } catch { return []; }
+    }
+
+    // 渲染联想下拉框HTML
+    function renderSuggestions(suggestions, query) {
+        const history = getSearchHistory();
+        let html = '';
+        if (!query && history.length > 0) {
+            html += '<div class="suggestion-section-label">搜索历史</div>';
+            history.forEach(item => {
+                html += '<div class="suggestion-item" data-query="'+escapeAttr(item)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="suggestion-text">'+escapeHtml(item)+'</span></div>';
+            });
+            html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
+            html += '<div class="suggestion-divider"></div>';
+        }
+        if (suggestions.length > 0) {
+            if (history.length > 0 || !query) {
+                html += '<div class="suggestion-section-label">联想搜索</div>';
+            }
+            suggestions.forEach(s => {
+                html += '<div class="suggestion-item" data-query="'+escapeAttr(s)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="suggestion-text">'+escapeHtml(s)+'</span></div>';
+            });
+        }
+        if (query && suggestions.length === 0) {
+            html += '<div class="suggestion-item" data-query="'+escapeAttr(query)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="suggestion-text">搜索 "'+escapeHtml(query)+'"</span></div>';
+        }
+        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
+    }
+
+    // 执行搜索/跳转（共享：浏览器和书签都用）
+    function doSharedSearch(query, hideFn, clearFn) {
+        if (!query) return;
+        if (_isURL(query)) {
+            _navigateTo(query);
+            hideFn();
+            clearFn();
+            return;
+        }
+        window.open('https://www.bing.com/search?q=' + encodeURIComponent(query), '_blank');
+        hideFn();
+        clearFn();
+        saveSearchHistory(query);
+    }
+
     // ====== 浏览器入口界面（V2.0.0）======
     const browserContainer = document.getElementById('browser-container');
     const browserSearchInput = document.getElementById('browser-search-input');
@@ -72,6 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const browserVersionDisplay = document.getElementById('browser-version-display');
     const browserBackBtn = document.getElementById('browser-back-btn');
     const authBackBtn = document.getElementById('auth-back-btn');
+    const profileContainer = document.getElementById('profile-container');
+    const profileBackBtn = document.getElementById('profile-back-btn');
 
     if (browserVersionDisplay) {
         browserVersionDisplay.textContent = CURRENT_VERSION;
@@ -142,23 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function getFaviconUrl(url) {
-        try { const u = new URL(url); return `https://www.google.com/s2/favicons?domain=${u.hostname}&sz=64`; }
-        catch { return ''; }
-    }
-    function escapeUrl(str) {
-        if (!str) return '#';
-        if (/^https?:\/\//i.test(str)) return str;
-        return 'https://' + str;
-    }
-    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-    function escapeAttr(str) { return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function stringToColor(str) {
-        let hash = 0; for (let i=0;i<str.length;i++) { hash=str.charCodeAt(i)+((hash<<5)-hash); }
-        const h = Math.abs(hash) % 360;
-        return `hsl(${h},55%,48%)`;
-    }
-
     // ---- 添加快捷方式弹窗 ----
     function showShortcutModal() {
         const old = document.querySelector('.qa-modal-overlay');
@@ -212,12 +296,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const action = item.dataset.action;
             if (action === 'profile') {
                 if (currentUser) {
+                    // 已登录 → 个人信息页
                     browserContainer.classList.add('hidden');
                     mainContainer.classList.add('hidden');
-                    authContainer.classList.remove('hidden');
+                    authContainer.classList.add('hidden');
+                    profileContainer.classList.remove('hidden');
+                    showProfile();
                 } else {
+                    // 未登录 → 认证页
                     browserContainer.classList.add('hidden');
                     mainContainer.classList.add('hidden');
+                    profileContainer.classList.add('hidden');
                     authContainer.classList.remove('hidden');
                 }
             } else if (action === 'bookmarks') {
@@ -244,14 +333,108 @@ document.addEventListener('DOMContentLoaded', () => {
         browserContainer.classList.remove('hidden');
         authContainer.classList.add('hidden');
         mainContainer.classList.add('hidden');
+        profileContainer.classList.add('hidden');
         renderQuickAccess();
     }
     if (browserBackBtn) browserBackBtn.addEventListener('click', goToBrowser);
     if (authBackBtn) authBackBtn.addEventListener('click', goToBrowser);
+    if (profileBackBtn) profileBackBtn.addEventListener('click', goToBrowser);
 
-    // ---- 浏览器搜索 ----
+    // ---- 个人信息界面 ----
+    const profileCurrentUser = document.getElementById('profile-current-user');
+    const profileNewUsername = document.getElementById('profile-new-username');
+    const profileUpdateUsernameBtn = document.getElementById('profile-update-username-btn');
+    const profileOldPassword = document.getElementById('profile-old-password');
+    const profileNewPassword = document.getElementById('profile-new-password');
+    const profileConfirmPassword = document.getElementById('profile-confirm-password');
+    const profileUpdatePasswordBtn = document.getElementById('profile-update-password-btn');
+
+    function showProfile() {
+        if (profileCurrentUser) profileCurrentUser.textContent = currentUser || '';
+        if (profileNewUsername) profileNewUsername.value = '';
+        if (profileOldPassword) profileOldPassword.value = '';
+        if (profileNewPassword) profileNewPassword.value = '';
+        if (profileConfirmPassword) profileConfirmPassword.value = '';
+        // 清除旧消息
+        const msgs = document.querySelectorAll('.profile-msg');
+        msgs.forEach(m => m.remove());
+    }
+
+    if (profileUpdateUsernameBtn) {
+        profileUpdateUsernameBtn.addEventListener('click', async () => {
+            const newName = profileNewUsername.value.trim();
+            if (!newName) { showToast('请输入新用户名'); return; }
+            try {
+                const resp = await fetch(API_URL + '/update-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId, newUsername: newName })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    currentUser = newName;
+                    localStorage.setItem('mark_current_user', JSON.stringify({ username: newName, id: currentUserId }));
+                    if (profileCurrentUser) profileCurrentUser.textContent = newName;
+                    showMsg('profile-update-username-btn', '用户名已更新', 'success');
+                    profileNewUsername.value = '';
+                    // 刷新书签界面内的用户状态
+                    if (!mainContainer.classList.contains('hidden')) {
+                        updateUIText();
+                    }
+                } else {
+                    showMsg('profile-update-username-btn', data.error || '修改失败', 'error');
+                }
+            } catch (err) {
+                showMsg('profile-update-username-btn', '网络错误', 'error');
+            }
+        });
+    }
+
+    if (profileUpdatePasswordBtn) {
+        profileUpdatePasswordBtn.addEventListener('click', async () => {
+            const oldPwd = profileOldPassword.value;
+            const newPwd = profileNewPassword.value;
+            const confirmPwd = profileConfirmPassword.value;
+            if (!oldPwd) { showToast('请输入当前密码'); return; }
+            if (!newPwd) { showToast('请输入新密码'); return; }
+            if (newPwd !== confirmPwd) { showToast('两次新密码不一致'); return; }
+            try {
+                const resp = await fetch(API_URL + '/update-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId, oldPassword: oldPwd, newPassword: newPwd })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showMsg('profile-update-password-btn', '密码已更新，下次登录请使用新密码', 'success');
+                    profileOldPassword.value = '';
+                    profileNewPassword.value = '';
+                    profileConfirmPassword.value = '';
+                } else {
+                    showMsg('profile-update-password-btn', data.error || '修改失败', 'error');
+                }
+            } catch (err) {
+                showMsg('profile-update-password-btn', '网络错误', 'error');
+            }
+        });
+    }
+
+    function showMsg(afterId, text, type) {
+        const el = document.getElementById(afterId);
+        if (!el) return;
+        const old = el.parentElement.querySelector('.profile-msg');
+        if (old) old.remove();
+        const msg = document.createElement('div');
+        msg.className = 'profile-msg profile-msg--' + type;
+        msg.textContent = text;
+        el.insertAdjacentElement('afterend', msg);
+    }
+
+    // ---- 浏览器搜索（使用共享联想函数）----
     if (browserSearchInput && browserSuggestionsDropdown) {
         let browserActiveIndex = -1;
+        let browserSuggestionTimer = null;
+
         function hideBrowserSuggestions() {
             browserSuggestionsDropdown.innerHTML = '';
             browserSuggestionsDropdown.classList.remove('show');
@@ -278,59 +461,34 @@ document.addEventListener('DOMContentLoaded', () => {
             items[browserActiveIndex].scrollIntoView({ block: 'nearest' });
         }
 
-        // 联想词获取
-        async function fetchBrowserSuggestions(query) {
-            try {
-                const resp = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`);
-                if (!resp.ok) return [];
-                const data = await resp.json();
-                return Array.isArray(data) ? data.map(item => item.phrase) : [];
-            } catch { return []; }
-        }
-
-        // URL 检测
-        function isBrowserURL(str) {
-            if (/^https?:\/\//i.test(str)) return true;
-            if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
-            if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
-            return false;
-        }
-
-        // 搜索/导航
-        function doBrowserSearch(keyword) {
-            if (!keyword) return;
-            if (isBrowserURL(keyword)) {
-                let url = keyword;
-                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                window.open(url, '_blank');
-            } else {
-                window.open(`https://www.bing.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
-            }
-            hideBrowserSuggestions();
-            browserSearchInput.value = '';
-        }
-
-        browserSearchInput.addEventListener('input', async () => {
+        // input 事件：防抖联想
+        browserSearchInput.addEventListener('input', () => {
+            clearTimeout(browserSuggestionTimer);
             const query = browserSearchInput.value.trim();
-            if (!query) { hideBrowserSuggestions(); return; }
-            const suggestions = await fetchBrowserSuggestions(query);
-            let html = '';
-            if (suggestions.length > 0) {
-                suggestions.forEach(s => {
-                    html += `<div class="suggestion-item" data-query="${escapeAttr(s)}">
-                        <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                        <span class="suggestion-text">${escapeHtml(s)}</span>
-                    </div>`;
-                });
-            } else {
-                html += `<div class="suggestion-item" data-query="${escapeAttr(query)}">
-                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
-                    <span class="suggestion-text">搜索 "${escapeHtml(query)}"</span>
-                </div>`;
+            if (!query) {
+                // 空输入显示历史
+                const html = renderSuggestions([], '');
+                if (html) showBrowserSuggestions(html);
+                else hideBrowserSuggestions();
+                return;
             }
-            showBrowserSuggestions(html);
+            browserSuggestionTimer = setTimeout(async () => {
+                const suggestions = await fetchBingSuggestions(query);
+                const html = renderSuggestions(suggestions, query);
+                showBrowserSuggestions(html);
+            }, 200);
         });
 
+        // 聚焦显示搜索历史
+        browserSearchInput.addEventListener('focus', () => {
+            const query = browserSearchInput.value.trim();
+            if (!query) {
+                const html = renderSuggestions([], '');
+                if (html) showBrowserSuggestions(html);
+            }
+        });
+
+        // 键盘导航
         browserSearchInput.addEventListener('keydown', e => {
             if (e.key === 'Escape') { hideBrowserSuggestions(); return; }
             if (e.key === 'ArrowDown') { e.preventDefault(); updateBrowserActiveSuggestion(1); return; }
@@ -339,17 +497,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const active = getBrowserActiveQuery();
                 const keyword = active || browserSearchInput.value.trim();
-                if (keyword) doBrowserSearch(keyword);
+                if (keyword) doSharedSearch(keyword, hideBrowserSuggestions, () => { browserSearchInput.value = ''; });
             }
         });
 
+        // 点击联想项
         browserSuggestionsDropdown.addEventListener('click', e => {
             const item = e.target.closest('.suggestion-item');
+            const footer = e.target.closest('.suggestion-footer');
+            if (footer && footer.dataset.action === 'clear-history') {
+                clearSearchHistory();
+                hideBrowserSuggestions();
+                return;
+            }
             if (item && item.dataset.query) {
-                doBrowserSearch(item.dataset.query);
+                doSharedSearch(item.dataset.query, hideBrowserSuggestions, () => { browserSearchInput.value = ''; });
             }
         });
 
+        // 点击外部关闭
         document.addEventListener('click', e => {
             if (!browserSuggestionsDropdown.contains(e.target) && e.target !== browserSearchInput) {
                 hideBrowserSuggestions();
@@ -699,123 +865,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSuggestionIdx = -1;
     }
 
-    function isURL(str) {
-        // 带协议的直接识别
-        if (/^https?:\/\//i.test(str)) return true;
-        // 常见域名格式: example.com, www.example.com, example.com/path
-        if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
-        // localhost
-        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
-        return false;
-    }
-
-    function navigateTo(str) {
-        let url = str;
-        if (!/^https?:\/\//i.test(url)) {
-            url = 'https://' + url;
-        }
-        window.open(url, '_blank');
-        hideSuggestions();
-        searchInput.value = '';
-    }
-
-    function doBingSearch(query) {
-        if (!query) return;
-        // 检测是否为网址，是则直接跳转
-        if (isURL(query)) {
-            navigateTo(query);
-            return;
-        }
-        window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
-        hideSuggestions();
-        searchInput.value = '';
-        // 保存到搜索历史
-        saveSearchHistory(query);
-    }
-
-    // 搜索历史（localStorage）
-    const MAX_HISTORY = 6;
-    function getSearchHistory() {
-        try {
-            return JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
-        } catch { return []; }
-    }
-    function saveSearchHistory(query) {
-        let hist = getSearchHistory();
-        hist = hist.filter(h => h !== query);
-        hist.unshift(query);
-        if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
-        localStorage.setItem('mark_bing_history', JSON.stringify(hist));
-    }
-    function clearSearchHistory() {
-        localStorage.removeItem('mark_bing_history');
-        hideSuggestions();
-    }
-
-    async function fetchBingSuggestions(query) {
-        try {
-            // DuckDuckGo 联想 API 支持 CORS，无需代理
-            const resp = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`);
-            if (!resp.ok) return [];
-            const data = await resp.json();
-            // DDG 格式: [{"phrase":"..."}, ...]
-            return Array.isArray(data) ? data.map(item => item.phrase) : [];
-        } catch {
-            return [];
-        }
-    }
-
-    function renderSuggestions(suggestions, query) {
-        const history = getSearchHistory();
-        let html = '';
-
-        // 搜索历史
-        if (!query && history.length > 0) {
-            html += '<div class="suggestion-section-label">搜索历史</div>';
-            history.forEach(item => {
-                html += `<div class="suggestion-item" data-query="${escapeAttr(item)}">
-                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                    <span class="suggestion-text">${escapeHtml(item)}</span>
-                </div>`;
-            });
-            html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
-            html += '<div class="suggestion-divider"></div>';
-        }
-
-        // Bing 联想词
-        if (suggestions.length > 0) {
-            if (history.length > 0 || !query) {
-                html += '<div class="suggestion-section-label">联想搜索</div>';
-            }
-            suggestions.forEach(s => {
-                html += `<div class="suggestion-item" data-query="${escapeAttr(s)}">
-                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                    <span class="suggestion-text">${escapeHtml(s)}</span>
-                </div>`;
-            });
-        }
-
-        // 直接搜索当前输入
-        if (query && suggestions.length === 0) {
-            html += `<div class="suggestion-item" data-query="${escapeAttr(query)}">
-                <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                <span class="suggestion-text">搜索 "${escapeHtml(query)}"</span>
-            </div>`;
-        }
-
-        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function escapeAttr(str) {
-        return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
     function updateActiveSuggestion(delta) {
         const items = suggestionsDropdown.querySelectorAll('.suggestion-item');
         if (items.length === 0) return;
@@ -925,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const active = getActiveQuery();
                 const keyword = active || searchInput.value.trim();
-                if (keyword) doBingSearch(keyword);
+                if (keyword) doSharedSearch(keyword, hideSuggestions, () => { searchInput.value = ''; });
             }
         });
 
@@ -936,11 +985,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (footer && footer.dataset.action === 'clear-history') {
                 clearSearchHistory();
+                hideSuggestions();
                 return;
             }
 
             if (item && item.dataset.query) {
-                doBingSearch(item.dataset.query);
+                doSharedSearch(item.dataset.query, hideSuggestions, () => { searchInput.value = ''; });
             }
         });
 
@@ -1563,12 +1613,14 @@ document.addEventListener('DOMContentLoaded', () => {
         authContainer.classList.remove('hidden');
         mainContainer.classList.add('hidden');
         browserContainer.classList.add('hidden');
+        profileContainer.classList.add('hidden');
     }
 
     function showMainContainer() {
         authContainer.classList.add('hidden');
         mainContainer.classList.remove('hidden');
         browserContainer.classList.add('hidden');
+        profileContainer.classList.add('hidden');
     }
 
     // 初始化默认文件夹（新用户无数据时创建"根文件夹"）

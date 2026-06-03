@@ -264,6 +264,50 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// 修改用户名
+app.post('/api/update-username', async (req, res) => {
+    const { userId, newUsername } = req.body;
+    if (!userId || !newUsername) {
+        return res.status(400).json({ error: '参数不完整' });
+    }
+    try {
+        // 检查新用户名是否已存在
+        const exist = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [newUsername, userId]);
+        if (exist.rows.length > 0) {
+            return res.status(409).json({ error: '用户名已被占用' });
+        }
+        await pool.query('UPDATE users SET username = $1 WHERE id = $2', [newUsername, userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Update username error:', err);
+        res.status(500).json({ error: '修改用户名失败' });
+    }
+});
+
+// 修改密码
+app.post('/api/update-password', async (req, res) => {
+    const { userId, oldPassword, newPassword } = req.body;
+    if (!userId || !oldPassword || !newPassword) {
+        return res.status(400).json({ error: '参数不完整' });
+    }
+    try {
+        const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: '用户不存在' });
+        }
+        const valid = await bcrypt.compare(oldPassword, userResult.rows[0].password);
+        if (!valid) {
+            return res.status(401).json({ error: '当前密码错误' });
+        }
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, userId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Update password error:', err);
+        res.status(500).json({ error: '修改密码失败' });
+    }
+});
+
 app.post('/api/save-bookmarks', async (req, res) => {
     const { userId, bookmarks: bookmarksData } = req.body;
     
