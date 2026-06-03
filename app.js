@@ -108,14 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('mark_bing_history');
     }
 
-    // 搜索联想词（服务端代理 Bing API，无 CORS 问题）
+    // 搜索联想词（浏览器直调 Wikipedia 开放搜索 API，CORS 友好，全球可用）
     async function fetchBingSuggestions(query) {
         try {
-            const resp = await fetch('/api/bing-suggestions?q='+encodeURIComponent(query));
+            const resp = await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search=' + encodeURIComponent(query) + '&limit=8&format=json&origin=*');
             if (!resp.ok) return [];
             const data = await resp.json();
-            // 服务端已处理为字符串数组
-            return Array.isArray(data) ? data : [];
+            // Wikipedia 返回: [query, [suggestion1, suggestion2, ...], ...]
+            return Array.isArray(data) && Array.isArray(data[1]) ? data[1] : [];
         } catch { return []; }
     }
 
