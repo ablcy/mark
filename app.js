@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V2.0.1';
+const CURRENT_VERSION = 'V2.0.2';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -108,13 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('mark_bing_history');
     }
 
-    // DuckDuckGo 联想词（CORS 友好）
+    // 搜索联想词（服务端代理 Bing API，无 CORS 问题）
     async function fetchBingSuggestions(query) {
         try {
-            const resp = await fetch('https://duckduckgo.com/ac/?q='+encodeURIComponent(query)+'&type=json&pretty=0');
+            const resp = await fetch('/api/bing-suggestions?q='+encodeURIComponent(query));
             if (!resp.ok) return [];
             const data = await resp.json();
-            return Array.isArray(data) ? data.map(item => item.phrase) : [];
+            // 服务端已处理为字符串数组
+            return Array.isArray(data) ? data : [];
         } catch { return []; }
     }
 
