@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const https = require('https');
 const { Pool } = require('pg');
 
 const app = express();
@@ -810,31 +811,25 @@ app.post('/api/save-preference', async (req, res) => {
     }
 });
 
-// Bing 搜索联想代理（使用 DuckDuckGo 作为数据源，更可靠）
-app.get('/api/bing-suggestions', async (req, res) => {
+// Bing 搜索联想代理（服务端 https.get 调用 cn.bing.com，无 CORS 问题）
+app.get('/api/bing-suggestions', (req, res) => {
     const { query } = req.query;
-    if (!query) {
-        return res.json([]);
-    }
+    if (!query) { return res.json([]); }
     try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        // 使用 DuckDuckGo AC API，服务端调用稳定
-        const ddgResp = await fetch(`https://api.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`, {
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-        });
-        clearTimeout(timeout);
-        const data = await ddgResp.json();
-        // DDG 返回格式: [{"phrase":"..."}, ...]
-        const suggestions = Array.isArray(data) ? data.map(item => item.phrase) : [];
-        res.json(suggestions);
-    } catch (err) {
-        console.error('[DuckDuckGo Proxy] Error:', err.name, err.message);
-        res.json([]);
-    }
+        const url = 'https://cn.bing.com/osjson.aspx?query=' + encodeURIComponent(query) + '&mkt=zh-CN';
+        https.get(url, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' } }, (resp) => {
+            let data = '';
+            resp.on('data', chunk => data += chunk);
+            resp.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    // Bing 返回: ["query", ["建议1", "建议2", ...], [], {"<a>":"https://..."}]
+                    const suggestions = Array.isArray(parsed) && Array.isArray(parsed[1]) ? parsed[1] : [];
+                    res.json(suggestions);
+                } catch { res.json([]); }
+            });
+        }).on('error', () => res.json([]));
+    } catch { res.json([]); }
 });
 
 app.use((err, req, res, next) => {
