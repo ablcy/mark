@@ -1,5 +1,15 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.4';
+const CURRENT_VERSION = 'v3.0.5';
+
+// 文件夹 SVG 图标（方案 A：前盖翻开）
+function getFolderIconSVG(isOpen, size) {
+    const w = size || 16;
+    const s = size || 16;
+    if (isOpen) {
+        return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/><path d="M2 8h20"/><path d="M4 8l1.5 3h13L20 8"/></svg>';
+    }
+    return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/></svg>';
+}
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -1660,29 +1670,11 @@ document.addEventListener('DOMContentLoaded', () => {
             header.appendChild(checkbox);
         }
         
-        const toggle = document.createElement('span');
-        toggle.className = 'folder-toggle';
-        if (folder.children && folder.children.some(child => child.type === 'folder')) {
-            toggle.textContent = '▼'; // 默认展开
-            toggle.onclick = (e) => {
-                e.stopPropagation();
-                const content = div.querySelector('.subfolders');
-                if (content) {
-                    if (content.style.display === 'none') {
-                        content.style.display = 'block';
-                        toggle.textContent = '▼';
-                    } else {
-                        content.style.display = 'none';
-                        toggle.textContent = '▶';
-                    }
-                }
-            };
-        }
-        header.appendChild(toggle);
+
         
         const icon = document.createElement('span');
         icon.className = 'folder-icon';
-        icon.textContent = '📂';
+        icon.innerHTML = getFolderIconSVG(false, 16);
         
         const name = document.createElement('span');
         name.className = 'folder-name';
@@ -1697,6 +1689,22 @@ document.addEventListener('DOMContentLoaded', () => {
         header.onclick = (e) => {
             if (multiSelectMode && e.target.tagName === 'INPUT') return;
             if (multiSelectMode) return;
+            // 展开/收起子文件夹
+            if (folder.children && folder.children.some(child => child.type === 'folder')) {
+                const subfoldersEl = div.querySelector('.subfolders');
+                if (subfoldersEl) {
+                    if (subfoldersEl.style.display === 'none') {
+                        subfoldersEl.style.display = 'block';
+                        folder._isOpen = true;
+                    } else {
+                        subfoldersEl.style.display = 'none';
+                        folder._isOpen = false;
+                    }
+                    // 更新图标
+                    const iconEl = header.querySelector('.folder-icon');
+                    if (iconEl) iconEl.innerHTML = getFolderIconSVG(folder._isOpen, 16);
+                }
+            }
             selectedFolder = folder;
             selectedFolderName.textContent = folder.name;
             updateBookmarksList(folder.children || []);
@@ -1714,6 +1722,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const subfolders = document.createElement('div');
             subfolders.className = 'subfolders';
             subfolders.style.display = 'block'; // 默认展开
+            folder._isOpen = true;
             
             for (let i = 0; i < folder.children.length; i++) {
                 const child = folder.children[i];
@@ -2156,20 +2165,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const icon = document.createElement('span');
         icon.className = 'content-folder-icon';
-        icon.textContent = '📂';
+        icon.innerHTML = getFolderIconSVG(false, 20);
 
         const name = document.createElement('span');
         name.className = 'content-folder-name';
         name.textContent = folder.name;
 
-        const count = document.createElement('span');
-        count.className = 'content-folder-count';
-        const bookmarkCount = countBookmarks([folder]);
-        count.textContent = bookmarkCount + ' 个书签';
-
         div.appendChild(icon);
         div.appendChild(name);
-        div.appendChild(count);
 
         // 文件夹 ... 菜单按钮
         attachFolderMenuBtn(div, folder, 'content-folder-menu-btn');
