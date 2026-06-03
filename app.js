@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V2.0.2';
+const CURRENT_VERSION = 'V1.2.5';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -59,470 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const contentActions = document.getElementById('content-actions');
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
-
-    // ====== 搜索共享函数（URL检测、搜索历史、联想词）======
-    function _isURL(str) {
-        if (/^https?:\/\//i.test(str)) return true;
-        if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
-        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
-        return false;
-    }
-    function _navigateTo(str) {
-        let url = str;
-        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-        window.open(url, '_blank');
-    }
-
-    // URL域名提取
-    function getFaviconUrl(url) {
-        try { const u = new URL(url); return 'https://www.google.com/s2/favicons?domain=' + u.hostname + '&sz=64'; }
-        catch { return ''; }
-    }
-    function escapeUrl(str) {
-        if (!str) return '#';
-        if (/^https?:\/\//i.test(str)) return str;
-        return 'https://' + str;
-    }
-    function escapeHtml(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
-    function escapeAttr(str) { return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-    function stringToColor(str) {
-        let hash = 0; for (let i=0;i<str.length;i++) { hash=str.charCodeAt(i)+((hash<<5)-hash); }
-        const h = Math.abs(hash) % 360;
-        return 'hsl('+h+',55%,48%)';
-    }
-
-    // 搜索历史（localStorage）
-    const MAX_HISTORY = 6;
-    function getSearchHistory() {
-        try { return JSON.parse(localStorage.getItem('mark_bing_history') || '[]'); }
-        catch { return []; }
-    }
-    function saveSearchHistory(query) {
-        let hist = getSearchHistory();
-        hist = hist.filter(h => h !== query);
-        hist.unshift(query);
-        if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
-        localStorage.setItem('mark_bing_history', JSON.stringify(hist));
-    }
-    function clearSearchHistory() {
-        localStorage.removeItem('mark_bing_history');
-    }
-
-    // 搜索联想词（浏览器直调 Wikipedia 开放搜索 API，CORS 友好，全球可用）
-    async function fetchBingSuggestions(query) {
-        try {
-            const resp = await fetch('https://en.wikipedia.org/w/api.php?action=opensearch&search=' + encodeURIComponent(query) + '&limit=8&format=json&origin=*');
-            if (!resp.ok) return [];
-            const data = await resp.json();
-            // Wikipedia 返回: [query, [suggestion1, suggestion2, ...], ...]
-            return Array.isArray(data) && Array.isArray(data[1]) ? data[1] : [];
-        } catch { return []; }
-    }
-
-    // 渲染联想下拉框HTML
-    function renderSuggestions(suggestions, query) {
-        const history = getSearchHistory();
-        let html = '';
-        if (!query && history.length > 0) {
-            html += '<div class="suggestion-section-label">搜索历史</div>';
-            history.forEach(item => {
-                html += '<div class="suggestion-item" data-query="'+escapeAttr(item)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="suggestion-text">'+escapeHtml(item)+'</span></div>';
-            });
-            html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
-            html += '<div class="suggestion-divider"></div>';
-        }
-        if (suggestions.length > 0) {
-            if (history.length > 0 || !query) {
-                html += '<div class="suggestion-section-label">联想搜索</div>';
-            }
-            suggestions.forEach(s => {
-                html += '<div class="suggestion-item" data-query="'+escapeAttr(s)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="suggestion-text">'+escapeHtml(s)+'</span></div>';
-            });
-        }
-        if (query && suggestions.length === 0) {
-            html += '<div class="suggestion-item" data-query="'+escapeAttr(query)+'"><span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="suggestion-text">搜索 "'+escapeHtml(query)+'"</span></div>';
-        }
-        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
-    }
-
-    // 执行搜索/跳转（共享：浏览器和书签都用）
-    function doSharedSearch(query, hideFn, clearFn) {
-        if (!query) return;
-        if (_isURL(query)) {
-            _navigateTo(query);
-            hideFn();
-            clearFn();
-            return;
-        }
-        window.open('https://www.bing.com/search?q=' + encodeURIComponent(query), '_blank');
-        hideFn();
-        clearFn();
-        saveSearchHistory(query);
-    }
-
-    // ====== 浏览器入口界面（V2.0.0）======
-    const browserContainer = document.getElementById('browser-container');
-    const browserSearchInput = document.getElementById('browser-search-input');
-    const browserSuggestionsDropdown = document.getElementById('browser-suggestions-dropdown');
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const menuDrawer = document.getElementById('menu-drawer');
-    const menuDrawerOverlay = document.getElementById('menu-drawer-overlay');
-    const menuDrawerPanel = document.getElementById('menu-drawer-panel');
-    const quickAccessGrid = document.getElementById('quick-access-grid');
-    const browserVersionDisplay = document.getElementById('browser-version-display');
-    const browserBackBtn = document.getElementById('browser-back-btn');
-    const authBackBtn = document.getElementById('auth-back-btn');
-    const profileContainer = document.getElementById('profile-container');
-    const profileBackBtn = document.getElementById('profile-back-btn');
-
-    if (browserVersionDisplay) {
-        browserVersionDisplay.textContent = CURRENT_VERSION;
-        browserVersionDisplay.addEventListener('click', () => {
-            changelogModal.classList.remove('hidden');
-        });
-    }
-    if (versionDisplay) versionDisplay.textContent = CURRENT_VERSION;
-
-    // ---- 快捷方式存储 ----
-    const SHORTCUTS_KEY = 'mark_shortcuts';
-    function getShortcuts() {
-        try { return JSON.parse(localStorage.getItem(SHORTCUTS_KEY) || '[]'); }
-        catch { return []; }
-    }
-    function saveShortcuts(arr) {
-        localStorage.setItem(SHORTCUTS_KEY, JSON.stringify(arr));
-    }
-
-    // ---- 快捷方式渲染 ----
-    function renderQuickAccess() {
-        if (!quickAccessGrid) return;
-        const shortcuts = getShortcuts();
-        let bookmarkItems = [];
-        if (currentUser && bookmarks.length > 0) {
-            const flat = [];
-            function walk(nodes) {
-                for (const n of nodes) {
-                    if (n.type === 'bookmark') flat.push(n);
-                    if (n.children) walk(n.children);
-                }
-            }
-            walk(bookmarks);
-            bookmarkItems = flat.slice(0, 9);
-        }
-
-        let html = '';
-        bookmarkItems.forEach(bm => {
-            const icon = getFaviconUrl(bm.url);
-            html += `<a class="quick-access-item" href="${escapeUrl(bm.url)}" target="_blank" title="${escapeHtml(bm.title)}">
-                <div class="quick-access-icon-wrap"><img src="${icon}" alt="" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'qa-fallback\\' style=\\'background:'+stringToColor('${escapeAttr(bm.title)}')+'\\'>'+'${escapeAttr(bm.title)}'.charAt(0).toUpperCase()+'</div>'"></div>
-                <span class="quick-access-name">${escapeHtml(bm.title)}</span>
-            </a>`;
-        });
-        shortcuts.forEach((sc, i) => {
-            html += `<a class="quick-access-item" href="${escapeUrl(sc.url)}" target="_blank" title="${escapeHtml(sc.name)}">
-                <div class="quick-access-icon-wrap"><img src="${sc.favicon || ''}" alt="" loading="lazy" onerror="this.parentElement.innerHTML=this.parentElement.innerHTML"><div class="qa-remove" onclick="event.preventDefault();event.stopPropagation();window._markRemoveShortcut(${i})">&times;</div></div>
-                <span class="quick-access-name">${escapeHtml(sc.name)}</span>
-            </a>`;
-        });
-        html += `<div class="quick-access-item qa-add" id="qa-add-btn" title="添加快捷方式">
-            <div class="quick-access-icon-wrap"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-            <span class="quick-access-name">添加快捷方式</span>
-        </div>`;
-
-        quickAccessGrid.innerHTML = html;
-
-        // 绑定添加按钮
-        const addBtn = document.getElementById('qa-add-btn');
-        if (addBtn) addBtn.addEventListener('click', showShortcutModal);
-
-        // 移除函数挂到 window
-        window._markRemoveShortcut = function(i) {
-            const sc = getShortcuts();
-            sc.splice(i, 1);
-            saveShortcuts(sc);
-            renderQuickAccess();
-        };
-    }
-
-    // ---- 添加快捷方式弹窗 ----
-    function showShortcutModal() {
-        const old = document.querySelector('.qa-modal-overlay');
-        if (old) old.remove();
-
-        const overlay = document.createElement('div');
-        overlay.className = 'qa-modal-overlay';
-        overlay.innerHTML = `<div class="qa-modal-box">
-            <h3>添加快捷方式</h3>
-            <input type="text" id="qa-name" placeholder="名称" autocomplete="off">
-            <input type="text" id="qa-url" placeholder="网址 (例: github.com)" autocomplete="off">
-            <div class="qa-modal-actions">
-                <button class="qa-modal-btn qa-modal-btn--cancel">取消</button>
-                <button class="qa-modal-btn qa-modal-btn--confirm">添加</button>
-            </div>
-        </div>`;
-        document.body.appendChild(overlay);
-
-        const nameInp = overlay.querySelector('#qa-name');
-        const urlInp = overlay.querySelector('#qa-url');
-        overlay.querySelector('.qa-modal-btn--cancel').onclick = ()=>overlay.remove();
-        overlay.onclick = e => { if (e.target===overlay) overlay.remove(); };
-        overlay.querySelector('.qa-modal-btn--confirm').onclick = ()=>{
-            const name = nameInp.value.trim();
-            const rawUrl = urlInp.value.trim();
-            if (!name || !rawUrl) { showToast('名称和网址不能为空'); return; }
-            const fullUrl = escapeUrl(rawUrl);
-            const sc = getShortcuts();
-            sc.push({ name, url: fullUrl, favicon: getFaviconUrl(fullUrl) });
-            saveShortcuts(sc);
-            renderQuickAccess();
-            overlay.remove();
-        };
-        nameInp.focus();
-    }
-
-    // ---- 菜单抽屉 ----
-    function openMenu() {
-        menuDrawer.classList.remove('hidden');
-    }
-    function closeMenu() {
-        menuDrawer.classList.add('hidden');
-    }
-    if (hamburgerBtn) hamburgerBtn.addEventListener('click', openMenu);
-    if (menuDrawerOverlay) menuDrawerOverlay.addEventListener('click', closeMenu);
-
-    // 菜单项点击
-    menuDrawerPanel.querySelectorAll('.menu-drawer-item').forEach(item => {
-        item.addEventListener('click', () => {
-            closeMenu();
-            const action = item.dataset.action;
-            if (action === 'profile') {
-                if (currentUser) {
-                    // 已登录 → 个人信息页
-                    browserContainer.classList.add('hidden');
-                    mainContainer.classList.add('hidden');
-                    authContainer.classList.add('hidden');
-                    profileContainer.classList.remove('hidden');
-                    showProfile();
-                } else {
-                    // 未登录 → 认证页
-                    browserContainer.classList.add('hidden');
-                    mainContainer.classList.add('hidden');
-                    profileContainer.classList.add('hidden');
-                    authContainer.classList.remove('hidden');
-                }
-            } else if (action === 'bookmarks') {
-                if (currentUser) {
-                    browserContainer.classList.add('hidden');
-                    authContainer.classList.add('hidden');
-                    mainContainer.classList.remove('hidden');
-                    initDefaultFolder();
-                    renderFolderTree();
-                    selectDefaultFolder();
-                } else {
-                    // 未登录则引导去"我的"
-                    browserContainer.classList.add('hidden');
-                    mainContainer.classList.add('hidden');
-                    authContainer.classList.remove('hidden');
-                    showToast('请先登录');
-                }
-            }
-        });
-    });
-
-    // ---- 返回浏览器 ----
-    function goToBrowser() {
-        browserContainer.classList.remove('hidden');
-        authContainer.classList.add('hidden');
-        mainContainer.classList.add('hidden');
-        profileContainer.classList.add('hidden');
-        renderQuickAccess();
-    }
-    if (browserBackBtn) browserBackBtn.addEventListener('click', goToBrowser);
-    if (authBackBtn) authBackBtn.addEventListener('click', goToBrowser);
-    if (profileBackBtn) profileBackBtn.addEventListener('click', goToBrowser);
-
-    // ---- 个人信息界面 ----
-    const profileCurrentUser = document.getElementById('profile-current-user');
-    const profileNewUsername = document.getElementById('profile-new-username');
-    const profileUpdateUsernameBtn = document.getElementById('profile-update-username-btn');
-    const profileOldPassword = document.getElementById('profile-old-password');
-    const profileNewPassword = document.getElementById('profile-new-password');
-    const profileConfirmPassword = document.getElementById('profile-confirm-password');
-    const profileUpdatePasswordBtn = document.getElementById('profile-update-password-btn');
-
-    function showProfile() {
-        if (profileCurrentUser) profileCurrentUser.textContent = currentUser || '';
-        if (profileNewUsername) profileNewUsername.value = '';
-        if (profileOldPassword) profileOldPassword.value = '';
-        if (profileNewPassword) profileNewPassword.value = '';
-        if (profileConfirmPassword) profileConfirmPassword.value = '';
-        // 清除旧消息
-        const msgs = document.querySelectorAll('.profile-msg');
-        msgs.forEach(m => m.remove());
-    }
-
-    if (profileUpdateUsernameBtn) {
-        profileUpdateUsernameBtn.addEventListener('click', async () => {
-            const newName = profileNewUsername.value.trim();
-            if (!newName) { showToast('请输入新用户名'); return; }
-            try {
-                const resp = await fetch(API_URL + '/update-username', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: currentUserId, newUsername: newName })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    currentUser = newName;
-                    localStorage.setItem('mark_current_user', JSON.stringify({ username: newName, id: currentUserId }));
-                    if (profileCurrentUser) profileCurrentUser.textContent = newName;
-                    showMsg('profile-update-username-btn', '用户名已更新', 'success');
-                    profileNewUsername.value = '';
-                    // 刷新书签界面内的用户状态
-                    if (!mainContainer.classList.contains('hidden')) {
-                        updateUIText();
-                    }
-                } else {
-                    showMsg('profile-update-username-btn', data.error || '修改失败', 'error');
-                }
-            } catch (err) {
-                showMsg('profile-update-username-btn', '网络错误', 'error');
-            }
-        });
-    }
-
-    if (profileUpdatePasswordBtn) {
-        profileUpdatePasswordBtn.addEventListener('click', async () => {
-            const oldPwd = profileOldPassword.value;
-            const newPwd = profileNewPassword.value;
-            const confirmPwd = profileConfirmPassword.value;
-            if (!oldPwd) { showToast('请输入当前密码'); return; }
-            if (!newPwd) { showToast('请输入新密码'); return; }
-            if (newPwd !== confirmPwd) { showToast('两次新密码不一致'); return; }
-            try {
-                const resp = await fetch(API_URL + '/update-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: currentUserId, oldPassword: oldPwd, newPassword: newPwd })
-                });
-                const data = await resp.json();
-                if (data.success) {
-                    showMsg('profile-update-password-btn', '密码已更新，下次登录请使用新密码', 'success');
-                    profileOldPassword.value = '';
-                    profileNewPassword.value = '';
-                    profileConfirmPassword.value = '';
-                } else {
-                    showMsg('profile-update-password-btn', data.error || '修改失败', 'error');
-                }
-            } catch (err) {
-                showMsg('profile-update-password-btn', '网络错误', 'error');
-            }
-        });
-    }
-
-    function showMsg(afterId, text, type) {
-        const el = document.getElementById(afterId);
-        if (!el) return;
-        const old = el.parentElement.querySelector('.profile-msg');
-        if (old) old.remove();
-        const msg = document.createElement('div');
-        msg.className = 'profile-msg profile-msg--' + type;
-        msg.textContent = text;
-        el.insertAdjacentElement('afterend', msg);
-    }
-
-    // ---- 浏览器搜索（使用共享联想函数）----
-    if (browserSearchInput && browserSuggestionsDropdown) {
-        let browserActiveIndex = -1;
-        let browserSuggestionTimer = null;
-
-        function hideBrowserSuggestions() {
-            browserSuggestionsDropdown.innerHTML = '';
-            browserSuggestionsDropdown.classList.remove('show');
-            browserActiveIndex = -1;
-        }
-        function showBrowserSuggestions(html) {
-            browserSuggestionsDropdown.innerHTML = html;
-            browserSuggestionsDropdown.classList.add('show');
-            browserActiveIndex = -1;
-        }
-        function getBrowserActiveQuery() {
-            const items = browserSuggestionsDropdown.querySelectorAll('.suggestion-item');
-            for (const it of items) {
-                if (it.classList.contains('active')) return it.dataset.query;
-            }
-            return null;
-        }
-        function updateBrowserActiveSuggestion(delta) {
-            const items = browserSuggestionsDropdown.querySelectorAll('.suggestion-item');
-            if (items.length === 0) return;
-            items.forEach(it => it.classList.remove('active'));
-            browserActiveIndex = (browserActiveIndex + delta + items.length) % items.length;
-            items[browserActiveIndex].classList.add('active');
-            items[browserActiveIndex].scrollIntoView({ block: 'nearest' });
-        }
-
-        // input 事件：防抖联想
-        browserSearchInput.addEventListener('input', () => {
-            clearTimeout(browserSuggestionTimer);
-            const query = browserSearchInput.value.trim();
-            if (!query) {
-                // 空输入显示历史
-                const html = renderSuggestions([], '');
-                if (html) showBrowserSuggestions(html);
-                else hideBrowserSuggestions();
-                return;
-            }
-            browserSuggestionTimer = setTimeout(async () => {
-                const suggestions = await fetchBingSuggestions(query);
-                const html = renderSuggestions(suggestions, query);
-                showBrowserSuggestions(html);
-            }, 200);
-        });
-
-        // 聚焦显示搜索历史
-        browserSearchInput.addEventListener('focus', () => {
-            const query = browserSearchInput.value.trim();
-            if (!query) {
-                const html = renderSuggestions([], '');
-                if (html) showBrowserSuggestions(html);
-            }
-        });
-
-        // 键盘导航
-        browserSearchInput.addEventListener('keydown', e => {
-            if (e.key === 'Escape') { hideBrowserSuggestions(); return; }
-            if (e.key === 'ArrowDown') { e.preventDefault(); updateBrowserActiveSuggestion(1); return; }
-            if (e.key === 'ArrowUp') { e.preventDefault(); updateBrowserActiveSuggestion(-1); return; }
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const active = getBrowserActiveQuery();
-                const keyword = active || browserSearchInput.value.trim();
-                if (keyword) doSharedSearch(keyword, hideBrowserSuggestions, () => { browserSearchInput.value = ''; });
-            }
-        });
-
-        // 点击联想项
-        browserSuggestionsDropdown.addEventListener('click', e => {
-            const item = e.target.closest('.suggestion-item');
-            const footer = e.target.closest('.suggestion-footer');
-            if (footer && footer.dataset.action === 'clear-history') {
-                clearSearchHistory();
-                hideBrowserSuggestions();
-                return;
-            }
-            if (item && item.dataset.query) {
-                doSharedSearch(item.dataset.query, hideBrowserSuggestions, () => { browserSearchInput.value = ''; });
-            }
-        });
-
-        // 点击外部关闭
-        document.addEventListener('click', e => {
-            if (!browserSuggestionsDropdown.contains(e.target) && e.target !== browserSearchInput) {
-                hideBrowserSuggestions();
-            }
-        });
-    }
 
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
@@ -866,6 +402,123 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSuggestionIdx = -1;
     }
 
+    function isURL(str) {
+        // 带协议的直接识别
+        if (/^https?:\/\//i.test(str)) return true;
+        // 常见域名格式: example.com, www.example.com, example.com/path
+        if (/^([\w-]+\.)+[\w-]+(\/[\w\-./?=&#%]*)?$/i.test(str)) return true;
+        // localhost
+        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
+        return false;
+    }
+
+    function navigateTo(str) {
+        let url = str;
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+        }
+        window.open(url, '_blank');
+        hideSuggestions();
+        searchInput.value = '';
+    }
+
+    function doBingSearch(query) {
+        if (!query) return;
+        // 检测是否为网址，是则直接跳转
+        if (isURL(query)) {
+            navigateTo(query);
+            return;
+        }
+        window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        hideSuggestions();
+        searchInput.value = '';
+        // 保存到搜索历史
+        saveSearchHistory(query);
+    }
+
+    // 搜索历史（localStorage）
+    const MAX_HISTORY = 6;
+    function getSearchHistory() {
+        try {
+            return JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
+        } catch { return []; }
+    }
+    function saveSearchHistory(query) {
+        let hist = getSearchHistory();
+        hist = hist.filter(h => h !== query);
+        hist.unshift(query);
+        if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+        localStorage.setItem('mark_bing_history', JSON.stringify(hist));
+    }
+    function clearSearchHistory() {
+        localStorage.removeItem('mark_bing_history');
+        hideSuggestions();
+    }
+
+    async function fetchBingSuggestions(query) {
+        try {
+            // DuckDuckGo 联想 API 支持 CORS，无需代理
+            const resp = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`);
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            // DDG 格式: [{"phrase":"..."}, ...]
+            return Array.isArray(data) ? data.map(item => item.phrase) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function renderSuggestions(suggestions, query) {
+        const history = getSearchHistory();
+        let html = '';
+
+        // 搜索历史
+        if (!query && history.length > 0) {
+            html += '<div class="suggestion-section-label">搜索历史</div>';
+            history.forEach(item => {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(item)}">
+                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                    <span class="suggestion-text">${escapeHtml(item)}</span>
+                </div>`;
+            });
+            html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
+            html += '<div class="suggestion-divider"></div>';
+        }
+
+        // Bing 联想词
+        if (suggestions.length > 0) {
+            if (history.length > 0 || !query) {
+                html += '<div class="suggestion-section-label">联想搜索</div>';
+            }
+            suggestions.forEach(s => {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(s)}">
+                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    <span class="suggestion-text">${escapeHtml(s)}</span>
+                </div>`;
+            });
+        }
+
+        // 直接搜索当前输入
+        if (query && suggestions.length === 0) {
+            html += `<div class="suggestion-item" data-query="${escapeAttr(query)}">
+                <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <span class="suggestion-text">搜索 "${escapeHtml(query)}"</span>
+            </div>`;
+        }
+
+        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
     function updateActiveSuggestion(delta) {
         const items = suggestionsDropdown.querySelectorAll('.suggestion-item');
         if (items.length === 0) return;
@@ -975,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const active = getActiveQuery();
                 const keyword = active || searchInput.value.trim();
-                if (keyword) doSharedSearch(keyword, hideSuggestions, () => { searchInput.value = ''; });
+                if (keyword) doBingSearch(keyword);
             }
         });
 
@@ -986,12 +639,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (footer && footer.dataset.action === 'clear-history') {
                 clearSearchHistory();
-                hideSuggestions();
                 return;
             }
 
             if (item && item.dataset.query) {
-                doSharedSearch(item.dataset.query, hideSuggestions, () => { searchInput.value = ''; });
+                doBingSearch(item.dataset.query);
             }
         });
 
@@ -1457,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUserId = null;
         bookmarks = [];
         selectedFolder = null;
-        goToBrowser();
+        showAuthContainer();
         loginForm.reset();
     });
 
@@ -1613,15 +1265,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function showAuthContainer() {
         authContainer.classList.remove('hidden');
         mainContainer.classList.add('hidden');
-        browserContainer.classList.add('hidden');
-        profileContainer.classList.add('hidden');
     }
 
     function showMainContainer() {
         authContainer.classList.add('hidden');
         mainContainer.classList.remove('hidden');
-        browserContainer.classList.add('hidden');
-        profileContainer.classList.add('hidden');
     }
 
     // 初始化默认文件夹（新用户无数据时创建"根文件夹"）
@@ -2653,27 +2301,27 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    // 检查是否有保存的登录信息（仅恢复会话，不自动进入书签管理）
+    // 检查是否有保存的登录信息
     const savedUser = localStorage.getItem('mark_current_user');
     if (savedUser) {
         try {
             const userData = JSON.parse(savedUser);
             currentUser = userData.username;
             currentUserId = userData.id;
-            // 后台同步书签数据（用于浏览器界面快捷入口）
+            showMainContainer();
+            // 先同步服务器数据，再渲染
             syncBookmarks().then(() => {
                 initDefaultFolder();
-                renderQuickAccess();
+                renderFolderTree();
+                selectDefaultFolder();
                 loadPreferences();
             }).catch(() => {
                 initDefaultFolder();
-                renderQuickAccess();
+                renderFolderTree();
+                selectDefaultFolder();
             });
         } catch (err) {
             console.log('无法解析保存的用户信息');
         }
-    } else {
-        // 未登录也渲染快捷方式
-        renderQuickAccess();
     }
 });
