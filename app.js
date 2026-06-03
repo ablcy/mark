@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.2';
+const CURRENT_VERSION = 'V1.2.3';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -368,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             searchMode = searchMode === 'bookmark' ? 'bing' : 'bookmark';
             updateSearchModeUI();
             savePreference('searchMode', searchMode);
+            hideSuggestions();
             // 切换回书签模式时恢复当前目录显示
             if (searchMode === 'bookmark') {
                 searchInput.value = '';
@@ -382,43 +383,249 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 搜索功能
+    // ==== Bing 搜索联想 ====
+    const suggestionsDropdown = document.getElementById('suggestions-dropdown');
+    let suggestionList = [];
+    let activeSuggestionIdx = -1;
+    let suggestionTimer = null;
+
+    function hideSuggestions() {
+        suggestionsDropdown.classList.remove('show');
+        suggestionsDropdown.innerHTML = '';
+        suggestionList = [];
+        activeSuggestionIdx = -1;
+    }
+
+    function showSuggestions(html) {
+        suggestionsDropdown.innerHTML = html;
+        suggestionsDropdown.classList.add('show');
+        activeSuggestionIdx = -1;
+    }
+
+    function doBingSearch(query) {
+        if (!query) return;
+        window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        hideSuggestions();
+        searchInput.value = '';
+        // 保存到搜索历史
+        saveSearchHistory(query);
+    }
+
+    // 搜索历史（localStorage）
+    const MAX_HISTORY = 6;
+    function getSearchHistory() {
+        try {
+            return JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
+        } catch { return []; }
+    }
+    function saveSearchHistory(query) {
+        let hist = getSearchHistory();
+        hist = hist.filter(h => h !== query);
+        hist.unshift(query);
+        if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
+        localStorage.setItem('mark_bing_history', JSON.stringify(hist));
+    }
+    function clearSearchHistory() {
+        localStorage.removeItem('mark_bing_history');
+        hideSuggestions();
+    }
+
+    async function fetchBingSuggestions(query) {
+        try {
+            const resp = await fetch(`https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`);
+            if (!resp.ok) return [];
+            const text = await resp.text();
+            // 格式: ["query",["s1","s2",...]]
+            const data = JSON.parse(text);
+            return Array.isArray(data) && data.length > 1 ? data[1] : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function renderSuggestions(suggestions, query) {
+        const history = getSearchHistory();
+        let html = '';
+
+        // 搜索历史
+        if (!query && history.length > 0) {
+            html += '<div class="suggestion-section-label">搜索历史</div>';
+            history.forEach(item => {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(item)}">
+                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                    <span class="suggestion-text">${escapeHtml(item)}</span>
+                </div>`;
+            });
+            html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
+            html += '<div class="suggestion-divider"></div>';
+        }
+
+        // Bing 联想词
+        if (suggestions.length > 0) {
+            if (history.length > 0 || !query) {
+                html += '<div class="suggestion-section-label">联想搜索</div>';
+            }
+            suggestions.forEach(s => {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(s)}">
+                    <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                    <span class="suggestion-text">${escapeHtml(s)}</span>
+                </div>`;
+            });
+        }
+
+        // 直接搜索当前输入
+        if (query && suggestions.length === 0) {
+            html += `<div class="suggestion-item" data-query="${escapeAttr(query)}">
+                <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <span class="suggestion-text">搜索 "${escapeHtml(query)}"</span>
+            </div>`;
+        }
+
+        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function escapeAttr(str) {
+        return str.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function updateActiveSuggestion(delta) {
+        const items = suggestionsDropdown.querySelectorAll('.suggestion-item');
+        if (items.length === 0) return;
+        items.forEach(item => item.classList.remove('active'));
+        activeSuggestionIdx = Math.max(-1, Math.min(items.length - 1, activeSuggestionIdx + delta));
+        if (activeSuggestionIdx >= 0) {
+            items[activeSuggestionIdx].classList.add('active');
+            items[activeSuggestionIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    function getActiveQuery() {
+        const items = suggestionsDropdown.querySelectorAll('.suggestion-item');
+        if (activeSuggestionIdx >= 0 && activeSuggestionIdx < items.length) {
+            return items[activeSuggestionIdx].dataset.query;
+        }
+        return null;
+    }
+
+    // 搜索输入事件
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            if (searchMode === 'bing') return;
-            const keyword = searchInput.value.trim().toLowerCase();
-            if (!keyword) {
-                if (selectedFolder) {
-                    selectedFolderName.textContent = selectedFolder.name;
-                    updateBookmarksList(selectedFolder.children || []);
-                } else {
-                    selectedFolderName.textContent = '根文件夹';
-                    updateBookmarksList(getAllBookmarks(bookmarks));
+        searchInput.addEventListener('input', async () => {
+            if (searchMode !== 'bing') {
+                // 书签模式：本地搜索
+                const keyword = searchInput.value.trim().toLowerCase();
+                if (!keyword) {
+                    if (selectedFolder) {
+                        selectedFolderName.textContent = selectedFolder.name;
+                        updateBookmarksList(selectedFolder.children || []);
+                    } else {
+                        selectedFolderName.textContent = '根文件夹';
+                        updateBookmarksList(getAllBookmarks(bookmarks));
+                    }
+                    return;
                 }
+                const allItems = getAllBookmarks(bookmarks);
+                const filtered = allItems.filter(item =>
+                    item.type === 'bookmark' && (
+                        item.title.toLowerCase().includes(keyword) ||
+                        item.url.toLowerCase().includes(keyword)
+                    )
+                );
+                const matchedFolders = bookmarks.filter(item =>
+                    item.type === 'folder' && item.name.toLowerCase().includes(keyword)
+                );
+                const allFiltered = [...matchedFolders, ...filtered];
+                selectedFolderName.textContent = `全局搜索："${searchInput.value.trim()}"`;
+                updateBookmarksList(allFiltered, keyword);
                 return;
             }
-            const allItems = getAllBookmarks(bookmarks);
-            const filtered = allItems.filter(item =>
-                item.type === 'bookmark' && (
-                    item.title.toLowerCase().includes(keyword) ||
-                    item.url.toLowerCase().includes(keyword)
-                )
-            );
-            const matchedFolders = bookmarks.filter(item =>
-                item.type === 'folder' && item.name.toLowerCase().includes(keyword)
-            );
-            const allFiltered = [...matchedFolders, ...filtered];
-            selectedFolderName.textContent = `全局搜索："${searchInput.value.trim()}"`;
-            updateBookmarksList(allFiltered, keyword);
+
+            // Bing 模式：联想搜索
+            clearTimeout(suggestionTimer);
+            const query = searchInput.value.trim();
+            if (!query) {
+                const html = await renderSuggestions([], '');
+                if (html) showSuggestions(html);
+                else hideSuggestions();
+                return;
+            }
+
+            suggestionTimer = setTimeout(async () => {
+                const suggestions = await fetchBingSuggestions(query);
+                const html = await renderSuggestions(suggestions, query);
+                showSuggestions(html);
+            }, 200);
         });
 
-        // Enter 键：Bing 模式下跳转搜索
+        // 聚焦时显示搜索历史
+        searchInput.addEventListener('focus', async () => {
+            if (searchMode !== 'bing') return;
+            const query = searchInput.value.trim();
+            if (!query) {
+                const html = await renderSuggestions([], '');
+                if (html) showSuggestions(html);
+            }
+        });
+
+        // Enter / Arrow 键导航
         searchInput.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter') return;
-            const keyword = searchInput.value.trim();
-            if (!keyword) return;
-            if (searchMode === 'bing') {
-                window.open(`https://www.bing.com/search?q=${encodeURIComponent(keyword)}`, '_blank');
+            if (searchMode !== 'bing') {
+                if (e.key !== 'Enter') return;
+                const keyword = searchInput.value.trim();
+                if (!keyword) return;
+                // 书签模式下 Enter 无特殊行为，仅触发过滤
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                hideSuggestions();
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                updateActiveSuggestion(1);
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                updateActiveSuggestion(-1);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const active = getActiveQuery();
+                const keyword = active || searchInput.value.trim();
+                if (keyword) doBingSearch(keyword);
+            }
+        });
+
+        // 点击联想项
+        suggestionsDropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.suggestion-item');
+            const footer = e.target.closest('.suggestion-footer');
+
+            if (footer && footer.dataset.action === 'clear-history') {
+                clearSearchHistory();
+                return;
+            }
+
+            if (item && item.dataset.query) {
+                doBingSearch(item.dataset.query);
+            }
+        });
+
+        // 点击外部关闭
+        document.addEventListener('click', (e) => {
+            if (!suggestionsDropdown.contains(e.target) && e.target !== searchInput && e.target !== searchModeBtn) {
+                hideSuggestions();
             }
         });
     }

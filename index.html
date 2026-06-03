@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.2.2</span>
+                            <span class="auth-version">V1.2.3</span>
             </div>
         </div>
 
@@ -45,11 +45,12 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.2.2</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.2.3</span>
                 </div>
                 <div class="nav-center">
                     <button id="search-mode-btn" class="search-mode-btn" title="切换搜索引擎">书签</button>
-                    <input type="text" class="search-input" placeholder="搜索书签...">
+                    <input type="text" class="search-input" placeholder="搜索书签..." autocomplete="off">
+                    <div class="suggestions-dropdown" id="suggestions-dropdown"></div>
                 </div>
                 <div class="nav-right">
                     <button id="lang-btn" class="nav-btn" title="切换语言">中</button>
@@ -124,6 +125,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.2.3 - 2026年6月3日</h3>
+                        <ul>
+                            <li>Bing 模式新增搜索联想：输入关键词自动从 Bing 获取联想词</li>
+                            <li>搜索历史（最近6条），自动保存在本地浏览器</li>
+                            <li>键盘导航：上下箭头选择联想项，回车搜索，Esc 关闭</li>
+                            <li>点击联想词或搜索历史直接在新标签页搜索</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.2.2 - 2026年6月3日</h3>
                         <ul>

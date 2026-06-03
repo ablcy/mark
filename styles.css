@@ -71,6 +71,7 @@ body {
     display: flex;
     align-items: center;
     gap: 0;
+    position: relative;
 }
 
 .search-mode-btn {
@@ -114,6 +115,88 @@ body {
 
 .search-input::placeholder {
     color: #999;
+}
+
+/* 搜索联想下拉框 */
+.suggestions-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 1000;
+    padding: 4px 0;
+}
+
+.suggestions-dropdown.show {
+    display: block;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background 0.15s;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+    background: #f0f0f0;
+}
+
+.suggestion-item .suggestion-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suggestion-item .suggestion-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestion-section-label {
+    padding: 6px 16px 2px;
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.suggestion-divider {
+    height: 1px;
+    background: #eee;
+    margin: 4px 0;
+}
+
+.suggestion-footer {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #0078d4;
+    cursor: pointer;
+    border-top: 1px solid #eee;
+    text-align: center;
+}
+
+.suggestion-footer:hover {
+    background: #f5f5f5;
 }
 
 .nav-right {
@@ -834,6 +917,15 @@ body {
         padding: 6px 10px;
     }
 
+    .suggestion-item {
+        font-size: 13px;
+        padding: 9px 12px;
+    }
+
+    .suggestions-dropdown {
+        max-height: 300px;
+    }
+
     .nav-right {
         flex: 0 0 100%;
         display: flex;
@@ -1214,6 +1306,34 @@ body {
 
 [data-theme="dark"] .search-mode-btn.bing-mode:hover {
     background: #106ebe;
+}
+
+[data-theme="dark"] .suggestions-dropdown {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .suggestion-item {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .suggestion-item:hover,
+[data-theme="dark"] .suggestion-item.active {
+    background: var(--bg-hover);
+}
+
+[data-theme="dark"] .suggestion-divider {
+    background: var(--border-color);
+}
+
+[data-theme="dark"] .suggestion-footer {
+    border-top-color: var(--border-color);
+    color: #4da3ff;
+}
+
+[data-theme="dark"] .suggestion-footer:hover {
+    background: var(--bg-hover);
 }
 
 [data-theme="dark"] .main-layout {
