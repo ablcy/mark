@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const https = require('https');
 const { Pool } = require('pg');
 
 const app = express();
@@ -262,50 +261,6 @@ app.post('/api/login', async (req, res) => {
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: '登录失败，请重试' });
-    }
-});
-
-// 修改用户名
-app.post('/api/update-username', async (req, res) => {
-    const { userId, newUsername } = req.body;
-    if (!userId || !newUsername) {
-        return res.status(400).json({ error: '参数不完整' });
-    }
-    try {
-        // 检查新用户名是否已存在
-        const exist = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [newUsername, userId]);
-        if (exist.rows.length > 0) {
-            return res.status(409).json({ error: '用户名已被占用' });
-        }
-        await pool.query('UPDATE users SET username = $1 WHERE id = $2', [newUsername, userId]);
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Update username error:', err);
-        res.status(500).json({ error: '修改用户名失败' });
-    }
-});
-
-// 修改密码
-app.post('/api/update-password', async (req, res) => {
-    const { userId, oldPassword, newPassword } = req.body;
-    if (!userId || !oldPassword || !newPassword) {
-        return res.status(400).json({ error: '参数不完整' });
-    }
-    try {
-        const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
-        if (userResult.rows.length === 0) {
-            return res.status(404).json({ error: '用户不存在' });
-        }
-        const valid = await bcrypt.compare(oldPassword, userResult.rows[0].password);
-        if (!valid) {
-            return res.status(401).json({ error: '当前密码错误' });
-        }
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashed, userId]);
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Update password error:', err);
-        res.status(500).json({ error: '修改密码失败' });
     }
 });
 
@@ -811,41 +766,31 @@ app.post('/api/save-preference', async (req, res) => {
     }
 });
 
-// 搜索联想代理（Wikipedia 开放搜索 API，全球可用）
-app.get('/api/bing-suggestions', (req, res) => {
+// Bing 搜索联想代理（使用 DuckDuckGo 作为数据源，更可靠）
+app.get('/api/bing-suggestions', async (req, res) => {
     const { query } = req.query;
-    if (!query) { return res.json([]); }
+    if (!query) {
+        return res.json([]);
+    }
     try {
-        const url = 'https://zh.wikipedia.org/w/api.php?action=opensearch&search=' + encodeURIComponent(query) + '&limit=8&format=json&origin=*';
-        https.get(url, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' } }, (resp) => {
-            // 处理 301/302 重定向
-            if ([301, 302, 307, 308].includes(resp.statusCode)) {
-                const redirectUrl = resp.headers.location;
-                https.get(redirectUrl, { timeout: 5000, headers: { 'User-Agent': 'Mozilla/5.0' } }, (r2) => {
-                    let data = '';
-                    r2.on('data', chunk => data += chunk);
-                    r2.on('end', () => {
-                        try {
-                            const parsed = JSON.parse(data);
-                            // Wikipedia 返回: [query, [suggestion1, suggestion2, ...], ...]
-                            const suggestions = Array.isArray(parsed) && Array.isArray(parsed[1]) ? parsed[1] : [];
-                            res.json(suggestions);
-                        } catch { res.json([]); }
-                    });
-                }).on('error', () => res.json([]));
-                return;
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        // 使用 DuckDuckGo AC API，服务端调用稳定
+        const ddgResp = await fetch(`https://api.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
-            let data = '';
-            resp.on('data', chunk => data += chunk);
-            resp.on('end', () => {
-                try {
-                    const parsed = JSON.parse(data);
-                    const suggestions = Array.isArray(parsed) && Array.isArray(parsed[1]) ? parsed[1] : [];
-                    res.json(suggestions);
-                } catch { res.json([]); }
-            });
-        }).on('error', () => res.json([]));
-    } catch { res.json([]); }
+        });
+        clearTimeout(timeout);
+        const data = await ddgResp.json();
+        // DDG 返回格式: [{"phrase":"..."}, ...]
+        const suggestions = Array.isArray(data) ? data.map(item => item.phrase) : [];
+        res.json(suggestions);
+    } catch (err) {
+        console.error('[DuckDuckGo Proxy] Error:', err.name, err.message);
+        res.json([]);
+    }
 });
 
 app.use((err, req, res, next) => {
