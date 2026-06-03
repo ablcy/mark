@@ -87,7 +87,7 @@
                 <!-- 左侧文件夹树 -->
                 <aside class="sidebar">
                     <div class="sidebar-title">
-                        <span class="folder-icon">📂</span>
+                        <span class="folder-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/></svg></span>
                         根文件夹
                     </div>
                     <div id="folder-tree" class="folder-tree"></div>
@@ -131,6 +131,16 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.5 - 2026年6月4日</h3>
+                        <ul>
+                            <li>文件夹图标改为黑色平面线条 SVG（方案 A：前盖翻开）</li>
+                            <li>折叠/展开箭头（▼/▶）移除，改为点击文件夹头部切换展开/收起</li>
+                            <li>左侧 sidebar 和右侧内容区文件夹图标在展开/收起时动态切换（关闭/翻开）</li>
+                            <li>文件夹外部书签计数（.content-folder-count）移除，计数仅保留在菜单内</li>
+                            <li>侧边栏标题栏（.sidebar-title）和内容区标题栏（.content-header）隐藏</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.3 - 2026年6月3日</h3>
                         <ul>
