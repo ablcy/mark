@@ -580,14 +580,7 @@ body {
 }
 
 .sidebar-title {
-    padding: 16px 20px;
-    font-size: 15px;
-    color: #333;
-    font-weight: 500;
-    border-bottom: 1px solid #e8e8e8;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    display: none;
 }
 
 .sidebar-title .folder-icon {
@@ -683,18 +676,7 @@ body {
 }
 
 .content-header {
-    padding: 20px 30px;
-    border-bottom: 1px solid #e8e8e8;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.content-header h2 {
-    font-size: 20px;
-    color: #333;
-    font-weight: 500;
+    display: none;
 }
 
 .content-actions {
@@ -1187,8 +1169,7 @@ body {
     }
 
     .sidebar-title {
-        padding: 10px 12px;
-        font-size: 13px;
+        display: none;
     }
 
     .folder-header {
@@ -1207,7 +1188,7 @@ body {
     }
 
     .content-header {
-        padding: 10px 12px;
+        display: none;
     }
 
     .content-header h2 {
