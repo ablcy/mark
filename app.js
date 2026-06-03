@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.4';
+const CURRENT_VERSION = 'v3.0.0';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -402,9 +402,27 @@ document.addEventListener('DOMContentLoaded', () => {
         activeSuggestionIdx = -1;
     }
 
+    function isURL(str) {
+        // 带协议头的完整 URL
+        if (/^https?:\/\//i.test(str)) return true;
+        // domain.tld 格式 (如 github.com, baidu.com)
+        if (/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?)+(:\d+)?(\/.*)?$/.test(str)) return true;
+        // localhost
+        if (/^localhost(:\d+)?(\/.*)?$/i.test(str)) return true;
+        // IP 地址
+        if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?(\/.*)?$/.test(str)) return true;
+        return false;
+    }
+
     function doBingSearch(query) {
         if (!query) return;
-        window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        if (isURL(query)) {
+            let url = query.trim();
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            window.open(url, '_blank');
+        } else {
+            window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        }
         hideSuggestions();
         searchInput.value = '';
         // 保存到搜索历史
