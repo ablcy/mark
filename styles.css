@@ -217,13 +217,20 @@ body {
     border-color: #bbb;
 }
 
-/* 文件夹/内容区 ... 菜单按钮 */
+/* 统一 ... 菜单按钮样式（无边框无方框） */
+/* 顶部导航栏菜单按钮容器：紧跟版本号 */
+.nav-menu-wrapper {
+    position: relative;
+    display: inline-flex;
+    margin-left: 4px;
+}
+
 .folder-menu-btn,
-.content-folder-menu-btn {
+.content-folder-menu-btn,
+.nav-menu-btn,
+.bookmark-menu-btn {
+    display: none;
     flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    padding: 0;
     border: none;
     background: transparent;
     color: #999;
@@ -231,43 +238,24 @@ body {
     font-weight: bold;
     letter-spacing: 1px;
     cursor: pointer;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     line-height: 1;
-    transition: all 0.15s;
+    transition: color 0.15s;
+    padding: 4px 6px;
+}
+
+.folder-menu-btn {
+    margin-left: auto;
+}
+
+.content-folder-menu-btn {
     margin-left: auto;
 }
 
 .folder-menu-btn:hover,
-.content-folder-menu-btn:hover {
-    background: #e0e0e0;
-    color: #555;
-}
-
-.folder-menu-btn:active,
-.content-folder-menu-btn:active {
-    background: #d0d0d0;
-}
-
-/* 顶部导航栏 ... 按钮 */
-.nav-menu-btn {
-    padding: 4px 10px;
-    font-weight: bold;
-    letter-spacing: 2px;
-    font-size: 14px;
-    line-height: 1;
-    border-radius: 4px;
-    background: transparent;
-    border: 1px solid transparent;
-    color: #888;
-}
-
-.nav-menu-btn:hover {
-    background: #eee;
+.content-folder-menu-btn:hover,
+.nav-menu-btn:hover,
+.bookmark-menu-btn:hover {
     color: #333;
-    border-color: #ddd;
 }
 
 /* 认证界面 */
@@ -731,11 +719,17 @@ body {
     top: 100%;
     margin-top: 4px;
     background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    min-width: 140px;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    min-width: 150px;
     z-index: 200;
+    padding: 4px 0;
+}
+
+/* 顶部导航栏下拉菜单左对齐 */
+#nav-menu-dropdown {
+    right: auto;
+    left: 0;
 }
 
 .dropdown-item {
@@ -806,6 +800,7 @@ body {
     color: inherit;
 }
 
+/* 右侧内容区文件夹行 */
 .content-folder-item {
     display: flex;
     align-items: center;
@@ -991,16 +986,17 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    color: #888;
-    font-size: 16px;
+    color: #999;
+    font-size: 14px;
     font-weight: bold;
-    letter-spacing: 2px;
-    padding: 4px 8px;
-    border-radius: 4px;
+    letter-spacing: 1px;
+    padding: 4px 6px;
+    border-radius: 0;
     flex-shrink: 0;
     line-height: 1;
     margin-left: 8px;
     text-decoration: none;
+    transition: color 0.15s;
 }
 
 .bookmark-item:hover .bookmark-menu-btn {
@@ -1008,7 +1004,6 @@ body {
 }
 
 .bookmark-menu-btn:hover {
-    background: #e0e0e0;
     color: #333;
 }
 
@@ -1585,24 +1580,16 @@ body {
 }
 
 [data-theme="dark"] .folder-menu-btn,
-[data-theme="dark"] .content-folder-menu-btn {
+[data-theme="dark"] .content-folder-menu-btn,
+[data-theme="dark"] .nav-menu-btn {
     color: #777;
 }
 
 [data-theme="dark"] .folder-menu-btn:hover,
-[data-theme="dark"] .content-folder-menu-btn:hover {
-    background: #3a3a3a;
+[data-theme="dark"] .content-folder-menu-btn:hover,
+[data-theme="dark"] .nav-menu-btn:hover,
+[data-theme="dark"] .bookmark-menu-btn:hover {
     color: #bbb;
-}
-
-[data-theme="dark"] .nav-menu-btn {
-    color: #aaa;
-}
-
-[data-theme="dark"] .nav-menu-btn:hover {
-    background: #333;
-    color: #ddd;
-    border-color: #555;
 }
 
 [data-theme="dark"] .folder-item:hover > .folder-header {
