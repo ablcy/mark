@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.1</span>
+                            <span class="auth-version">v3.0.3</span>
             </div>
         </div>
 
@@ -45,21 +45,21 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.1</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.3</span>
                     <div class="nav-menu-wrapper">
-                        <button id="nav-menu-btn" class="nav-btn nav-menu-btn" title="菜单">...</button>
-                        <div id="nav-menu-dropdown" class="nav-menu-dropdown hidden">
-                            <button id="lang-btn" class="nav-menu-item">中</button>
-                            <button id="theme-btn" class="nav-menu-item">
+                        <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
+                        <div id="nav-menu-dropdown" class="dropdown-menu hidden">
+                            <button id="lang-btn" class="dropdown-item">中</button>
+                            <button id="theme-btn" class="dropdown-item">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
                                 主题
                             </button>
-                            <div class="nav-menu-divider"></div>
-                            <button id="multi-select-nav-btn" class="nav-menu-item">多选</button>
-                            <button id="shares-btn" class="nav-menu-item">短链接</button>
-                            <button id="admin-btn" class="nav-menu-item">管理</button>
-                            <div class="nav-menu-divider"></div>
-                            <button id="logout-btn" class="nav-menu-item nav-menu-item--danger">退出</button>
+                            <div class="dropdown-divider"></div>
+                            <button id="multi-select-nav-btn" class="dropdown-item">多选</button>
+                            <button id="shares-btn" class="dropdown-item">短链接</button>
+                            <button id="admin-btn" class="dropdown-item">管理</button>
+                            <div class="dropdown-divider"></div>
+                            <button id="logout-btn" class="dropdown-item dropdown-item--danger">退出</button>
                         </div>
                     </div>
                 </div>
@@ -131,6 +131,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.3 - 2026年6月3日</h3>
+                        <ul>
+                            <li>顶部 ... 菜单样式统一使用 dropdown-menu 体系（与文件夹菜单共用）</li>
+                            <li>左侧 sidebar 和右侧内容区的每个文件夹后均显示 ... 菜单按钮</li>
+                            <li>文件夹菜单：添加链接 / 新建子文件夹 / 新建同级文件夹 / 导入 / 导出 / 修改名称 / 去层 / 删除该收藏 / 底部书签数量统计</li>
+                            <li>搜索框 PC 端放大至 720px，手机端占满整屏</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.1 - 2026年6月3日</h3>
                         <ul>
