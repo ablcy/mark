@@ -773,20 +773,29 @@ app.get('/api/bing-suggestions', async (req, res) => {
         return res.json([]);
     }
     try {
-        const https = require('https');
-        const bingResp = await new Promise((resolve, reject) => {
-            https.get(`https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`, (resp) => {
-                let data = '';
-                resp.on('data', chunk => data += chunk);
-                resp.on('end', () => resolve(data));
-                resp.on('error', reject);
-            }).on('error', reject);
+        const bingUrl = `https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`;
+        console.log('[Bing Proxy] Fetching:', bingUrl);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const bingResp = await fetch(bingUrl, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+                'Accept': '*/*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://cn.bing.com/'
+            }
         });
-        const parsed = JSON.parse(bingResp);
+        clearTimeout(timeout);
+        console.log('[Bing Proxy] Status:', bingResp.status, bingResp.statusText);
+        const text = await bingResp.text();
+        console.log('[Bing Proxy] Response length:', text.length, 'preview:', text.substring(0, 100));
+        const parsed = JSON.parse(text);
         const suggestions = Array.isArray(parsed) && parsed.length > 1 ? parsed[1] : [];
+        console.log('[Bing Proxy] Suggestions count:', suggestions.length);
         res.json(suggestions);
     } catch (err) {
-        console.error('Bing suggestions proxy error:', err.message);
+        console.error('[Bing Proxy] Error:', err.name, err.message);
         res.json([]);
     }
 });
