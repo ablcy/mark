@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.2';
+const CURRENT_VERSION = 'v3.0.1';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -209,13 +209,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (regInputs[1]) regInputs[1].placeholder = t.password;
             if (regInputs[2]) regInputs[2].placeholder = t.confirmPassword;
         }
-        if (langBtn) langBtn.innerHTML = (currentLang === 'zh'
-            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></svg> 语言 (中)'
-            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><path d="M2 12h20"/></svg> 语言 (En)');
-        if (multiSelectNavBtn) { const s = multiSelectNavBtn.querySelector('.nav-menu-text'); if (s) s.textContent = t.multiSelect; }
-        if (sharesBtn) { const s = sharesBtn.querySelector('.nav-menu-text'); if (s) s.textContent = t.shares; }
-        if (adminBtn) { const s = adminBtn.querySelector('.nav-menu-text'); if (s) s.textContent = t.admin; }
-        if (logoutBtn) { const s = logoutBtn.querySelector('.nav-menu-text'); if (s) s.textContent = t.logout; }
+        if (langBtn) langBtn.textContent = currentLang === 'zh' ? '中' : 'En';
+        if (multiSelectNavBtn) multiSelectNavBtn.textContent = t.multiSelect;
+        if (sharesBtn) sharesBtn.textContent = t.shares;
+        if (adminBtn) adminBtn.textContent = t.admin;
+        if (logoutBtn) logoutBtn.textContent = t.logout;
         if (versionDisplay) versionDisplay.title = t.versionBadgeTitle;
         // 侧边栏标题
         const sidebarTitle = document.querySelector('.sidebar-title');
@@ -269,9 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (themeBtn) {
             const isLight = currentTheme === 'light';
             const svg = isLight
-                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-            themeBtn.innerHTML = svg + ' 主题';
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+            themeBtn.innerHTML = svg + ' <span>主题</span>';
             themeBtn.title = isLight ? '切换暗色主题' : '切换亮色主题';
         }
     }
@@ -1578,17 +1576,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         header.appendChild(icon);
         header.appendChild(name);
-
-        // 文件夹菜单按钮 ...
-        const menuBtn = document.createElement('button');
-        menuBtn.className = 'folder-menu-btn';
-        menuBtn.textContent = '...';
-        menuBtn.title = '文件夹菜单';
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // TODO: 弹出文件夹菜单
-        });
-        header.appendChild(menuBtn);
         
         header.onclick = (e) => {
             if (multiSelectMode && e.target.tagName === 'INPUT') return;
@@ -2066,17 +2053,6 @@ document.addEventListener('DOMContentLoaded', () => {
         div.appendChild(icon);
         div.appendChild(name);
         div.appendChild(count);
-
-        // 文件夹菜单按钮 ...
-        const menuBtn = document.createElement('button');
-        menuBtn.className = 'content-folder-menu-btn';
-        menuBtn.textContent = '...';
-        menuBtn.title = '文件夹菜单';
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // TODO: 弹出文件夹菜单
-        });
-        div.appendChild(menuBtn);
 
         // 多选模式 checkbox
         if (multiSelectMode) {
