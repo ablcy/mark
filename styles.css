@@ -66,7 +66,7 @@ body {
 
 .nav-center {
     flex: 1;
-    max-width: 500px;
+    max-width: 720px;
     margin: 0 40px;
     display: flex;
     align-items: center;
@@ -75,12 +75,12 @@ body {
 }
 
 .search-mode-btn {
-    padding: 7px 12px;
+    padding: 10px 16px;
     background: white;
     border: 1px solid #ddd;
     border-right: none;
     border-radius: 20px 0 0 20px;
-    font-size: 13px;
+    font-size: 14px;
     color: #555;
     cursor: pointer;
     white-space: nowrap;
@@ -104,10 +104,10 @@ body {
 
 .search-input {
     width: 100%;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border: 1px solid #ddd;
     border-radius: 0 20px 20px 0;
-    font-size: 14px;
+    font-size: 15px;
     background: white;
     color: #333;
     outline: none;
@@ -215,6 +215,59 @@ body {
 .nav-btn:hover {
     background: #e8e8e8;
     border-color: #bbb;
+}
+
+/* 文件夹/内容区 ... 菜单按钮 */
+.folder-menu-btn,
+.content-folder-menu-btn {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #999;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.15s;
+    margin-left: auto;
+}
+
+.folder-menu-btn:hover,
+.content-folder-menu-btn:hover {
+    background: #e0e0e0;
+    color: #555;
+}
+
+.folder-menu-btn:active,
+.content-folder-menu-btn:active {
+    background: #d0d0d0;
+}
+
+/* 顶部导航栏 ... 按钮 */
+.nav-menu-btn {
+    padding: 4px 10px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-size: 14px;
+    line-height: 1;
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: #888;
+}
+
+.nav-menu-btn:hover {
+    background: #eee;
+    color: #333;
+    border-color: #ddd;
 }
 
 /* 认证界面 */
@@ -577,6 +630,7 @@ body {
     min-height: 24px;
     line-height: 1;
     transition: background-color 0.15s ease;
+    position: relative;
 }
 
 .folder-toggle {
@@ -723,6 +777,14 @@ body {
     background: #fdf2f2;
 }
 
+.dropdown-info {
+    padding: 8px 16px 10px 16px;
+    font-size: 12px;
+    color: #999;
+    border-top: 1px solid #f0f0f0;
+    user-select: none;
+}
+
 .bookmarks-list {
     flex: 1;
     padding: 20px 30px;
@@ -756,6 +818,7 @@ body {
     color: inherit;
     gap: 10px;
     margin-bottom: 4px;
+    position: relative;
 }
 
 .content-folder-item:hover {
@@ -1058,22 +1121,23 @@ body {
     }
 
     .nav-center {
-        flex: 0 0 auto;
-        width: 50%;
-        margin: 0 0 0 6px;
+        flex: 1 1 100%;
+        width: 100%;
+        max-width: none;
+        margin: 0 6px;
         min-width: 0;
         order: 2;
         display: flex;
     }
 
     .search-mode-btn {
-        font-size: 11px;
-        padding: 5px 8px;
+        font-size: 13px;
+        padding: 8px 12px;
     }
 
     .search-input {
-        font-size: 12px;
-        padding: 6px 10px;
+        font-size: 14px;
+        padding: 8px 14px;
     }
 
     .suggestion-item {
@@ -1520,6 +1584,27 @@ body {
     color: var(--text-muted);
 }
 
+[data-theme="dark"] .folder-menu-btn,
+[data-theme="dark"] .content-folder-menu-btn {
+    color: #777;
+}
+
+[data-theme="dark"] .folder-menu-btn:hover,
+[data-theme="dark"] .content-folder-menu-btn:hover {
+    background: #3a3a3a;
+    color: #bbb;
+}
+
+[data-theme="dark"] .nav-menu-btn {
+    color: #aaa;
+}
+
+[data-theme="dark"] .nav-menu-btn:hover {
+    background: #333;
+    color: #ddd;
+    border-color: #555;
+}
+
 [data-theme="dark"] .folder-item:hover > .folder-header {
     background: var(--bg-hover);
 }
@@ -1600,6 +1685,11 @@ body {
 
 [data-theme="dark"] .dropdown-divider {
     border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dropdown-info {
+    color: #666;
+    border-top-color: #3a3a3a;
 }
 
 [data-theme="dark"] .empty-state {
