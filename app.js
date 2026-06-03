@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'V1.2.3';
+const CURRENT_VERSION = 'V1.2.4';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -432,12 +432,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function fetchBingSuggestions(query) {
         try {
-            const resp = await fetch(`https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`);
+            const resp = await fetch(`${API_URL}/bing-suggestions?query=${encodeURIComponent(query)}`);
             if (!resp.ok) return [];
-            const text = await resp.text();
-            // 格式: ["query",["s1","s2",...]]
-            const data = JSON.parse(text);
-            return Array.isArray(data) && data.length > 1 ? data[1] : [];
+            const data = await resp.json();
+            return Array.isArray(data) ? data : [];
         } catch {
             return [];
         }

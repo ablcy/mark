@@ -709,6 +709,15 @@ app.post('/api/admin/shares/:id/domain', async (req, res) => {
 
 // 删除短链接
 app.delete('/api/admin/shares/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM shares WHERE id = $1', [id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete share error:', err);
+        res.status(500).json({ error: '删除短链接失败' });
+    }
+});
 
 // 获取用户偏好
 app.get('/api/preferences/:userId', async (req, res) => {
@@ -757,13 +766,28 @@ app.post('/api/save-preference', async (req, res) => {
     }
 });
 
-    const { id } = req.params;
+// Bing 搜索联想代理（解决浏览器 CORS 限制）
+app.get('/api/bing-suggestions', async (req, res) => {
+    const { query } = req.query;
+    if (!query) {
+        return res.json([]);
+    }
     try {
-        await pool.query('DELETE FROM shares WHERE id = $1', [id]);
-        res.json({ success: true });
+        const https = require('https');
+        const bingResp = await new Promise((resolve, reject) => {
+            https.get(`https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`, (resp) => {
+                let data = '';
+                resp.on('data', chunk => data += chunk);
+                resp.on('end', () => resolve(data));
+                resp.on('error', reject);
+            }).on('error', reject);
+        });
+        const parsed = JSON.parse(bingResp);
+        const suggestions = Array.isArray(parsed) && parsed.length > 1 ? parsed[1] : [];
+        res.json(suggestions);
     } catch (err) {
-        console.error('Delete share error:', err);
-        res.status(500).json({ error: '删除短链接失败' });
+        console.error('Bing suggestions proxy error:', err.message);
+        res.json([]);
     }
 });
 

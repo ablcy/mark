@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">V1.2.3</span>
+                            <span class="auth-version">V1.2.4</span>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.2.3</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">V1.2.4</span>
                 </div>
                 <div class="nav-center">
                     <button id="search-mode-btn" class="search-mode-btn" title="切换搜索引擎">书签</button>
@@ -125,6 +125,13 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>V1.2.4 - 2026年6月3日</h3>
+                        <ul>
+                            <li>Bing 搜索联想通过服务端代理请求，修复浏览器 CORS 拦截导致联想词无法显示的问题</li>
+                            <li>修复 server.js 中 delete /api/admin/shares 路由被偏好设置代码插入破坏的语法问题</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>V1.2.3 - 2026年6月3日</h3>
                         <ul>
