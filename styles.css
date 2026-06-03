@@ -66,7 +66,7 @@ body {
 
 .nav-center {
     flex: 1;
-    max-width: 680px;
+    max-width: 500px;
     margin: 0 40px;
     display: flex;
     align-items: center;
@@ -75,12 +75,12 @@ body {
 }
 
 .search-mode-btn {
-    padding: 9px 16px;
+    padding: 7px 12px;
     background: white;
     border: 1px solid #ddd;
     border-right: none;
     border-radius: 20px 0 0 20px;
-    font-size: 14px;
+    font-size: 13px;
     color: #555;
     cursor: pointer;
     white-space: nowrap;
@@ -104,10 +104,10 @@ body {
 
 .search-input {
     width: 100%;
-    padding: 10px 20px;
+    padding: 8px 16px;
     border: 1px solid #ddd;
     border-radius: 0 20px 20px 0;
-    font-size: 15px;
+    font-size: 14px;
     background: white;
     color: #333;
     outline: none;
@@ -215,166 +215,6 @@ body {
 .nav-btn:hover {
     background: #e8e8e8;
     border-color: #bbb;
-}
-
-/* ================================================================
-   标题栏 ... 下拉菜单
-   ================================================================ */
-.nav-menu-wrapper {
-    position: relative;
-    margin-left: 2px;
-}
-
-.nav-menu-btn {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    letter-spacing: 1px;
-    font-size: 16px;
-    line-height: 1;
-    border-radius: 50%;
-    background: transparent;
-    border: 1px solid transparent;
-    color: #888;
-    transition: all 0.2s;
-}
-
-.nav-menu-btn:hover {
-    background: #eee;
-    color: #333;
-    border-color: #ddd;
-}
-
-.nav-menu-dropdown {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 6px);
-    background: #fff;
-    border: 1px solid #e8e8e8;
-    border-radius: 10px;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-    min-width: 152px;
-    padding: 6px;
-    z-index: 300;
-}
-
-.nav-menu-dropdown.hidden {
-    display: none;
-}
-
-.nav-menu-section-label {
-    font-size: 10px;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 6px 10px 4px 10px;
-    user-select: none;
-}
-
-.nav-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 9px 10px;
-    border: none;
-    background: none;
-    text-align: left;
-    font-size: 13px;
-    color: #333;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.1s ease;
-    white-space: nowrap;
-}
-
-.nav-menu-item:hover {
-    background: #f3f4f6;
-}
-
-.nav-menu-item svg {
-    flex-shrink: 0;
-}
-
-.nav-menu-divider {
-    height: 1px;
-    background: #f0f0f0;
-    margin: 4px 6px;
-}
-
-.nav-menu-item--danger {
-    color: #e74c3c;
-}
-
-.nav-menu-item--danger:hover {
-    background: #fef2f2;
-}
-
-/* ================================================================
-   文件夹 ... 菜单按钮
-   ================================================================ */
-.folder-menu-btn {
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #aaa;
-    font-size: 16px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: all 0.15s;
-    margin-left: auto;
-}
-
-.folder-menu-btn:hover {
-    background: #e8e8e8;
-    color: #555;
-}
-
-.folder-menu-btn:active {
-    background: #ddd;
-}
-
-/* 右侧内容区文件夹的菜单按钮 */
-.content-folder-menu-btn {
-    flex-shrink: 0;
-    width: 28px;
-    height: 28px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #aaa;
-    font-size: 18px;
-    font-weight: bold;
-    letter-spacing: 1px;
-    cursor: pointer;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: all 0.15s;
-}
-
-.content-folder-menu-btn:hover {
-    background: #d4ddf4;
-    color: #555;
-}
-
-.content-folder-menu-btn:active {
-    background: #c4cde5;
 }
 
 /* 认证界面 */
@@ -1218,23 +1058,22 @@ body {
     }
 
     .nav-center {
-        flex: 1 1 100%;
-        width: 100%;
-        max-width: none;
-        margin: 0;
+        flex: 0 0 auto;
+        width: 50%;
+        margin: 0 0 0 6px;
         min-width: 0;
         order: 2;
         display: flex;
     }
 
     .search-mode-btn {
-        font-size: 13px;
-        padding: 7px 12px;
+        font-size: 11px;
+        padding: 5px 8px;
     }
 
     .search-input {
-        font-size: 14px;
-        padding: 8px 14px;
+        font-size: 12px;
+        padding: 6px 10px;
     }
 
     .suggestion-item {
@@ -1246,18 +1085,18 @@ body {
         max-height: 300px;
     }
 
-    .nav-menu-btn {
-        width: 28px;
-        height: 28px;
+    .nav-right {
+        flex: 0 0 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 3px;
+        order: 3;
     }
 
-    .nav-menu-dropdown {
-        min-width: 140px;
-    }
-
-    .nav-menu-item {
-        padding: 8px 10px;
-        font-size: 12px;
+    .nav-btn {
+        padding: 5px 8px;
+        font-size: 11px;
     }
 
     .main-layout {
@@ -1761,61 +1600,6 @@ body {
 
 [data-theme="dark"] .dropdown-divider {
     border-color: var(--border-color);
-}
-
-/* 暗色主题 - 标题栏下拉菜单 */
-[data-theme="dark"] .nav-menu-btn {
-    color: #aaa;
-}
-[data-theme="dark"] .nav-menu-btn:hover {
-    background: #333;
-    color: #ddd;
-    border-color: #555;
-}
-[data-theme="dark"] .nav-menu-dropdown {
-    background: #2a2a2a;
-    border-color: #444;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3);
-}
-[data-theme="dark"] .nav-menu-section-label {
-    color: #777;
-}
-[data-theme="dark"] .nav-menu-item {
-    color: #ccc;
-}
-[data-theme="dark"] .nav-menu-item:hover {
-    background: #3a3a3a;
-}
-[data-theme="dark"] .nav-menu-divider {
-    background: #444;
-}
-[data-theme="dark"] .nav-menu-item--danger {
-    color: #f87171;
-}
-[data-theme="dark"] .nav-menu-item--danger:hover {
-    background: #3a1a1a;
-}
-
-/* 暗色主题 - 文件夹菜单按钮 */
-[data-theme="dark"] .folder-menu-btn {
-    color: #777;
-}
-[data-theme="dark"] .folder-menu-btn:hover {
-    background: #3a3a3a;
-    color: #bbb;
-}
-[data-theme="dark"] .folder-menu-btn:active {
-    background: #444;
-}
-[data-theme="dark"] .content-folder-menu-btn {
-    color: #777;
-}
-[data-theme="dark"] .content-folder-menu-btn:hover {
-    background: #3a4a6a;
-    color: #bbb;
-}
-[data-theme="dark"] .content-folder-menu-btn:active {
-    background: #4a5a7a;
 }
 
 [data-theme="dark"] .empty-state {
