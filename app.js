@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.1';
+const CURRENT_VERSION = 'v3.0.3';
 
 function showToast(msg) {
     let toast = document.getElementById('toast');
@@ -756,6 +756,120 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectedFolder) {
             updateBookmarksList(selectedFolder.children || []);
         }
+    }
+
+    // 为文件夹添加 ... 菜单按钮（左侧 sidebar 和右侧内容区共用）
+    function attachFolderMenuBtn(container, folder, btnCssClass) {
+        const btn = document.createElement('button');
+        btn.className = btnCssClass || 'folder-menu-btn';
+        btn.textContent = '...';
+        btn.title = '文件夹菜单';
+
+        const menu = document.createElement('div');
+        menu.className = 'dropdown-menu hidden';
+
+        function addItem(label, onClick, isDanger) {
+            const item = document.createElement('button');
+            item.className = 'dropdown-item' + (isDanger ? ' dropdown-item--danger' : '');
+            item.textContent = label;
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.add('hidden');
+                selectedFolder = folder;
+                onClick();
+            });
+            menu.appendChild(item);
+        }
+
+        addItem('添加链接', () => addBookmarkToCurrentFolder());
+        addItem('新建子文件夹', () => addSubfolderToCurrentFolder());
+        addItem('新建同级文件夹', () => addSiblingFolder());
+
+        const divider1 = document.createElement('div');
+        divider1.className = 'dropdown-divider';
+        menu.appendChild(divider1);
+
+        addItem('导入', () => importBookmarks());
+        addItem('导出', () => exportBookmarks());
+
+        const divider2 = document.createElement('div');
+        divider2.className = 'dropdown-divider';
+        menu.appendChild(divider2);
+
+        addItem('修改名称', async () => {
+            const newName = prompt('请输入新的文件夹名称：', folder.name);
+            if (!newName || !newName.trim()) return;
+            folder.name = newName.trim();
+            await saveBookmarks();
+            renderFolderTree();
+            selectedFolderName.textContent = folder.name;
+            updateBookmarksList(folder.children || []);
+        });
+
+        addItem('去层', async () => {
+            if (folder.name === '根文件夹') { alert('根文件夹不能去层！'); return; }
+            function findParentArr(items, target) {
+                for (const item of items) {
+                    if (item.type === 'folder' && item.children) {
+                        if (item.children.includes(target)) return item.children;
+                        const f = findParentArr(item.children, target);
+                        if (f) return f;
+                    }
+                }
+                return null;
+            }
+            const parentArray = findParentArr(bookmarks, folder) || (bookmarks.includes(folder) ? bookmarks : null);
+            if (!parentArray) { alert('找不到父文件夹，操作失败！'); return; }
+            if (!confirm('确定要去层文件夹「' + folder.name + '」？\n其所有子内容将提升到上一级，文件夹本身将被删除。')) return;
+            const idx = parentArray.indexOf(folder);
+            const children = folder.children || [];
+            parentArray.splice(idx, 1, ...children);
+            await saveBookmarks();
+            renderFolderTree();
+            selectDefaultFolder();
+        });
+
+        const divider3 = document.createElement('div');
+        divider3.className = 'dropdown-divider';
+        menu.appendChild(divider3);
+
+        addItem('删除该收藏', async () => {
+            if (folder.name === '根文件夹') { alert('根文件夹不能删除！'); return; }
+            if (!confirm('确定要删除文件夹「' + folder.name + '」及其所有内容吗？此操作不可恢复！')) return;
+            function removeFromTree(items, target) {
+                for (let i = items.length - 1; i >= 0; i--) {
+                    if (items[i] === target) { items.splice(i, 1); return true; }
+                    if (items[i].type === 'folder' && items[i].children) {
+                        if (removeFromTree(items[i].children, target)) return true;
+                    }
+                }
+                return false;
+            }
+            removeFromTree(bookmarks, folder);
+            await saveBookmarks();
+            renderFolderTree();
+            selectDefaultFolder();
+        }, true);
+
+        // 底部统计
+        const info = document.createElement('div');
+        info.className = 'dropdown-info';
+        const count = countBookmarks([folder]);
+        info.textContent = count + ' 个书签';
+        menu.appendChild(info);
+
+        container.appendChild(btn);
+        container.appendChild(menu);
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            // 关闭其他下拉菜单
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+            menu.classList.toggle('hidden');
+        });
     }
 
     // 三点菜单
@@ -1576,7 +1690,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         header.appendChild(icon);
         header.appendChild(name);
-        
+
+        // 文件夹 ... 菜单按钮
+        attachFolderMenuBtn(header, folder, 'folder-menu-btn');
+
         header.onclick = (e) => {
             if (multiSelectMode && e.target.tagName === 'INPUT') return;
             if (multiSelectMode) return;
@@ -2053,6 +2170,9 @@ document.addEventListener('DOMContentLoaded', () => {
         div.appendChild(icon);
         div.appendChild(name);
         div.appendChild(count);
+
+        // 文件夹 ... 菜单按钮
+        attachFolderMenuBtn(div, folder, 'content-folder-menu-btn');
 
         // 多选模式 checkbox
         if (multiSelectMode) {
