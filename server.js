@@ -766,29 +766,36 @@ app.post('/api/save-preference', async (req, res) => {
     }
 });
 
-// Bing 搜索联想代理（使用 DuckDuckGo 作为数据源，更可靠）
+// Bing 搜索联想代理（解决浏览器 CORS 限制）
 app.get('/api/bing-suggestions', async (req, res) => {
     const { query } = req.query;
     if (!query) {
         return res.json([]);
     }
     try {
+        const bingUrl = `https://cn.bing.com/osjson.aspx?query=${encodeURIComponent(query)}`;
+        console.log('[Bing Proxy] Fetching:', bingUrl);
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
-        // 使用 DuckDuckGo AC API，服务端调用稳定
-        const ddgResp = await fetch(`https://api.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=json&pretty=0`, {
+        const bingResp = await fetch(bingUrl, {
             signal: controller.signal,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+                'Accept': '*/*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Referer': 'https://cn.bing.com/'
             }
         });
         clearTimeout(timeout);
-        const data = await ddgResp.json();
-        // DDG 返回格式: [{"phrase":"..."}, ...]
-        const suggestions = Array.isArray(data) ? data.map(item => item.phrase) : [];
+        console.log('[Bing Proxy] Status:', bingResp.status, bingResp.statusText);
+        const text = await bingResp.text();
+        console.log('[Bing Proxy] Response length:', text.length, 'preview:', text.substring(0, 100));
+        const parsed = JSON.parse(text);
+        const suggestions = Array.isArray(parsed) && parsed.length > 1 ? parsed[1] : [];
+        console.log('[Bing Proxy] Suggestions count:', suggestions.length);
         res.json(suggestions);
     } catch (err) {
-        console.error('[DuckDuckGo Proxy] Error:', err.name, err.message);
+        console.error('[Bing Proxy] Error:', err.name, err.message);
         res.json([]);
     }
 });
