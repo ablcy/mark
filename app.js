@@ -4,10 +4,11 @@ const CURRENT_VERSION = 'v3.0.6';
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
     { id: 'bookmark', name: '书签搜索', searchUrl: null, color: '#2c3e50' },
-    { id: 'general', name: '综合搜索', searchUrl: 'https://www.bing.com/search?q={q}', color: '#0078d4' },
     { id: 'baidu', name: '百度', searchUrl: 'https://www.baidu.com/s?wd={q}', color: '#2932E1' },
     { id: 'bing', name: '必应', searchUrl: 'https://www.bing.com/search?q={q}', color: '#008373' },
     { id: 'google', name: 'Google', searchUrl: 'https://www.google.com/search?q={q}', color: '#4285F4' },
+    { id: 'sogou', name: '搜狗', searchUrl: 'https://www.sogou.com/web?query={q}', color: '#FF4F01' },
+    { id: 'so360', name: '360搜索', searchUrl: 'https://www.so.com/s?q={q}', color: '#40BA21' },
     { id: 'metaso', name: '秘塔AI', searchUrl: 'https://metaso.cn/?q={q}', color: '#6C5CE7' },
 ];
 
@@ -16,16 +17,18 @@ function getEngineIconSVG(engineId, size) {
     switch (engineId) {
         case 'bookmark':
             return '<img src="favicon.png" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Mark">';
-        case 'general':
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
         case 'baidu':
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#2932E1"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">B</text></svg>';
+            return '<img src="https://www.baidu.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="百度" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#2932E1"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">B</text></svg>';
         case 'bing':
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#008373"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">b</text></svg>';
+            return '<img src="https://www.bing.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="必应" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#008373"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">b</text></svg>';
         case 'google':
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="white" stroke="#ddd" stroke-width="0.5"/><text x="7" y="16" fill="#4285F4" font-size="12" font-weight="bold" font-family="Arial">G</text><text x="12" y="16" fill="#EA4335" font-size="10" font-weight="bold" font-family="Arial">o</text><text x="16" y="16" fill="#FBBC05" font-size="10" font-weight="bold" font-family="Arial">o</text></svg>';
+            return '<img src="https://www.google.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Google" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="10" fill="#4285F4"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial">G</text></svg>';
+        case 'sogou':
+            return '<img src="https://www.sogou.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="搜狗" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#FF4F01"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">搜</text></svg>';
+        case 'so360':
+            return '<img src="https://www.so.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="360搜索" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#40BA21"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">360</text></svg>';
         case 'metaso':
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#6C5CE7"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">AI</text></svg>';
+            return '<img src="https://metaso.cn/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="秘塔AI" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#6C5CE7"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">AI</text></svg>';
         default:
             return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
     }
@@ -169,8 +172,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!searchEnginePicker) return;
         const currentId = localStorage.getItem('mark_engine') || 'bing';
         const engines = getAllEngines();
-        const isDefault = DEFAULT_ENGINES.some(e => e.id === currentId && currentId !== 'bookmark');
-        const isBookmark = currentId === 'bookmark';
 
         let html = '';
         engines.forEach((eng, idx) => {
@@ -190,42 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</div>';
 
         searchEnginePicker.innerHTML = html;
-
-        // 绑定引擎点击事件
-        searchEnginePicker.querySelectorAll('.engine-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                if (e.target.closest('.engine-item-delete')) return;
-                const engineId = this.dataset.engineId;
-                localStorage.setItem('mark_engine', engineId);
-                savePreference('currentEngine', engineId);
-                updateEngineIcon();
-                hideEnginePicker();
-                // 切换到书签模式时清空并恢复
-                if (engineId === 'bookmark') {
-                    searchInput.value = '';
-                    if (selectedFolder) {
-                        selectedFolderName.textContent = selectedFolder.name;
-                        updateBookmarksList(selectedFolder.children || []);
-                    }
-                }
-            });
-        });
-
-        // 绑定删除事件
-        searchEnginePicker.querySelectorAll('.engine-item-delete').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const engineId = this.dataset.delete;
-                deleteCustomEngine(engineId);
-            });
-        });
-
-        // 绑定添加按钮
-        const addBtn = searchEnginePicker.querySelector('#engine-add-btn');
-        if (addBtn) {
-            addBtn.addEventListener('click', showCustomEngineForm);
-        }
-
         searchEnginePicker.classList.add('show');
     }
 
@@ -246,26 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         searchEnginePicker.innerHTML = formHtml;
 
-        document.getElementById('custom-engine-cancel').addEventListener('click', () => {
-            searchEnginePicker.classList.remove('show');
-            setTimeout(() => renderEnginePicker(), 100);
-        });
-
-        document.getElementById('custom-engine-save').addEventListener('click', () => {
-            const name = document.getElementById('custom-engine-name').value.trim();
-            const url = document.getElementById('custom-engine-url').value.trim();
-            if (!name || !url) {
-                alert('请填写名称和搜索地址');
-                return;
-            }
-            if (!url.includes('{q}')) {
-                alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
-                return;
-            }
-            addCustomEngine(name, url);
-        });
-
-        document.getElementById('custom-engine-name').focus();
+        // focus must happen after DOM update
+        setTimeout(() => {
+            const nameInput = document.getElementById('custom-engine-name');
+            if (nameInput) nameInput.focus();
+        }, 50);
     }
 
     function addCustomEngine(name, url) {
@@ -301,6 +251,67 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 hideEnginePicker();
                 renderEnginePicker();
+            }
+        });
+    }
+
+    // 引擎选择器面板内事件委托（绑定一次，不依赖每次 innerHTML 重建）
+    if (searchEnginePicker) {
+        searchEnginePicker.addEventListener('click', function(e) {
+            // 点击引擎项
+            const engineItem = e.target.closest('.engine-item');
+            if (engineItem && !e.target.closest('.engine-item-delete')) {
+                const engineId = engineItem.dataset.engineId;
+                localStorage.setItem('mark_engine', engineId);
+                savePreference('currentEngine', engineId);
+                updateEngineIcon();
+                hideEnginePicker();
+                if (engineId === 'bookmark') {
+                    searchInput.value = '';
+                    if (selectedFolder) {
+                        selectedFolderName.textContent = selectedFolder.name;
+                        updateBookmarksList(selectedFolder.children || []);
+                    }
+                }
+                return;
+            }
+
+            // 删除自定义引擎
+            const delBtn = e.target.closest('.engine-item-delete');
+            if (delBtn) {
+                deleteCustomEngine(delBtn.dataset.delete);
+                return;
+            }
+
+            // 自定义搜索引擎按钮
+            if (e.target.closest('#engine-add-btn')) {
+                showCustomEngineForm();
+                return;
+            }
+
+            // 自定义表单内 -- 取消按钮
+            if (e.target.id === 'custom-engine-cancel') {
+                searchEnginePicker.classList.remove('show');
+                setTimeout(() => renderEnginePicker(), 100);
+                return;
+            }
+
+            // 自定义表单内 -- 保存按钮
+            if (e.target.id === 'custom-engine-save') {
+                const nameEl = document.getElementById('custom-engine-name');
+                const urlEl = document.getElementById('custom-engine-url');
+                const name = nameEl ? nameEl.value.trim() : '';
+                const url = urlEl ? urlEl.value.trim() : '';
+                if (!name || !url) {
+                    alert('请填写名称和搜索地址');
+                    return;
+                }
+                if (!url.includes('{q}')) {
+                    alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
+                    return;
+                }
+                addCustomEngine(name, url);
+                return;
             }
         });
     }
@@ -678,7 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         }
 
-        return html || '<div class="suggestion-item" style="color:#999;cursor:default;">无建议</div>';
+        return html;
     }
 
     function escapeHtml(str) {
@@ -766,9 +777,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(suggestionTimer);
             const query = searchInput.value.trim();
             if (!query) {
-                const html = await renderSuggestions([], '');
-                if (html) showSuggestions(html);
-                else hideSuggestions();
+                hideSuggestions();
                 return;
             }
 
@@ -779,14 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 200);
         });
 
-        // 聚焦时显示搜索历史
+        // 聚焦时不显示任何内容
         searchInput.addEventListener('focus', async () => {
             if (isBookmarkMode()) return;
-            const query = searchInput.value.trim();
-            if (!query) {
-                const html = await renderSuggestions([], '');
-                if (html) showSuggestions(html);
-            }
         });
 
         // Enter / Arrow 键导航
