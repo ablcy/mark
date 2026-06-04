@@ -5,7 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mark - 书签管理</title>
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://www.baidu.com">
+    <link rel="preconnect" href="https://www.bing.com">
+    <link rel="preconnect" href="https://www.google.com">
+    <style>
+        /* === Critical CSS - 首屏极速渲染 === */
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f5f5f5;height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0)}
+        #app{flex:1;display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+        .hidden{display:none!important}
+        /* 顶栏 */
+        .top-nav{background:#f5f5f5;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.08);position:sticky;top:0;z-index:100;min-height:56px}
+        .nav-left{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+        .nav-left .logo{color:#333;font-size:24px;font-weight:bold}
+        .nav-logo-img{width:28px;height:28px;border-radius:4px;flex-shrink:0}
+        .version-badge{background:#e8e8e8;color:#666;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500}
+        .nav-right{display:flex;gap:8px}
+        .nav-btn{padding:8px 16px;background:white;border:1px solid #ddd;color:#333;border-radius:4px;cursor:pointer;font-size:13px;transition:all .2s}
+        .nav-btn:hover{background:#e8e8e8;border-color:#bbb}
+        /* 搜索栏 */
+        .nav-center{position:absolute;left:50%;transform:translateX(-50%);max-width:720px;width:calc(100% - 48px);display:flex;align-items:center}
+        .search-bar{position:relative;width:100%;display:flex;align-items:center;background:white;border:1px solid #ddd;border-radius:20px;overflow:visible;transition:border-color .2s}
+        .search-bar:focus-within{border-color:#3498db;box-shadow:0 0 0 2px rgba(52,152,219,.15)}
+        .search-engine-btn{flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;border-radius:20px 0 0 20px;padding:0}
+        .search-input{flex:1;min-width:0;padding:10px 4px;border:none;font-size:15px;background:transparent;color:#333;outline:none}
+        .search-input::placeholder{color:#999}
+        .search-submit-btn{flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;border-radius:0 20px 20px 0;color:#999;padding:0;transition:all .15s}
+        .search-submit-btn:hover{color:#333;background:#f0f0f0}
+        /* 主布局 */
+        .main-layout{flex:1;display:flex;background:white;min-height:0;height:calc(100dvh - 56px)}
+        .sidebar{width:260px;min-width:260px;background:#fafafa;border-right:1px solid #eee;display:flex;flex-direction:column;padding:16px 0;overflow-y:auto}
+        .content-area{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:white}
+        /* 认证界面 */
+        #auth-container{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;height:100dvh}
+        .auth-wrapper{display:flex;flex-direction:column;align-items:center;width:100%;max-width:380px}
+        .auth-logo{font-size:48px;font-weight:bold;color:#2c3e50;margin:12px 0}
+        .auth-logo-img{width:64px;height:64px;border-radius:12px}
+        .auth-box{width:100%;background:white;border-radius:8px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+        .auth-tabs{display:flex;margin-bottom:16px}
+        .auth-tabs button{flex:1;padding:10px;border:none;background:transparent;cursor:pointer;font-size:14px;color:#999;border-bottom:2px solid transparent}
+        .auth-tabs button.active{color:#333;border-bottom-color:#3498db;font-weight:500}
+        .auth-form{display:flex;flex-direction:column;gap:12px}
+        .auth-form input{padding:12px;border:1px solid #ddd;border-radius:4px;font-size:14px;outline:none}
+        .auth-form input:focus{border-color:#3498db}
+        .auth-form button[type="submit"]{padding:12px;background:#3498db;color:white;border:none;border-radius:4px;font-size:15px;cursor:pointer}
+        .auth-form button[type="submit"]:hover{background:#2980b9}
+        .auth-back-btn{padding:12px;background:transparent;color:#999;border:1px solid #e0e0e0;border-radius:4px;font-size:15px;cursor:pointer;transition:all .2s;font-family:inherit}
+        .auth-back-btn:hover{color:#666;border-color:#ccc}
+        .auth-version{text-align:center;color:#bbb;font-size:11px;margin-top:16px}
+        .auth-switch{text-align:center;margin-top:16px;font-size:13px;color:#666}
+        .auth-switch a{color:#3498db;text-decoration:none;cursor:pointer}
+        /* Loading skeleton */
+        #main-container:empty::after, .loading-state{content:'';display:block;height:100%;background:#f5f5f5}
+        /* 响应式 */
+        @media(max-width:768px){
+            .top-nav{padding:8px 12px}
+            .nav-center{width:calc(100% - 100px)}
+            .sidebar{display:none;width:0;min-width:0}
+            .main-layout{height:calc(100dvh - 48px)}
+        }
+    </style>
+    <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css"></noscript>
 </head>
 <body>
     <div id="app">
@@ -35,18 +96,18 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.12</span>
+                            <span class="auth-version">v3.0.13</span>
             </div>
         </div>
 
         <!-- 主界面 -->
-        <div id="main-container" class="hidden">
+        <div id="main-container">
             <!-- 顶部导航栏 -->
             <header class="top-nav">
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.12</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.13</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -140,6 +201,16 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.13 - 2026年6月4日</h3>
+                        <ul>
+                            <li>极速加载优化：inline 关键 CSS（~2KB）实现秒级首屏渲染，完整 CSS 异步加载</li>
+                            <li>script 添加 defer 属性，并行下载不阻塞 DOM 解析</li>
+                            <li>已登录用户立即渲染缓存数据，后台同步服务器数据不阻塞 UI</li>
+                            <li>搜索引擎 preconnect 预连接，图标 SVG 内联代码大幅精简</li>
+                            <li>主界面默认可见，游客模式无需等待 JS 即可看到页面结构</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.12 - 2026年6月4日</h3>
                         <ul>
@@ -602,6 +673,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script defer src="app.js"></script>
 </body>
 </html>

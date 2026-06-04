@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.12';
+const CURRENT_VERSION = 'v3.0.13';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -14,24 +14,22 @@ const DEFAULT_ENGINES = [
 
 function getEngineIconSVG(engineId, size) {
     const s = size || 20;
-    switch (engineId) {
-        case 'bookmark':
-            return '<img src="favicon.png" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Mark">';
-        case 'baidu':
-            return '<img src="https://www.baidu.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="百度" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#2932E1"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">B</text></svg>';
-        case 'bing':
-            return '<img src="https://www.bing.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="必应" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#008373"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">b</text></svg>';
-        case 'google':
-            return '<img src="https://www.google.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Google" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="10" fill="#4285F4"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="14" font-weight="bold" font-family="Arial">G</text></svg>';
-        case 'sogou':
-            return '<img src="https://www.sogou.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="搜狗" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#FF4F01"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">搜</text></svg>';
-        case 'so360':
-            return '<img src="https://www.so.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="360搜索" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#40BA21"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">360</text></svg>';
-        case 'metaso':
-            return '<img src="https://metaso.cn/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="秘塔AI" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'"><svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" style="display:none"><rect width="24" height="24" rx="12" fill="#6C5CE7"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">AI</text></svg>';
-        default:
-            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
+    if (engineId === 'bookmark') {
+        return '<img src="favicon.png" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Mark">';
     }
+    const icons = {
+        baidu: ['https://www.baidu.com/favicon.ico', 'B', '#2932E1'],
+        bing: ['https://www.bing.com/favicon.ico', 'b', '#008373'],
+        google: ['https://www.google.com/favicon.ico', 'G', '#4285F4'],
+        sogou: ['https://www.sogou.com/favicon.ico', 'S', '#FF4F01'],
+        so360: ['https://www.so.com/favicon.ico', '3', '#40BA21'],
+        metaso: ['https://metaso.cn/favicon.ico', 'M', '#6C5CE7']
+    };
+    const cfg = icons[engineId];
+    if (cfg) {
+        return '<img src="' + cfg[0] + '" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="" onerror="this.outerHTML=\'<svg width=' + s + ' height=' + s + ' viewBox=0 0 24 24><rect width=24 height=24 rx=12 fill=' + cfg[2] + '/><text x=12 y=17 text-anchor=middle fill=white font-size=13 font-weight=bold font-family=Arial>' + cfg[1] + '</text></svg>\'">';
+    }
+    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
 }
 
 function getAllEngines() {
@@ -2760,28 +2758,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const userData = JSON.parse(savedUser);
             currentUser = userData.username;
             currentUserId = userData.id;
-            showMainContainer();
-            // 先同步服务器数据，再渲染
+            // 立即渲染缓存数据，不等待网络
+            initDefaultFolder();
+            renderFolderTree();
+            selectDefaultFolder();
+            updateEngineIcon();
+            applyLanguage();
+            // 后台同步服务器数据
             syncBookmarks().then(() => {
-                initDefaultFolder();
                 renderFolderTree();
                 selectDefaultFolder();
                 loadPreferences();
-                applyLanguage();
-            }).catch(() => {
-                initDefaultFolder();
-                renderFolderTree();
-                selectDefaultFolder();
-                applyLanguage();
-            });
+            }).catch(() => {});
         } catch (err) {
             console.log('无法解析保存的用户信息');
-            showMainContainer();
             guestMode();
         }
     } else {
         // 游客模式：直接进入主界面，书签存 localStorage
-        showMainContainer();
         guestMode();
     }
 
@@ -2799,6 +2793,5 @@ document.addEventListener('DOMContentLoaded', () => {
         selectDefaultFolder();
         updateEngineIcon();
         applyLanguage();
-        showMainContainer();
     }
 });
