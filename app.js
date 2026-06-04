@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.9';
+const CURRENT_VERSION = 'v3.0.10';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -1347,12 +1347,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.add('hidden');
     });
 
-    // 返回主页按钮（登录/注册界面）
-    document.querySelectorAll('.auth-back-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+    // 返回主页按钮
+    const authBackBtn = document.querySelector('.auth-back-btn');
+    if (authBackBtn) {
+        authBackBtn.addEventListener('click', () => {
             guestMode();
         });
-    });
+    }
 
     // 注册
     registerForm.addEventListener('submit', async (e) => {
