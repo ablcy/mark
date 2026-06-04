@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>展开文件夹图标 - 重新设计</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        padding: 40px;
+        color: #333;
+    }
+    h1 {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    .subtitle {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 36px;
+    }
+    h2 {
+        font-size: 15px;
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 8px;
+    }
+    .desc {
+        font-size: 12px;
+        color: #999;
+        margin-bottom: 16px;
+        line-height: 1.6;
+    }
+    .option-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 40px;
+    }
+    .icon-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px 16px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        min-width: 120px;
+        flex: 1;
+        max-width: 200px;
+    }
+    .icon-card .size-label { font-size: 11px; color: #aaa; }
+
+    /* 模拟场景 */
+    .scene {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        padding: 16px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 360px;
+        font-size: 14px;
+    }
+    .scene .s-icon {
+        width: 18px; height: 18px; flex-shrink: 0;
+    }
+    .scene .s-name { flex: 1; }
+    .scene .s-name.active { color: #3498db; font-weight: 500; }
+
+    .content-row {
+        display: flex; align-items: center; padding: 8px 12px;
+        background: #f0f4ff; border-radius: 6px; font-size: 14px; gap: 8px;
+        margin-bottom: 8px; max-width: 360px;
+    }
+    .content-row .c-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+    .dark-section {
+        background: #1a1a1a; padding: 20px; border-radius: 8px; margin-top: 32px;
+        max-width: 420px;
+    }
+    .dark-section h2 { color: #888; }
+    .dark-scene {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 0; font-size: 14px; color: #ccc;
+    }
+    .dark-scene .ds-icon { width: 16px; height: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<h1>展开的文件夹 -- 方案对比</h1>
+<p class="subtitle">黑色平面线条 | 点击展开后替换关闭图标 | 48px / 18px / 20px</p>
+
+<!-- 方案 A -->
+<h2>方案 A：前盖翻开</h2>
+<p class="desc">文件夹前盖向下翻开，露出内部 tab，形似真实文件夹翻开动作。</p>
+<div class="option-row">
+    <div class="icon-card">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+            <path d="M2 8h20"/>
+            <path d="M4 8l1.5 3h13L20 8"/>
+        </svg>
+        <span class="size-label">48px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+            <path d="M2 8h20"/>
+            <path d="M4 8l1.5 3h13L20 8"/>
+        </svg>
+        <span class="size-label">18px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+            <path d="M2 8h20"/>
+            <path d="M4 8l1.5 3h13L20 8"/>
+        </svg>
+        <span class="size-label">20px</span>
+    </div>
+</div>
+
+<!-- 方案 B -->
+<h2>方案 B：顶部掀开+内容溢出</h2>
+<p class="desc">顶部完全打开，三条文档横线溢出，强调"内容可见、可操作"。</p>
+<div class="option-row">
+    <div class="icon-card">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3h5l2 2h8a2 2 0 0 1 2 2v1H2V5a2 2 0 0 1 2-2h1Z"/>
+            <path d="M2 8v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H2Z"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="5" y1="15" x2="17" y2="15"/>
+            <line x1="5" y1="18" x2="15" y2="18"/>
+        </svg>
+        <span class="size-label">48px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3h5l2 2h8a2 2 0 0 1 2 2v1H2V5a2 2 0 0 1 2-2h1Z"/>
+            <path d="M2 8v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H2Z"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="5" y1="15" x2="17" y2="15"/>
+            <line x1="5" y1="18" x2="15" y2="18"/>
+        </svg>
+        <span class="size-label">18px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3h5l2 2h8a2 2 0 0 1 2 2v1H2V5a2 2 0 0 1 2-2h1Z"/>
+            <path d="M2 8v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H2Z"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="5" y1="15" x2="17" y2="15"/>
+            <line x1="5" y1="18" x2="15" y2="18"/>
+        </svg>
+        <span class="size-label">20px</span>
+    </div>
+</div>
+
+<!-- 方案 C -->
+<h2>方案 C：斜线展开+单文档</h2>
+<p class="desc">前盖斜线表示翻开，内部一条粗文档线，极简克制。</p>
+<div class="option-row">
+    <div class="icon-card">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6a2 2 0 0 1 2-2h6l2 2h7a2 2 0 0 1 2 2v1"/>
+            <path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"/>
+            <path d="M8 4v5"/>
+            <line x1="5" y1="13" x2="19" y2="13" stroke-width="2"/>
+        </svg>
+        <span class="size-label">48px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6a2 2 0 0 1 2-2h6l2 2h7a2 2 0 0 1 2 2v1"/>
+            <path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"/>
+            <path d="M8 4v5"/>
+            <line x1="5" y1="13" x2="19" y2="13" stroke-width="2"/>
+        </svg>
+        <span class="size-label">18px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6a2 2 0 0 1 2-2h6l2 2h7a2 2 0 0 1 2 2v1"/>
+            <path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"/>
+            <path d="M8 4v5"/>
+            <line x1="5" y1="13" x2="19" y2="13" stroke-width="2"/>
+        </svg>
+        <span class="size-label">20px</span>
+    </div>
+</div>
+
+<!-- 方案 D -->
+<h2>方案 D：纯开盖+斜角翻页</h2>
+<p class="desc">前盖从左上角斜向翻开，露出内部容器，最接近真实文件夹打开动作。</p>
+<div class="option-row">
+    <div class="icon-card">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/>
+            <path d="M5 8l7 7 8-8"/>
+        </svg>
+        <span class="size-label">48px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/>
+            <path d="M5 8l7 7 8-8"/>
+        </svg>
+        <span class="size-label">18px</span>
+    </div>
+    <div class="icon-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/>
+            <path d="M5 8l7 7 8-8"/>
+        </svg>
+        <span class="size-label">20px</span>
+    </div>
+</div>
+
+<!-- 场景模拟 -->
+<h2 style="margin-top:48px;">左侧边栏场景 (18px) -- 方案 A</h2>
+<div class="scene">
+    <span class="s-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/></svg>
+    </span>
+    <span class="s-name">根文件夹</span>
+</div>
+<div class="scene">
+    <span class="s-icon" style="margin-left:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+            <path d="M2 8h20"/>
+            <path d="M4 8l1.5 3h13L20 8"/>
+        </svg>
+    </span>
+    <span class="s-name active">收藏夹 (展开)</span>
+</div>
+
+<h2 style="margin-top:32px;">左侧边栏场景 (18px) -- 方案 B</h2>
+<div class="scene">
+    <span class="s-icon" style="margin-left:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3h5l2 2h8a2 2 0 0 1 2 2v1H2V5a2 2 0 0 1 2-2h1Z"/>
+            <path d="M2 8v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H2Z"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <line x1="5" y1="15" x2="17" y2="15"/>
+            <line x1="5" y1="18" x2="15" y2="18"/>
+        </svg>
+    </span>
+    <span class="s-name active">收藏夹 (展开)</span>
+</div>
+
+<h2 style="margin-top:32px;">右侧内容区 (20px) -- 方案 A</h2>
+<div class="content-row">
+    <span class="c-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+            <path d="M2 8h20"/>
+            <path d="M4 8l1.5 3h13L20 8"/>
+        </svg>
+    </span>
+    <span class="s-name active">技术文档 (展开)</span>
+</div>
+
+<!-- 暗色主题 -->
+<div class="dark-section">
+    <h2>暗色主题</h2>
+    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+            <span style="color:#999;font-size:11px;">关闭</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/>
+                <path d="M2 8h20"/>
+                <path d="M4 8l1.5 3h13L20 8"/>
+            </svg>
+            <span style="color:#999;font-size:11px;">方案A</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 3h5l2 2h8a2 2 0 0 1 2 2v1H2V5a2 2 0 0 1 2-2h1Z"/>
+                <path d="M2 8v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8H2Z"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <line x1="5" y1="15" x2="17" y2="15"/>
+                <line x1="5" y1="18" x2="15" y2="18"/>
+            </svg>
+            <span style="color:#999;font-size:11px;">方案B</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6a2 2 0 0 1 2-2h6l2 2h7a2 2 0 0 1 2 2v1"/>
+                <path d="M3 9v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9H3Z"/>
+                <path d="M8 4v5"/>
+                <line x1="5" y1="13" x2="19" y2="13" stroke-width="2"/>
+            </svg>
+            <span style="color:#999;font-size:11px;">方案C</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19V8a2 2 0 0 0-2-2h-8l-2-2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2Z"/>
+                <path d="M5 8l7 7 8-8"/>
+            </svg>
+            <span style="color:#999;font-size:11px;">方案D</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

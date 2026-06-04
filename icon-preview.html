@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件夹图标预览</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        padding: 40px;
+        color: #333;
+    }
+    h1 {
+        font-size: 20px;
+        margin-bottom: 8px;
+    }
+    .subtitle {
+        color: #888;
+        font-size: 13px;
+        margin-bottom: 32px;
+    }
+    .icon-grid {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+    .icon-card {
+        background: white;
+        border-radius: 8px;
+        padding: 24px 20px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        min-width: 140px;
+    }
+    .icon-card .icon-display {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .icon-card .icon-label {
+        font-size: 13px;
+        color: #555;
+    }
+    .icon-card .icon-hint {
+        font-size: 11px;
+        color: #aaa;
+    }
+
+    /* 模拟实际场景 */
+    .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 12px;
+        margin-top: 40px;
+    }
+
+    .preview-bar {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 400px;
+    }
+    .preview-item {
+        display: flex;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 14px;
+        color: #333;
+    }
+    .preview-item .icon {
+        width: 18px;
+        height: 18px;
+        margin-right: 6px;
+        flex-shrink: 0;
+    }
+    .preview-item .name {
+        flex: 1;
+    }
+    .preview-item .indent {
+        margin-left: 16px;
+    }
+    .preview-item .indent2 {
+        margin-left: 32px;
+    }
+
+    .content-preview {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        padding: 16px;
+        max-width: 400px;
+    }
+    .content-folder-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f0f4ff;
+        border-radius: 6px;
+        font-size: 14px;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .content-folder-row .icon {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+    .content-folder-row .name {
+        flex: 1;
+        font-weight: 500;
+    }
+    .dark-section {
+        background: #1a1a1a;
+        padding: 24px;
+        border-radius: 8px;
+        margin-top: 32px;
+    }
+    .dark-section .section-title {
+        color: #888;
+    }
+</style>
+</head>
+<body>
+
+<h1>文件夹图标设计预览</h1>
+<p class="subtitle">黑色平面线条风格 | 点击展开/折叠时切换</p>
+
+<!-- 纯图标对比 -->
+<div class="section-title">图标对比 (48px)</div>
+<div class="icon-grid">
+    <div class="icon-card">
+        <div class="icon-display">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+        </div>
+        <div class="icon-label">关闭的文件夹</div>
+        <div class="icon-hint">默认状态 / 折叠时</div>
+    </div>
+    <div class="icon-card">
+        <div class="icon-display">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v2H2V5Z"/>
+                <path d="M2 9v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7H2Z"/>
+                <line x1="6" y1="12" x2="18" y2="12"/>
+                <line x1="6" y1="15" x2="16" y2="15"/>
+            </svg>
+        </div>
+        <div class="icon-label">展开的文件夹</div>
+        <div class="icon-hint">展开状态 / 内容可见</div>
+    </div>
+</div>
+
+<!-- 左侧边栏模拟 -->
+<div class="section-title">左侧边栏文件夹树 (16px)</div>
+<div class="preview-bar">
+    <div class="preview-item">
+        <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+        </span>
+        <span class="name">根文件夹</span>
+    </div>
+    <div class="preview-item indent">
+        <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v2H2V5Z"/>
+                <path d="M2 9v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7H2Z"/>
+                <line x1="6" y1="12" x2="18" y2="12"/>
+                <line x1="6" y1="15" x2="16" y2="15"/>
+            </svg>
+        </span>
+        <span class="name" style="color:#3498db;">收藏夹</span>
+    </div>
+    <div class="preview-item indent2">
+        <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+        </span>
+        <span class="name">技术</span>
+    </div>
+    <div class="preview-item indent">
+        <span class="icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+        </span>
+        <span class="name">设计</span>
+    </div>
+</div>
+
+<!-- 右侧内容区模拟 -->
+<div class="section-title">右侧内容区文件夹行 (20px)</div>
+<div class="content-preview">
+    <div class="content-folder-row">
+        <span class="icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+        </span>
+        <span class="name">子文件夹</span>
+    </div>
+    <div style="display:flex;align-items:center;padding:8px 12px;background:#fafafa;border-radius:6px;margin-bottom:4px;text-decoration:none;color:inherit;gap:12px;font-size:14px;">
+        <span style="font-size:20px;">...</span>
+        <div>
+            <div>书签标题示例</div>
+            <div style="font-size:12px;color:#888;">https://example.com</div>
+        </div>
+    </div>
+</div>
+
+<!-- 暗色主题 -->
+<div class="dark-section">
+    <div class="section-title">暗色主题</div>
+    <div style="display:flex;gap:24px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/>
+            </svg>
+            <span style="color:#999;font-size:12px;">关闭</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v2H2V5Z"/>
+                <path d="M2 9v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-7H2Z"/>
+                <line x1="6" y1="12" x2="18" y2="12"/>
+                <line x1="6" y1="15" x2="16" y2="15"/>
+            </svg>
+            <span style="color:#999;font-size:12px;">展开</span>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
