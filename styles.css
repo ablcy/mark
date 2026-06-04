@@ -40,6 +40,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
+    z-index: 1;
 }
 
 .nav-left .logo {
@@ -65,16 +67,18 @@ body {
 }
 
 .nav-center {
-    flex: 1;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     max-width: 720px;
-    margin: 0 40px;
+    width: calc(100% - 48px);
     display: flex;
     align-items: center;
     gap: 0;
-    position: relative;
 }
 
 .search-mode-btn {
+    display: none;
     padding: 10px 16px;
     background: white;
     border: 1px solid #ddd;
@@ -86,6 +90,10 @@ body {
     white-space: nowrap;
     transition: all 0.2s;
     flex-shrink: 0;
+}
+
+.search-mode-btn.visible {
+    display: inline-block;
 }
 
 .search-mode-btn:hover {
@@ -106,11 +114,15 @@ body {
     width: 100%;
     padding: 10px 20px;
     border: 1px solid #ddd;
-    border-radius: 0 20px 20px 0;
+    border-radius: 20px;
     font-size: 15px;
     background: white;
     color: #333;
     outline: none;
+}
+
+.search-input.with-mode-btn {
+    border-radius: 0 20px 20px 0;
 }
 
 .search-input::placeholder {
@@ -1117,6 +1129,9 @@ body {
     }
 
     .nav-center {
+        position: relative;
+        left: auto;
+        transform: none;
         flex: 1 1 100%;
         width: 100%;
         max-width: none;
