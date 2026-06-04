@@ -1,6 +1,47 @@
 // 当前版本号 - 每次发布时自动更新
 const CURRENT_VERSION = 'v3.0.6';
 
+// 搜索引擎定义
+const DEFAULT_ENGINES = [
+    { id: 'bookmark', name: '书签搜索', searchUrl: null, color: '#2c3e50' },
+    { id: 'general', name: '综合搜索', searchUrl: 'https://www.bing.com/search?q={q}', color: '#0078d4' },
+    { id: 'baidu', name: '百度', searchUrl: 'https://www.baidu.com/s?wd={q}', color: '#2932E1' },
+    { id: 'bing', name: '必应', searchUrl: 'https://www.bing.com/search?q={q}', color: '#008373' },
+    { id: 'google', name: 'Google', searchUrl: 'https://www.google.com/search?q={q}', color: '#4285F4' },
+    { id: 'metaso', name: '秘塔AI', searchUrl: 'https://metaso.cn/?q={q}', color: '#6C5CE7' },
+];
+
+function getEngineIconSVG(engineId, size) {
+    const s = size || 20;
+    switch (engineId) {
+        case 'bookmark':
+            return '<img src="favicon.png" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Mark">';
+        case 'general':
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4" ry="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
+        case 'baidu':
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#2932E1"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">B</text></svg>';
+        case 'bing':
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#008373"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="13" font-weight="bold" font-family="Arial">b</text></svg>';
+        case 'google':
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="white" stroke="#ddd" stroke-width="0.5"/><text x="7" y="16" fill="#4285F4" font-size="12" font-weight="bold" font-family="Arial">G</text><text x="12" y="16" fill="#EA4335" font-size="10" font-weight="bold" font-family="Arial">o</text><text x="16" y="16" fill="#FBBC05" font-size="10" font-weight="bold" font-family="Arial">o</text></svg>';
+        case 'metaso':
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#6C5CE7"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="Arial">AI</text></svg>';
+        default:
+            return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
+    }
+}
+
+function getAllEngines() {
+    const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+    return [...DEFAULT_ENGINES, ...customs];
+}
+
+function getCurrentEngine() {
+    const all = getAllEngines();
+    const id = localStorage.getItem('mark_engine') || 'bookmark';
+    return all.find(e => e.id === id) || DEFAULT_ENGINES[0];
+}
+
 // 文件夹 SVG 图标
 // type: 'empty' = 无子文件夹, 'open' = 有子+展开(方案A展开), 'closed' = 有子+收起(方案B)
 function getFolderIconSVG(type, size) {
@@ -72,7 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const sharesModalClose = document.getElementById('shares-modal-close');
     const sharesList = document.getElementById('shares-list');
     const searchInput = document.querySelector('.search-input');
-    const searchModeBtn = document.getElementById('search-mode-btn');
+    const searchEngineBtn = document.getElementById('search-engine-btn');
+    const searchSubmitBtn = document.getElementById('search-submit-btn');
+    const searchEnginePicker = document.getElementById('search-engine-picker');
     const contentActions = document.getElementById('content-actions');
     const langBtn = document.getElementById('lang-btn');
     const themeBtn = document.getElementById('theme-btn');
@@ -82,7 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
     let currentTheme = localStorage.getItem('mark_theme') || 'light';
-    let searchMode = 'bookmark';    // 'bookmark' | 'bing'
 
     // 偏好管理
     async function loadPreferences() {
@@ -92,9 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resp.ok) return;
             const data = await resp.json();
             if (data.success && data.preferences) {
-                if (data.preferences.searchMode) {
-                    searchMode = data.preferences.searchMode;
-                    updateSearchModeUI();
+                if (data.preferences.currentEngine) {
+                    localStorage.setItem('mark_engine', data.preferences.currentEngine);
+                    updateEngineIcon();
                 }
             }
         } catch (e) {
@@ -115,28 +157,160 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateSearchModeUI() {
-        const t = i18n[currentLang];
-        if (searchMode === 'bing') {
-            searchModeBtn.textContent = 'Bing';
-            searchModeBtn.classList.add('bing-mode');
-            searchInput.placeholder = '搜索或输入网址';
-        } else {
-            searchModeBtn.textContent = '书签';
-            searchModeBtn.classList.remove('bing-mode');
-            searchInput.placeholder = t.searchPlaceholder;
+    function updateEngineIcon() {
+        const engine = getCurrentEngine();
+        if (searchEngineBtn) {
+            searchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
         }
     }
 
-    function toggleSearchModeBtn(visible) {
-        if (visible) {
-            searchModeBtn.classList.add('visible');
-            searchInput.classList.add('with-mode-btn');
-        } else {
-            searchModeBtn.classList.remove('visible');
-            searchInput.classList.remove('with-mode-btn');
+    // 渲染搜索引擎选择器面板
+    function renderEnginePicker() {
+        if (!searchEnginePicker) return;
+        const currentId = localStorage.getItem('mark_engine') || 'bookmark';
+        const engines = getAllEngines();
+        const isDefault = DEFAULT_ENGINES.some(e => e.id === currentId && currentId !== 'bookmark');
+        const isBookmark = currentId === 'bookmark';
+
+        let html = '';
+        engines.forEach((eng, idx) => {
+            const isActive = eng.id === currentId;
+            const isCustom = !DEFAULT_ENGINES.some(d => d.id === eng.id);
+            html += '<div class="engine-item' + (isActive ? ' active' : '') + '" data-engine-id="' + eng.id + '">';
+            html += '<div class="engine-item-icon">' + getEngineIconSVG(eng.id, 28) + '</div>';
+            html += '<span class="engine-item-name">' + eng.name + '</span>';
+            if (isActive) html += '<span class="engine-item-check">&#10003;</span>';
+            if (isCustom) html += '<button class="engine-item-delete" data-delete="' + eng.id + '" title="删除">&times;</button>';
+            html += '</div>';
+        });
+        html += '<div class="engine-divider"></div>';
+        html += '<div class="engine-add-btn" id="engine-add-btn">';
+        html += '<div class="engine-add-icon">+</div>';
+        html += '<span>自定义搜索引擎</span>';
+        html += '</div>';
+
+        searchEnginePicker.innerHTML = html;
+
+        // 绑定引擎点击事件
+        searchEnginePicker.querySelectorAll('.engine-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.engine-item-delete')) return;
+                const engineId = this.dataset.engineId;
+                localStorage.setItem('mark_engine', engineId);
+                savePreference('currentEngine', engineId);
+                updateEngineIcon();
+                hideEnginePicker();
+                // 切换到书签模式时清空并恢复
+                if (engineId === 'bookmark') {
+                    searchInput.value = '';
+                    if (selectedFolder) {
+                        selectedFolderName.textContent = selectedFolder.name;
+                        updateBookmarksList(selectedFolder.children || []);
+                    }
+                }
+            });
+        });
+
+        // 绑定删除事件
+        searchEnginePicker.querySelectorAll('.engine-item-delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const engineId = this.dataset.delete;
+                deleteCustomEngine(engineId);
+            });
+        });
+
+        // 绑定添加按钮
+        const addBtn = searchEnginePicker.querySelector('#engine-add-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', showCustomEngineForm);
+        }
+
+        searchEnginePicker.classList.add('show');
+    }
+
+    function hideEnginePicker() {
+        if (searchEnginePicker) {
+            searchEnginePicker.classList.remove('show');
         }
     }
+
+    function showCustomEngineForm() {
+        const formHtml = '<div class="engine-custom-form">' +
+            '<input type="text" id="custom-engine-name" placeholder="搜索引擎名称" autocomplete="off">' +
+            '<input type="text" id="custom-engine-url" placeholder="搜索地址（用 {q} 代替关键词）" autocomplete="off">' +
+            '<div class="engine-custom-actions">' +
+            '<button id="custom-engine-cancel">取消</button>' +
+            '<button class="engine-save-btn" id="custom-engine-save">添加</button>' +
+            '</div></div>';
+
+        searchEnginePicker.innerHTML = formHtml;
+
+        document.getElementById('custom-engine-cancel').addEventListener('click', () => {
+            searchEnginePicker.classList.remove('show');
+            setTimeout(() => renderEnginePicker(), 100);
+        });
+
+        document.getElementById('custom-engine-save').addEventListener('click', () => {
+            const name = document.getElementById('custom-engine-name').value.trim();
+            const url = document.getElementById('custom-engine-url').value.trim();
+            if (!name || !url) {
+                alert('请填写名称和搜索地址');
+                return;
+            }
+            if (!url.includes('{q}')) {
+                alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
+                return;
+            }
+            addCustomEngine(name, url);
+        });
+
+        document.getElementById('custom-engine-name').focus();
+    }
+
+    function addCustomEngine(name, url) {
+        const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+        const id = 'custom_' + Date.now();
+        customs.push({ id, name, searchUrl: url, color: '#666' });
+        localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+        localStorage.setItem('mark_engine', id);
+        updateEngineIcon();
+        renderEnginePicker();
+    }
+
+    function deleteCustomEngine(engineId) {
+        if (!confirm('确定删除这个搜索引擎吗？')) return;
+        let customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+        customs = customs.filter(e => e.id !== engineId);
+        localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+
+        const currentId = localStorage.getItem('mark_engine');
+        if (currentId === engineId) {
+            localStorage.setItem('mark_engine', 'bookmark');
+            updateEngineIcon();
+        }
+        renderEnginePicker();
+    }
+
+    // 搜索引擎按钮点击
+    if (searchEngineBtn) {
+        searchEngineBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (searchEnginePicker.classList.contains('show')) {
+                hideEnginePicker();
+            } else {
+                hideEnginePicker();
+                renderEnginePicker();
+            }
+        });
+    }
+
+    // 点击外部关闭引擎选择器
+    document.addEventListener('click', (e) => {
+        if (searchEnginePicker && !searchEnginePicker.contains(e.target) && e.target !== searchEngineBtn) {
+            hideEnginePicker();
+        }
+    });
 
     const i18n = {
         zh: {
@@ -236,9 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyLanguage() {
         const t = i18n[currentLang];
         if (searchInput) {
-            if (searchMode !== 'bing') {
-                searchInput.placeholder = t.searchPlaceholder;
-            }
+            searchInput.placeholder = t.searchPlaceholder;
         }
         if (loginTab) loginTab.textContent = t.login;
         if (registerTab) registerTab.textContent = t.register;
@@ -407,27 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 搜索模式切换按钮
-    if (searchModeBtn) {
-        searchModeBtn.addEventListener('click', () => {
-            searchMode = searchMode === 'bookmark' ? 'bing' : 'bookmark';
-            updateSearchModeUI();
-            savePreference('searchMode', searchMode);
-            hideSuggestions();
-            // 切换回书签模式时恢复当前目录显示
-            if (searchMode === 'bookmark') {
-                searchInput.value = '';
-                if (selectedFolder) {
-                    selectedFolderName.textContent = selectedFolder.name;
-                    updateBookmarksList(selectedFolder.children || []);
-                } else {
-                    selectedFolderName.textContent = '根文件夹';
-                    updateBookmarksList(getAllBookmarks(bookmarks));
-                }
-            }
-        });
-    }
-
     // ==== Bing 搜索联想 ====
     const suggestionsDropdown = document.getElementById('suggestions-dropdown');
     let suggestionList = [];
@@ -457,21 +608,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // IP 地址
         if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d+)?(\/.*)?$/.test(str)) return true;
         return false;
-    }
-
-    function doBingSearch(query) {
-        if (!query) return;
-        if (isURL(query)) {
-            let url = query.trim();
-            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-            window.open(url, '_blank');
-        } else {
-            window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
-        }
-        hideSuggestions();
-        searchInput.value = '';
-        // 保存到搜索历史
-        saveSearchHistory(query);
     }
 
     // 搜索历史（localStorage）
@@ -574,14 +710,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
+    function isBookmarkMode() {
+        return (localStorage.getItem('mark_engine') || 'bookmark') === 'bookmark';
+    }
+
+    function doWebSearch(query) {
+        if (!query) return;
+        if (isURL(query)) {
+            let url = query.trim();
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            window.open(url, '_blank');
+        } else {
+            const engine = getCurrentEngine();
+            const searchUrl = (engine.searchUrl || 'https://www.bing.com/search?q={q}').replace('{q}', encodeURIComponent(query));
+            window.open(searchUrl, '_blank');
+        }
+        hideSuggestions();
+        searchInput.value = '';
+        saveSearchHistory(query);
+    }
+
     // 搜索输入事件
     if (searchInput) {
         searchInput.addEventListener('input', async () => {
-            // 输入时显示搜索模式按钮，清空时隐藏
-            const hasContent = searchInput.value.trim().length > 0;
-            toggleSearchModeBtn(hasContent);
-
-            if (searchMode !== 'bing') {
+            if (isBookmarkMode()) {
                 // 书签模式：本地搜索
                 const keyword = searchInput.value.trim().toLowerCase();
                 if (!keyword) {
@@ -605,12 +757,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     item.type === 'folder' && item.name.toLowerCase().includes(keyword)
                 );
                 const allFiltered = [...matchedFolders, ...filtered];
-                selectedFolderName.textContent = `全局搜索："${searchInput.value.trim()}"`;
+                selectedFolderName.textContent = '全局搜索："' + searchInput.value.trim() + '"';
                 updateBookmarksList(allFiltered, keyword);
                 return;
             }
 
-            // Bing 模式：联想搜索
+            // Web 搜索引擎模式：联想搜索
             clearTimeout(suggestionTimer);
             const query = searchInput.value.trim();
             if (!query) {
@@ -629,7 +781,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 聚焦时显示搜索历史
         searchInput.addEventListener('focus', async () => {
-            if (searchMode !== 'bing') return;
+            if (isBookmarkMode()) return;
             const query = searchInput.value.trim();
             if (!query) {
                 const html = await renderSuggestions([], '');
@@ -637,20 +789,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 失焦且输入为空时隐藏搜索模式按钮
-        searchInput.addEventListener('blur', () => {
-            if (!searchInput.value.trim()) {
-                toggleSearchModeBtn(false);
-            }
-        });
-
         // Enter / Arrow 键导航
         searchInput.addEventListener('keydown', (e) => {
-            if (searchMode !== 'bing') {
+            if (isBookmarkMode()) {
                 if (e.key !== 'Enter') return;
-                const keyword = searchInput.value.trim();
-                if (!keyword) return;
-                // 书签模式下 Enter 无特殊行为，仅触发过滤
                 return;
             }
 
@@ -675,7 +817,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 const active = getActiveQuery();
                 const keyword = active || searchInput.value.trim();
-                if (keyword) doBingSearch(keyword);
+                if (keyword) doWebSearch(keyword);
             }
         });
 
@@ -690,15 +832,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (item && item.dataset.query) {
-                doBingSearch(item.dataset.query);
+                doWebSearch(item.dataset.query);
             }
         });
 
         // 点击外部关闭
         document.addEventListener('click', (e) => {
-            if (!suggestionsDropdown.contains(e.target) && e.target !== searchInput && e.target !== searchModeBtn) {
+            if (!suggestionsDropdown.contains(e.target) && e.target !== searchInput) {
                 hideSuggestions();
             }
+        });
+    }
+
+    // 放大镜按钮点击搜索
+    if (searchSubmitBtn) {
+        searchSubmitBtn.addEventListener('click', () => {
+            const query = searchInput.value.trim();
+            if (!query) return;
+            if (isBookmarkMode()) {
+                // 书签模式下放大镜也做书签搜索（输入事件已经做了过滤）
+                return;
+            }
+            doWebSearch(query);
         });
     }
 
@@ -934,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const multiSelectNavBtn = document.getElementById('multi-select-nav-btn');
 
     // 初始化语言和主题
+    updateEngineIcon();
     applyLanguage();
     applyTheme();
 
