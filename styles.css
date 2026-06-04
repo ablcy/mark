@@ -181,7 +181,7 @@ body {
 }
 
 .search-engine-picker.show {
-    display: block;
+    display: block !important;
 }
 
 .engine-item {
