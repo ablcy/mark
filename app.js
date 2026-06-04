@@ -1,12 +1,11 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.15';
+const CURRENT_VERSION = 'v3.0.16';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
     { id: 'bookmark', name: '书签搜索（需要登录并导入书签）', searchUrl: null, color: '#2c3e50' },
-    { id: 'baidu', name: '百度', searchUrl: 'https://www.baidu.com/s?wd={q}', color: '#2932E1' },
     { id: 'bing', name: '必应', searchUrl: 'https://www.bing.com/search?q={q}', color: '#008373' },
-    { id: 'google', name: 'Google', searchUrl: 'https://www.google.com/search?q={q}', color: '#4285F4' },
+    { id: 'baidu', name: '百度', searchUrl: 'https://www.baidu.com/s?wd={q}', color: '#2932E1' },
     { id: 'sogou', name: '搜狗', searchUrl: 'https://www.sogou.com/web?query={q}', color: '#FF4F01' },
     { id: 'so360', name: '360搜索', searchUrl: 'https://www.so.com/s?q={q}', color: '#40BA21' },
     { id: 'metaso', name: '秘塔AI', searchUrl: 'https://metaso.cn/?q={q}', color: '#6C5CE7' },
@@ -20,7 +19,6 @@ function getEngineIconSVG(engineId, size) {
     const icons = {
         baidu: ['https://www.baidu.com/favicon.ico', 'B', '#2932E1'],
         bing: ['https://www.bing.com/favicon.ico', 'b', '#008373'],
-        google: ['https://www.google.com/favicon.ico', 'G', '#4285F4'],
         sogou: ['https://www.sogou.com/favicon.ico', 'S', '#FF4F01'],
         so360: ['https://www.so.com/favicon.ico', '3', '#40BA21'],
         metaso: ['https://metaso.cn/favicon.ico', 'M', '#6C5CE7']
@@ -163,6 +161,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchEngineBtn) {
             searchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
         }
+        if (searchInput) {
+            const t = i18n[currentLang];
+            searchInput.placeholder = isBookmarkMode() ? t.searchBookmark : t.searchPlaceholder;
+        }
     }
 
     // 渲染搜索引擎选择器面板
@@ -199,20 +201,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showCustomEngineForm() {
-        const formHtml = '<div class="engine-custom-form">' +
+        searchEnginePicker.innerHTML = 
+            '<div class="engine-custom-form">' +
             '<input type="text" id="custom-engine-name" placeholder="搜索引擎名称" autocomplete="off">' +
             '<input type="text" id="custom-engine-url" placeholder="搜索地址（用 {q} 代替关键词）" autocomplete="off">' +
             '<div class="engine-custom-actions">' +
-            '<button id="custom-engine-cancel">取消</button>' +
-            '<button class="engine-save-btn" id="custom-engine-save">添加</button>' +
+            '<button type="button" id="custom-engine-cancel">取消</button>' +
+            '<button type="button" class="engine-save-btn" id="custom-engine-save">添加</button>' +
             '</div></div>';
 
-        searchEnginePicker.innerHTML = formHtml;
-
-        // focus must happen after DOM update
+        // 直接绑定事件，不依赖委托（委托在 innerHTML 替换后可能有竞态）
         setTimeout(() => {
             const nameInput = document.getElementById('custom-engine-name');
+            const urlInput = document.getElementById('custom-engine-url');
+            const cancelBtn = document.getElementById('custom-engine-cancel');
+            const saveBtn = document.getElementById('custom-engine-save');
+
             if (nameInput) nameInput.focus();
+
+            if (cancelBtn) {
+                cancelBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    hideEnginePicker();
+                    setTimeout(() => renderEnginePicker(), 100);
+                };
+            }
+
+            if (saveBtn) {
+                saveBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    const name = nameInput ? nameInput.value.trim() : '';
+                    const url = urlInput ? urlInput.value.trim() : '';
+                    if (!name || !url) {
+                        alert('请填写名称和搜索地址');
+                        return;
+                    }
+                    if (!url.includes('{q}')) {
+                        alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
+                        return;
+                    }
+                    addCustomEngine(name, url);
+                };
+            }
         }, 50);
     }
 
@@ -292,31 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCustomEngineForm();
                 return;
             }
-
-            // 自定义表单内 -- 取消按钮
-            if (e.target.id === 'custom-engine-cancel') {
-                searchEnginePicker.classList.remove('show');
-                setTimeout(() => renderEnginePicker(), 100);
-                return;
-            }
-
-            // 自定义表单内 -- 保存按钮
-            if (e.target.id === 'custom-engine-save') {
-                const nameEl = document.getElementById('custom-engine-name');
-                const urlEl = document.getElementById('custom-engine-url');
-                const name = nameEl ? nameEl.value.trim() : '';
-                const url = urlEl ? urlEl.value.trim() : '';
-                if (!name || !url) {
-                    alert('请填写名称和搜索地址');
-                    return;
-                }
-                if (!url.includes('{q}')) {
-                    alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
-                    return;
-                }
-                addCustomEngine(name, url);
-                return;
-            }
         });
     }
 
@@ -330,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const i18n = {
         zh: {
             searchPlaceholder: '搜索或输入网址',
+            searchBookmark: '搜索书签',
             login: '登录',
             register: '注册',
             loginBtn: '登录',
@@ -376,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         en: {
             searchPlaceholder: 'Search or enter URL',
+            searchBookmark: 'Search bookmarks',
             login: 'Login',
             register: 'Register',
             loginBtn: 'Login',
@@ -425,7 +432,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyLanguage() {
         const t = i18n[currentLang];
         if (searchInput) {
-            searchInput.placeholder = t.searchPlaceholder;
+            searchInput.placeholder = isBookmarkMode() ? t.searchBookmark : t.searchPlaceholder;
         }
         if (loginTab) loginTab.textContent = t.login;
         if (registerTab) registerTab.textContent = t.register;
