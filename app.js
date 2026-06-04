@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchMode === 'bing') {
             searchModeBtn.textContent = 'Bing';
             searchModeBtn.classList.add('bing-mode');
-            searchInput.placeholder = '搜索 Bing...';
+            searchInput.placeholder = '搜索或输入网址';
         } else {
             searchModeBtn.textContent = '书签';
             searchModeBtn.classList.remove('bing-mode');
@@ -128,9 +128,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function toggleSearchModeBtn(visible) {
+        if (visible) {
+            searchModeBtn.classList.add('visible');
+            searchInput.classList.add('with-mode-btn');
+        } else {
+            searchModeBtn.classList.remove('visible');
+            searchInput.classList.remove('with-mode-btn');
+        }
+    }
+
     const i18n = {
         zh: {
-            searchPlaceholder: '搜索书签...',
+            searchPlaceholder: '搜索或输入网址',
             login: '登录',
             register: '注册',
             loginBtn: '登录',
@@ -168,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             versionBadgeTitle: '点击查看更新日志'
         },
         en: {
-            searchPlaceholder: 'Search bookmarks...',
+            searchPlaceholder: 'Search or enter URL',
             login: 'Login',
             register: 'Register',
             loginBtn: 'Login',
@@ -552,6 +562,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 搜索输入事件
     if (searchInput) {
         searchInput.addEventListener('input', async () => {
+            // 输入时显示搜索模式按钮，清空时隐藏
+            const hasContent = searchInput.value.trim().length > 0;
+            toggleSearchModeBtn(hasContent);
+
             if (searchMode !== 'bing') {
                 // 书签模式：本地搜索
                 const keyword = searchInput.value.trim().toLowerCase();
@@ -605,6 +619,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!query) {
                 const html = await renderSuggestions([], '');
                 if (html) showSuggestions(html);
+            }
+        });
+
+        // 失焦且输入为空时隐藏搜索模式按钮
+        searchInput.addEventListener('blur', () => {
+            if (!searchInput.value.trim()) {
+                toggleSearchModeBtn(false);
             }
         });
 
