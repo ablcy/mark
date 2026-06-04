@@ -1254,6 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectDefaultFolder();
                 // 加载用户偏好（搜索引擎等）
                 loadPreferences();
+                applyLanguage();
             } else {
                 alert(data.error || '登录失败');
             }
