@@ -264,6 +264,51 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// 修改个人资料（用户名/密码）
+app.put('/api/profile', async (req, res) => {
+    const { userId, username, currentPassword, password } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: '用户ID不能为空' });
+    }
+    if (!currentPassword) {
+        return res.status(400).json({ error: '请输入当前密码' });
+    }
+
+    try {
+        // 验证当前密码
+        const user = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
+        if (user.rows.length === 0) {
+            return res.status(404).json({ error: '用户不存在' });
+        }
+
+        const validPassword = await bcrypt.compare(currentPassword, user.rows[0].password);
+        if (!validPassword) {
+            return res.status(401).json({ error: '当前密码不正确' });
+        }
+
+        // 修改用户名
+        if (username) {
+            const existing = await pool.query('SELECT id FROM users WHERE username = $1 AND id != $2', [username, userId]);
+            if (existing.rows.length > 0) {
+                return res.status(400).json({ error: '用户名已被占用' });
+            }
+            await pool.query('UPDATE users SET username = $1 WHERE id = $2', [username, userId]);
+        }
+
+        // 修改密码
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedPassword, userId]);
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Profile update error:', err);
+        res.status(500).json({ error: '修改失败，请重试' });
+    }
+});
+
 app.post('/api/save-bookmarks', async (req, res) => {
     const { userId, bookmarks: bookmarksData } = req.body;
     
