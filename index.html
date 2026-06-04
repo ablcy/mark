@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.14</span>
+                            <span class="auth-version">v3.0.15</span>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.14</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.15</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -210,6 +210,12 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.15 - 2026年6月4日</h3>
+                        <ul>
+                            <li>修复"返回主页"按钮失效问题：guestMode() 缺少 showMainContainer() 调用，导致界面停留在登录页不切换（v3.0.9 修复过的遗留问题在后续版本迭代中被覆盖）</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.14 - 2026年6月4日</h3>
                         <ul>
