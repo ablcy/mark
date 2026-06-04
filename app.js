@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.5';
+const CURRENT_VERSION = 'v3.0.6';
 
 // 文件夹 SVG 图标
 // type: 'empty' = 无子文件夹, 'open' = 有子+展开(方案A展开), 'closed' = 有子+收起(方案B)
@@ -150,8 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPassword: '确认密码',
             multiSelect: '多选',
             shares: '短链接',
-            admin: '管理',
-            logout: '退出',
+            admin: '后台管理',
+            logout: '退出登录',
+            profile: '个人',
+            loginSync: '登录同步书签',
+            profileTitle: '个人资料',
+            changeUsername: '新用户名（留空不修改）',
+            currentPassword: '当前密码',
+            newPassword: '新密码（留空不修改）',
+            profileSave: '保存修改',
+            changePassword: '修改密码',
             rootFolder: '根文件夹',
             allBookmarks: '全部书签',
             addBookmark: '添加链接',
@@ -188,8 +196,16 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPassword: 'Confirm Password',
             multiSelect: 'Multi',
             shares: 'Shares',
-            admin: 'Admin',
+            admin: 'Admin Panel',
             logout: 'Logout',
+            profile: 'Profile',
+            loginSync: 'Login to Sync',
+            profileTitle: 'User Profile',
+            changeUsername: 'New username (leave blank to keep)',
+            currentPassword: 'Current password',
+            newPassword: 'New password (leave blank to keep)',
+            profileSave: 'Save Changes',
+            changePassword: 'Change Password',
             rootFolder: 'Root',
             allBookmarks: 'All Bookmarks',
             addBookmark: 'Add Link',
@@ -240,7 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (multiSelectNavBtn) multiSelectNavBtn.textContent = t.multiSelect;
         if (sharesBtn) sharesBtn.textContent = t.shares;
         if (adminBtn) adminBtn.textContent = t.admin;
-        if (logoutBtn) logoutBtn.textContent = t.logout;
+        const profileBtn = document.getElementById('profile-btn');
+        if (profileBtn) profileBtn.textContent = t.profile;
+        if (logoutBtn) logoutBtn.textContent = currentUser ? t.logout : t.loginSync;
         if (versionDisplay) versionDisplay.title = t.versionBadgeTitle;
         // 侧边栏标题
         const sidebarTitle = document.querySelector('.sidebar-title');
@@ -293,10 +311,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', currentTheme);
         if (themeBtn) {
             const isLight = currentTheme === 'light';
-            const svg = isLight
-                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
-                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-            themeBtn.innerHTML = svg + ' <span>主题</span>';
+            themeBtn.innerHTML = '<span>主题</span>';
             themeBtn.title = isLight ? '切换暗色主题' : '切换亮色主题';
         }
     }
@@ -1247,16 +1262,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 退出登录
+    // 退出登录 / 登录同步
     logoutBtn.addEventListener('click', async () => {
-        await saveBookmarks();
-        localStorage.removeItem('mark_current_user');
-        currentUser = null;
-        currentUserId = null;
-        bookmarks = [];
-        selectedFolder = null;
-        showAuthContainer();
-        loginForm.reset();
+        if (currentUser) {
+            await saveBookmarks();
+            localStorage.removeItem('mark_current_user');
+            currentUser = null;
+            currentUserId = null;
+            bookmarks = [];
+            selectedFolder = null;
+            applyLanguage();
+            showMainContainer();
+            initDefaultFolder();
+            renderFolderTree();
+            selectDefaultFolder();
+        } else {
+            showAuthContainer();
+        }
     });
 
     // 点击版本号显示更新日志
@@ -1286,6 +1308,81 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminBtn) {
         adminBtn.addEventListener('click', () => {
             window.open('/admin', '_blank');
+        });
+    }
+
+    // 个人资料
+    const profileBtn = document.getElementById('profile-btn');
+    const profileModal = document.getElementById('profile-modal');
+    const profileForm = document.getElementById('profile-form');
+    const profileModalClose = document.getElementById('profile-modal-close');
+
+    if (profileBtn) {
+        profileBtn.addEventListener('click', () => {
+            if (!currentUser) {
+                alert('请先登录后再修改个人资料');
+                return;
+            }
+            document.getElementById('profile-username').value = '';
+            document.getElementById('profile-current-password').value = '';
+            document.getElementById('profile-new-password').value = '';
+            profileModal.classList.remove('hidden');
+        });
+    }
+    if (profileModalClose) {
+        profileModalClose.addEventListener('click', () => {
+            profileModal.classList.add('hidden');
+        });
+    }
+    if (profileModal) {
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) {
+                profileModal.classList.add('hidden');
+            }
+        });
+    }
+    if (profileForm) {
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentUserId) {
+                alert('请先登录');
+                return;
+            }
+            const newUsername = document.getElementById('profile-username').value.trim();
+            const currentPassword = document.getElementById('profile-current-password').value;
+            const newPassword = document.getElementById('profile-new-password').value.trim();
+
+            if (!newUsername && !newPassword) {
+                alert('请至少填写一项修改内容');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/profile`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        username: newUsername || undefined,
+                        currentPassword,
+                        password: newPassword || undefined
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('修改成功！' + (newUsername ? ' 用户名已更新为 ' + newUsername : ''));
+                    if (newUsername) {
+                        currentUser = newUsername;
+                        localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
+                        applyLanguage();
+                    }
+                    profileModal.classList.add('hidden');
+                } else {
+                    alert(data.error || '修改失败');
+                }
+            } catch (err) {
+                alert('网络错误，请稍后重试');
+            }
         });
     }
 
@@ -1472,6 +1569,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (err) {
                 console.log('保存到服务器失败');
             }
+        } else {
+            // 游客模式：保存到 localStorage
+            localStorage.setItem('mark_guest_bookmarks', JSON.stringify(bookmarks));
         }
     }
 
@@ -2465,7 +2565,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return div;
     }
 
-    // 检查是否有保存的登录信息
+    // 全局点击外部关闭文件夹菜单
+    document.addEventListener('click', (e) => {
+        const isFolderMenuBtn = e.target.closest('.folder-menu-btn') ||
+                                 e.target.closest('.content-folder-menu-btn');
+        if (!isFolderMenuBtn) {
+            document.querySelectorAll('.folder-menu-btn + .dropdown-menu, .content-folder-menu-btn + .dropdown-menu').forEach(m => {
+                m.classList.add('hidden');
+            });
+        }
+    });
+
+    // 检查是否有保存的登录信息，无则直接进入（免登录）
     const savedUser = localStorage.getItem('mark_current_user');
     if (savedUser) {
         try {
@@ -2479,13 +2590,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderFolderTree();
                 selectDefaultFolder();
                 loadPreferences();
+                applyLanguage();
             }).catch(() => {
                 initDefaultFolder();
                 renderFolderTree();
                 selectDefaultFolder();
+                applyLanguage();
             });
         } catch (err) {
             console.log('无法解析保存的用户信息');
+            showMainContainer();
+            guestMode();
         }
+    } else {
+        // 游客模式：直接进入主界面，书签存 localStorage
+        showMainContainer();
+        guestMode();
+    }
+
+    function guestMode() {
+        const savedBookmarks = localStorage.getItem('mark_guest_bookmarks');
+        if (savedBookmarks) {
+            try {
+                bookmarks = JSON.parse(savedBookmarks);
+            } catch(e) {
+                bookmarks = [];
+            }
+        }
+        initDefaultFolder();
+        renderFolderTree();
+        selectDefaultFolder();
+        applyLanguage();
     }
 });
