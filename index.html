@@ -10,7 +10,7 @@
 <body>
     <div id="app">
         <!-- 认证界面 -->
-        <div id="auth-container">
+        <div id="auth-container" class="hidden">
             <div class="auth-wrapper">
                 <img class="auth-logo-img" src="favicon.png" alt="Mark Logo">
                 <h1 class="auth-logo">Mark</h1>
@@ -34,7 +34,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.6</span>
+                            <span class="auth-version">v3.0.7</span>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.6</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.7</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -139,6 +139,14 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.7 - 2026年6月4日</h3>
+                        <ul>
+                            <li>修复免登录模式进入主页时登录界面闪屏问题（auth-container 默认隐藏）</li>
+                            <li>修复自定义搜索引擎按钮无反应问题（改用 button 元素 + data-action 选择器）</li>
+                            <li>"书签搜索"改为"书签搜索（需要登录并导入书签）"，未登录时点击跳转登录界面</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.6 - 2026年6月4日</h3>
                         <ul>

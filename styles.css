@@ -261,8 +261,13 @@ body {
     font-size: 13px;
     color: #888;
     transition: background 0.1s;
+    border: none;
     border-top: 1px solid #eee;
     margin-top: 2px;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
 }
 
 .engine-add-btn:hover {
@@ -1820,6 +1825,7 @@ body {
 [data-theme="dark"] .engine-add-btn {
     color: #888;
     border-top-color: var(--border-color);
+    background: transparent;
 }
 
 [data-theme="dark"] .engine-add-btn:hover {

@@ -1,9 +1,9 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.6';
+const CURRENT_VERSION = 'v3.0.7';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
-    { id: 'bookmark', name: '书签搜索', searchUrl: null, color: '#2c3e50' },
+    { id: 'bookmark', name: '书签搜索（需要登录并导入书签）', searchUrl: null, color: '#2c3e50' },
     { id: 'baidu', name: '百度', searchUrl: 'https://www.baidu.com/s?wd={q}', color: '#2932E1' },
     { id: 'bing', name: '必应', searchUrl: 'https://www.bing.com/search?q={q}', color: '#008373' },
     { id: 'google', name: 'Google', searchUrl: 'https://www.google.com/search?q={q}', color: '#4285F4' },
@@ -185,10 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
             html += '</div>';
         });
         html += '<div class="engine-divider"></div>';
-        html += '<div class="engine-add-btn" id="engine-add-btn">';
+        html += '<button class="engine-add-btn" data-action="add-engine" type="button">';
         html += '<div class="engine-add-icon">+</div>';
         html += '<span>自定义搜索引擎</span>';
-        html += '</div>';
+        html += '</button>';
 
         searchEnginePicker.innerHTML = html;
         searchEnginePicker.classList.add('show');
@@ -262,6 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const engineItem = e.target.closest('.engine-item');
             if (engineItem && !e.target.closest('.engine-item-delete')) {
                 const engineId = engineItem.dataset.engineId;
+                if (engineId === 'bookmark' && !currentUser) {
+                    // 未登录：跳转登录界面
+                    hideEnginePicker();
+                    showAuthContainer();
+                    return;
+                }
                 localStorage.setItem('mark_engine', engineId);
                 savePreference('currentEngine', engineId);
                 updateEngineIcon();
@@ -284,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 自定义搜索引擎按钮
-            if (e.target.closest('#engine-add-btn')) {
+            if (e.target.closest('[data-action="add-engine"]')) {
                 showCustomEngineForm();
                 return;
             }
@@ -2781,6 +2787,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initDefaultFolder();
         renderFolderTree();
         selectDefaultFolder();
+        updateEngineIcon();
         applyLanguage();
     }
 });
