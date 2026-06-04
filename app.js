@@ -38,8 +38,8 @@ function getAllEngines() {
 
 function getCurrentEngine() {
     const all = getAllEngines();
-    const id = localStorage.getItem('mark_engine') || 'bookmark';
-    return all.find(e => e.id === id) || DEFAULT_ENGINES[0];
+    const id = localStorage.getItem('mark_engine') || 'bing';
+    return all.find(e => e.id === id) || DEFAULT_ENGINES.find(e => e.id === 'bing');
 }
 
 // 文件夹 SVG 图标
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 渲染搜索引擎选择器面板
     function renderEnginePicker() {
         if (!searchEnginePicker) return;
-        const currentId = localStorage.getItem('mark_engine') || 'bookmark';
+        const currentId = localStorage.getItem('mark_engine') || 'bing';
         const engines = getAllEngines();
         const isDefault = DEFAULT_ENGINES.some(e => e.id === currentId && currentId !== 'bookmark');
         const isBookmark = currentId === 'bookmark';
@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isBookmarkMode() {
-        return (localStorage.getItem('mark_engine') || 'bookmark') === 'bookmark';
+        return (localStorage.getItem('mark_engine') || 'bing') === 'bookmark';
     }
 
     function doWebSearch(query) {
