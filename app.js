@@ -1,14 +1,21 @@
 // 当前版本号 - 每次发布时自动更新
 const CURRENT_VERSION = 'v3.0.5';
 
-// 文件夹 SVG 图标（方案 A：前盖翻开）
-function getFolderIconSVG(isOpen, size) {
+// 文件夹 SVG 图标
+// type: 'empty' = 无子文件夹, 'open' = 有子+展开(方案A展开), 'closed' = 有子+收起(方案B)
+function getFolderIconSVG(type, size) {
     const w = size || 16;
     const s = size || 16;
-    if (isOpen) {
+    if (type === 'empty') {
+        // 方案 A 闭合：空白文件夹，无子文件夹
+        return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/></svg>';
+    }
+    if (type === 'open') {
+        // 方案 A 展开：前盖翻开
         return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 8v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v1Z"/><path d="M2 8h20"/><path d="M4 8l1.5 3h13L20 8"/></svg>';
     }
-    return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/></svg>';
+    // 方案 B：有子文件夹但收起，内部三条文档横线
+    return '<svg width="' + w + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6a2 2 0 0 1 2-2h7l2 2h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6Z"/><path d="M7 13h10"/><path d="M7 16h7"/><path d="M7 10h8"/></svg>';
 }
 
 function showToast(msg) {
@@ -228,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 侧边栏标题
         const sidebarTitle = document.querySelector('.sidebar-title');
         if (sidebarTitle) {
-            sidebarTitle.innerHTML = `<span class="folder-icon">📂</span>${t.rootFolder}`;
+            sidebarTitle.innerHTML = `<span class="folder-icon">${getFolderIconSVG('open', 18)}</span>${t.rootFolder}`;
         }
         // 菜单项
         const menuAddBookmark = document.getElementById('menu-add-bookmark-btn');
@@ -1676,7 +1683,7 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.className = 'folder-icon';
         const hasSubfolders = folder.children && folder.children.some(child => child.type === 'folder');
         folder._isOpen = hasSubfolders;
-        icon.innerHTML = getFolderIconSVG(hasSubfolders, 16);
+        icon.innerHTML = getFolderIconSVG(hasSubfolders ? 'open' : 'empty', 16);
         
         const name = document.createElement('span');
         name.className = 'folder-name';
@@ -1704,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     // 更新图标
                     const iconEl = header.querySelector('.folder-icon');
-                    if (iconEl) iconEl.innerHTML = getFolderIconSVG(folder._isOpen, 16);
+                    if (iconEl) iconEl.innerHTML = getFolderIconSVG(folder._isOpen ? 'open' : 'closed', 16);
                 }
             }
             selectedFolder = folder;
@@ -2167,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const icon = document.createElement('span');
         icon.className = 'content-folder-icon';
-        icon.innerHTML = getFolderIconSVG(false, 20);
+        icon.innerHTML = getFolderIconSVG('empty', 20);
 
         const name = document.createElement('span');
         name.className = 'content-folder-name';
