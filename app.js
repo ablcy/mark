@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.7';
+const CURRENT_VERSION = 'v3.0.8';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -789,6 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             suggestionTimer = setTimeout(async () => {
                 const suggestions = await fetchBingSuggestions(query);
+                // 输入框已被清空或查询已改变，丢弃过期结果
+                if (!searchInput.value.trim() || searchInput.value.trim() !== query) return;
                 const html = await renderSuggestions(suggestions, query);
                 showSuggestions(html);
             }, 200);
@@ -1343,6 +1345,13 @@ document.addEventListener('DOMContentLoaded', () => {
         loginTab.classList.remove('active');
         registerForm.classList.remove('hidden');
         loginForm.classList.add('hidden');
+    });
+
+    // 返回主页按钮（登录/注册界面）
+    document.querySelectorAll('.auth-back-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            guestMode();
+        });
     });
 
     // 注册
