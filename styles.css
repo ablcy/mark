@@ -765,24 +765,20 @@ body {
 }
 
 .auth-back-btn {
-    display: block;
-    width: 100%;
-    padding: 10px;
+    padding: 12px;
     background: transparent;
     color: #999;
-    border: none;
-    border-top: 1px solid #e8e8e8;
-    font-size: 13px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 15px;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-top: 0;
-    border-radius: 0 0 8px 8px;
     font-family: inherit;
 }
 
 .auth-back-btn:hover {
     color: #666;
-    background: #f5f5f5;
+    border-color: #ccc;
 }
 
 /* 主布局 */
