@@ -1674,7 +1674,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const icon = document.createElement('span');
         icon.className = 'folder-icon';
-        icon.innerHTML = getFolderIconSVG(false, 16);
+        const hasSubfolders = folder.children && folder.children.some(child => child.type === 'folder');
+        folder._isOpen = hasSubfolders;
+        icon.innerHTML = getFolderIconSVG(hasSubfolders, 16);
         
         const name = document.createElement('span');
         name.className = 'folder-name';
