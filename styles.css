@@ -803,8 +803,8 @@ body {
 
 /* 左侧边栏 */
 .sidebar {
-    width: 280px;
-    min-width: 280px;
+    width: 373px;
+    min-width: 373px;
     background: #fafafa;
     border-right: 1px solid #e8e8e8;
     display: flex;

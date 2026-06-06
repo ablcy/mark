@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.16';
+const CURRENT_VERSION = 'v3.0.17';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -512,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (langBtn) {
         langBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             currentLang = currentLang === 'zh' ? 'en' : 'zh';
             localStorage.setItem('mark_lang', currentLang);
             applyLanguage();
@@ -520,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             currentTheme = currentTheme === 'light' ? 'dark' : 'light';
             localStorage.setItem('mark_theme', currentTheme);
             applyTheme();
@@ -1446,6 +1448,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 退出登录 / 登录同步
     logoutBtn.addEventListener('click', async () => {
+        navMenuDropdown.classList.add('hidden');
         if (currentUser) {
             await saveBookmarks();
             localStorage.removeItem('mark_current_user');
@@ -1489,6 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 管理
     if (adminBtn) {
         adminBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             window.open('/admin', '_blank');
         });
     }
@@ -1501,6 +1505,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (profileBtn) {
         profileBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             if (!currentUser) {
                 alert('请先登录后再修改个人资料');
                 return;
@@ -1571,6 +1576,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 导航栏多选
     if (multiSelectNavBtn) {
         multiSelectNavBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             if (multiSelectMode) {
                 exitMultiSelectMode();
             } else {
@@ -1582,6 +1588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 短链接管理
     if (sharesBtn) {
         sharesBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
             sharesModal.classList.remove('hidden');
             loadMyShares();
         });
