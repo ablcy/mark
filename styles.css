@@ -692,7 +692,7 @@ body {
 [data-theme="dark"] .profile-msg--error { color: #e74c3c; }
 
 /* 移动端 */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
     .profile-box {
         padding: 24px 18px;
         max-width: 100%;
@@ -1328,7 +1328,7 @@ body {
 }
 
 /* 手机端适配 */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
     .top-nav {
         flex-direction: row;
         flex-wrap: wrap;
@@ -2764,7 +2764,7 @@ body {
 }
 
 /* 移动端适配 */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
     .browser-main {
         padding-top: 6vh;
     }

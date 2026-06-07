@@ -62,7 +62,7 @@
         .skeleton-line:last-child{margin-bottom:0}
         @keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:.4}}
         /* 响应式 */
-        @media(max-width:768px){
+        @media(max-width:600px){
             .top-nav{padding:8px 12px}
             .nav-center{width:calc(100% - 100px)}
             .sidebar{display:none;width:0;min-width:0}
@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.18</span>
+                            <span class="auth-version">v3.0.19</span>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.18</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.19</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -210,6 +210,13 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.0.19 - 2026年6月7日</h3>
+                        <ul>
+                            <li>响应式断点从 768px 改为 600px，600px 以下才触发移动端布局（sidebar 缩为 140px 并隐藏）</li>
+                            <li>修复 index.html 内联 CSS 中遗留的 768px 断点覆盖外部 styles.css 的问题</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.18 - 2026年6月6日</h3>
                         <ul>
