@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.19';
+const CURRENT_VERSION = 'v3.0.20';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [

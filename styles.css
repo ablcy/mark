@@ -803,8 +803,8 @@ body {
 
 /* 左侧边栏 */
 .sidebar {
-    width: 256px;
-    min-width: 256px;
+    width: 256px !important;
+    min-width: 256px !important;
     background: #fafafa;
     border-right: 1px solid #e8e8e8;
     display: flex;
@@ -1401,8 +1401,8 @@ body {
     }
 
     .sidebar {
-        width: 140px;
-        min-width: 140px;
+        width: 140px !important;
+        min-width: 140px !important;
         height: calc(100vh - 80px);
         height: calc(100dvh - 80px);
     }
