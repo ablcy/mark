@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.23';
+const CURRENT_VERSION = 'v3.0.24';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -643,26 +643,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
-    // 搜索历史（localStorage）- 格式: [{query, time}, ...]
-    const MAX_HISTORY = 50;
+    // 搜索/访问历史（localStorage）
+    // 格式: [{query, url, title, type:'search'|'visit', time}, ...]
+    const MAX_HISTORY = 100;
     function getSearchHistory() {
         try {
             const raw = JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
-            // 向后兼容：如果存储的是纯字符串数组，转换为对象格式
+            // 向后兼容：纯字符串数组 → {query, type:'search'}
             if (raw.length > 0 && typeof raw[0] === 'string') {
-                const migrated = raw.map(q => ({ query: q, time: Date.now() }));
+                const migrated = raw.map(q => ({ query: q, type: 'search', time: Date.now() }));
                 localStorage.setItem('mark_bing_history', JSON.stringify(migrated));
                 return migrated;
+            }
+            // v3.0.23 格式只有 {query, time}，补 type:'search'
+            if (raw.length > 0 && !raw[0].type) {
+                raw.forEach(h => h.type = 'search');
+                localStorage.setItem('mark_bing_history', JSON.stringify(raw));
             }
             return Array.isArray(raw) ? raw : [];
         } catch { return []; }
     }
-    function saveSearchHistory(query) {
+    function saveSearchHistory(query, url, title, type) {
+        type = type || 'search';
         let hist = getSearchHistory();
-        hist = hist.filter(h => h.query !== query);
-        hist.unshift({ query, time: Date.now() });
+        // 去重：相同 query+type 的只保留最新一条
+        hist = hist.filter(h => !(h.query === query && h.type === type));
+        const entry = { query, time: Date.now(), type };
+        if (url) entry.url = url;
+        if (title) entry.title = title;
+        hist.unshift(entry);
         if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
         localStorage.setItem('mark_bing_history', JSON.stringify(hist));
+    }
+    function saveVisitHistory(url, title) {
+        // 用 URL 作为 query，记录访问
+        const displayText = title || url;
+        saveSearchHistory(displayText, url, title, 'visit');
     }
     function clearSearchHistory() {
         localStorage.removeItem('mark_bing_history');
@@ -700,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const history = getSearchHistory();
         const filter = (filterText || '').trim().toLowerCase();
         const filtered = filter
-            ? history.filter(h => h.query.toLowerCase().includes(filter))
+            ? history.filter(h => h.query.toLowerCase().includes(filter) || (h.url && h.url.toLowerCase().includes(filter)) || (h.title && h.title.toLowerCase().includes(filter)))
             : history;
 
         if (filtered.length === 0) {
@@ -710,11 +726,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const visitIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+        const searchIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+
         let html = '';
         filtered.forEach(item => {
-            html += `<div class="history-item" data-query="${escapeAttr(item.query)}">
-                <span class="history-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-                <span class="history-item-query">${escapeHtml(item.query)}</span>
+            const isVisit = item.type === 'visit';
+            const icon = isVisit ? visitIcon : searchIcon;
+            const cls = isVisit ? 'history-item history-item-visit' : 'history-item';
+            const dataAttrs = `data-query="${escapeAttr(item.query)}"` + (item.url ? ` data-url="${escapeAttr(item.url)}"` : '') + (isVisit ? ' data-type="visit"' : '');
+            let queryHtml = '<span class="history-item-query">' + escapeHtml(item.query) + '</span>';
+            if (isVisit && item.url && item.url !== item.query) {
+                queryHtml += '<span class="history-item-url">' + escapeHtml(item.url) + '</span>';
+            }
+            html += `<div class="${cls}" ${dataAttrs}>
+                <span class="history-item-icon">${icon}</span>
+                <div class="history-item-content">${queryHtml}</div>
                 <span class="history-item-time">${escapeHtml(formatHistoryTime(item.time))}</span>
             </div>`;
         });
@@ -736,10 +763,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const history = getSearchHistory();
         let html = '';
 
-        // 搜索历史（仅输入框为空时显示在联想面板中）
-        if (!query && history.length > 0) {
+        // 搜索历史（仅输入框为空时显示在联想面板中，只显示搜索类型）
+        const searchOnlyHistory = history.filter(h => h.type !== 'visit');
+        if (!query && searchOnlyHistory.length > 0) {
             html += '<div class="suggestion-section-label">搜索历史</div>';
-            history.slice(0, 6).forEach(item => {
+            searchOnlyHistory.slice(0, 6).forEach(item => {
                 html += `<div class="suggestion-item" data-query="${escapeAttr(item.query)}">
                     <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                     <span class="suggestion-text">${escapeHtml(item.query)}</span>
@@ -819,7 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         hideSuggestions();
         searchInput.value = '';
-        saveSearchHistory(query);
+        saveSearchHistory(query, null, null, 'search');
     }
 
     // 搜索输入事件
@@ -1596,14 +1624,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const item = e.target.closest('.history-item');
             if (!item) return;
             const query = item.getAttribute('data-query');
+            const url = item.getAttribute('data-url');
+            const type = item.getAttribute('data-type');
             if (!query) return;
-            if (searchInput) searchInput.value = query;
             if (searchHistoryPanel) searchHistoryPanel.classList.add('hidden');
-            // 自动执行搜索
-            if (isBookmarkMode()) {
-                searchInput.dispatchEvent(new Event('input'));
+
+            if (type === 'visit' && url) {
+                // 访问记录：直接打开网址
+                window.open(url, '_blank');
             } else {
-                doWebSearch(query);
+                // 搜索记录：填入搜索框并执行搜索
+                if (searchInput) searchInput.value = query;
+                if (isBookmarkMode()) {
+                    searchInput.dispatchEvent(new Event('input'));
+                } else {
+                    doWebSearch(query);
+                }
             }
         });
     }
@@ -2657,6 +2693,10 @@ document.addEventListener('DOMContentLoaded', () => {
         div.className = 'bookmark-item';
         div.href = bookmark.url;
         div.target = '_blank';
+        // 记录书签访问历史
+        div.addEventListener('click', () => {
+            saveVisitHistory(bookmark.url, bookmark.title);
+        });
 
         const favicon = document.createElement('img');
         favicon.className = 'bookmark-favicon';

@@ -1827,7 +1827,7 @@ body {
 
 .history-item {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
     padding: 10px 20px;
     cursor: pointer;
@@ -1846,15 +1846,37 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 2px;
+}
+
+.history-item-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .history-item-query {
-    flex: 1;
+    display: block;
     font-size: 14px;
     color: #333;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    line-height: 1.4;
+}
+
+.history-item-url {
+    display: block;
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+    margin-top: 2px;
+}
+
+.history-item-visit .history-item-icon {
+    color: #4a90d9;
 }
 
 .history-item-time {
@@ -3005,6 +3027,14 @@ body {
 
 [data-theme="dark"] .history-item-query {
     color: var(--text-primary);
+}
+
+[data-theme="dark"] .history-item-url {
+    color: #666;
+}
+
+[data-theme="dark"] .history-item-visit .history-item-icon {
+    color: #6aafff;
 }
 
 [data-theme="dark"] .history-item-time {
