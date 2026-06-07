@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.25</span>
+                            <span class="auth-version">v3.1.0</span>
             </div>
         </div>
 
@@ -110,11 +110,12 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.25</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.1.0</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
                             <button id="profile-btn" class="dropdown-item">个人</button>
+                            <button id="view-mode-btn" class="dropdown-item hidden">简洁模式</button>
                             <div class="dropdown-divider"></div>
                             <button id="theme-btn" class="dropdown-item">主题</button>
                             <button id="lang-btn" class="dropdown-item">中</button>
@@ -203,6 +204,25 @@
                     </footer>
                 </main>
             </div>
+
+            <!-- 简洁模式 -->
+            <div id="clean-mode-view" class="clean-mode-view hidden">
+                <div class="clean-search-wrapper">
+                    <div class="clean-search-bar" id="clean-search-bar">
+                        <button class="search-engine-btn" id="clean-search-engine-btn" title="切换搜索引擎"></button>
+                        <input type="text" class="search-input" id="clean-search-input" placeholder="搜索或输入网址" autocomplete="off">
+                        <button class="search-submit-btn" id="clean-search-submit-btn" title="搜索">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="search-engine-picker hidden" id="clean-search-engine-picker"></div>
+                    <div class="suggestions-dropdown" id="clean-suggestions-dropdown"></div>
+                </div>
+                <div id="clean-bookmarks-grid" class="clean-bookmarks-grid"></div>
+            </div>
         </div>
 
         <!-- 更新日志模态框 -->
@@ -211,6 +231,15 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.1.0 - 2026年6月7日</h3>
+                        <ul>
+                            <li>新增简洁模式：搜索框居中显示，界面更加清爽</li>
+                            <li>未登录默认进入简洁模式，登录后默认进入书签模式</li>
+                            <li>登录后可在导航栏菜单中切换简洁/书签模式</li>
+                            <li>简洁模式下登录用户搜索框下方显示前10个书签快捷入口</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.0.25 - 2026年6月7日</h3>
                         <ul>

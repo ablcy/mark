@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.25';
+const CURRENT_VERSION = 'v3.1.0';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -127,6 +127,232 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchHistoryList = document.getElementById('search-history-list');
     const searchHistoryFilter = document.getElementById('search-history-filter');
 
+    // 简洁模式 DOM
+    const cleanModeView = document.getElementById('clean-mode-view');
+    const cleanSearchInput = document.getElementById('clean-search-input');
+    const cleanSearchEngineBtn = document.getElementById('clean-search-engine-btn');
+    const cleanSearchSubmitBtn = document.getElementById('clean-search-submit-btn');
+    const cleanSearchEnginePicker = document.getElementById('clean-search-engine-picker');
+    const cleanSuggestionsDropdown = document.getElementById('clean-suggestions-dropdown');
+    const cleanBookmarksGrid = document.getElementById('clean-bookmarks-grid');
+    const viewModeBtn = document.getElementById('view-mode-btn');
+
+    // ====== 视图模式 ======
+    let currentViewMode = localStorage.getItem('mark_view_mode') || 'bookmark';
+    function getDefaultViewMode() {
+        return currentUserId ? 'bookmark' : 'clean';
+    }
+
+    function switchViewMode(mode) {
+        currentViewMode = mode;
+        localStorage.setItem('mark_view_mode', mode);
+        const mainLayout = document.querySelector('.main-layout');
+        if (mode === 'clean') {
+            if (mainLayout) mainLayout.classList.add('hidden');
+            if (cleanModeView) cleanModeView.classList.remove('hidden');
+            document.body.classList.add('clean-mode-active');
+            renderCleanModeBookmarks();
+            updateCleanEngineIcon();
+        } else {
+            if (mainLayout) mainLayout.classList.remove('hidden');
+            if (cleanModeView) cleanModeView.classList.add('hidden');
+            document.body.classList.remove('clean-mode-active');
+        }
+        if (viewModeBtn) {
+            const t = i18n[currentLang];
+            viewModeBtn.textContent = mode === 'clean' ? t.bookmarkMode : t.cleanMode;
+        }
+    }
+
+    function renderCleanModeBookmarks() {
+        if (!cleanBookmarksGrid) return;
+        if (!currentUserId) {
+            cleanBookmarksGrid.innerHTML = '';
+            return;
+        }
+        const all = getAllBookmarks(bookmarks);
+        const items = all.filter(b => b.type === 'bookmark').slice(0, 10);
+        let html = '';
+        items.forEach(item => {
+            const title = escapeHtml(item.title);
+            let faviconUrl = '';
+            try {
+                faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(new URL(item.url).hostname) + '&sz=64';
+            } catch (e) {
+                faviconUrl = '';
+            }
+            const firstChar = title.charAt(0).toUpperCase();
+            const iconHtml = faviconUrl
+                ? `<img src="${faviconUrl}" alt="" onerror="this.style.display='none';this.parentNode.textContent='${firstChar}'">`
+                : firstChar;
+            html += `<a class="clean-bookmark-item" href="${escapeAttr(item.url)}" target="_blank" title="${title}">
+                <div class="clean-bookmark-icon">${iconHtml}</div>
+                <span class="clean-bookmark-title">${title}</span>
+            </a>`;
+        });
+        // 添加按钮
+        html += `<button class="clean-add-btn" id="clean-add-bookmark-btn">
+            <div class="clean-add-icon">+</div>
+            <span class="clean-add-label">添加</span>
+        </button>`;
+        cleanBookmarksGrid.innerHTML = html;
+        // 绑定点击事件（记录访问历史）
+        cleanBookmarksGrid.querySelectorAll('.clean-bookmark-item').forEach(el => {
+            el.addEventListener('click', () => {
+                saveVisitHistory(el.href, el.title);
+                debouncedSearchHistorySync();
+            });
+        });
+        const addBtn = document.getElementById('clean-add-bookmark-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                navMenuDropdown.classList.add('hidden');
+                addBookmarkToCurrentFolder();
+            });
+        }
+    }
+
+    function updateCleanEngineIcon() {
+        if (!cleanSearchEngineBtn) return;
+        const engine = getCurrentEngine();
+        cleanSearchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
+    }
+
+    // 简洁模式搜索引擎选择器
+    function renderCleanEnginePicker() {
+        if (!cleanSearchEnginePicker) return;
+        let html = '';
+        DEFAULT_ENGINES.forEach(engine => {
+            const isBookmark = engine.id === 'bookmark';
+            if (isBookmark && !currentUserId) return;
+            html += `<button class="engine-option" data-engine="${engine.id}">${getEngineIconSVG(engine.id, 18)}<span>${engine.name}</span></button>`;
+        });
+        cleanSearchEnginePicker.innerHTML = html;
+        cleanSearchEnginePicker.querySelectorAll('.engine-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                localStorage.setItem('mark_engine', btn.dataset.engine);
+                updateEngineIcon();
+                updateCleanEngineIcon();
+                cleanSearchEnginePicker.classList.add('hidden');
+            });
+        });
+    }
+
+    if (cleanSearchEngineBtn) {
+        cleanSearchEngineBtn.addEventListener('click', () => {
+            renderCleanEnginePicker();
+            cleanSearchEnginePicker.classList.toggle('hidden');
+        });
+    }
+
+    // 简洁模式搜索输入
+    if (cleanSearchInput) {
+        cleanSearchInput.addEventListener('input', async () => {
+            clearTimeout(suggestionTimer);
+            const query = cleanSearchInput.value.trim();
+            if (!query) {
+                if (cleanSuggestionsDropdown) {
+                    cleanSuggestionsDropdown.classList.remove('show');
+                    cleanSuggestionsDropdown.innerHTML = '';
+                }
+                return;
+            }
+            suggestionTimer = setTimeout(async () => {
+                const suggestions = await fetchBingSuggestions(query);
+                if (!cleanSearchInput.value.trim() || cleanSearchInput.value.trim() !== query) return;
+                const html = await renderSuggestions(suggestions, query);
+                if (cleanSuggestionsDropdown) {
+                    cleanSuggestionsDropdown.innerHTML = html;
+                    cleanSuggestionsDropdown.classList.add('show');
+                }
+            }, 200);
+        });
+
+        cleanSearchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (cleanSuggestionsDropdown) {
+                    cleanSuggestionsDropdown.classList.remove('show');
+                    cleanSuggestionsDropdown.innerHTML = '';
+                }
+                return;
+            }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                updateActiveSuggestionClean(1);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                updateActiveSuggestionClean(-1);
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const items = cleanSuggestionsDropdown ? cleanSuggestionsDropdown.querySelectorAll('.suggestion-item') : [];
+                let activeQuery = '';
+                items.forEach((item, idx) => {
+                    if (item.classList.contains('active')) activeQuery = item.dataset.query;
+                });
+                const keyword = activeQuery || cleanSearchInput.value.trim();
+                if (keyword) doWebSearch(keyword);
+            }
+        });
+    }
+
+    function updateActiveSuggestionClean(delta) {
+        if (!cleanSuggestionsDropdown) return;
+        const items = cleanSuggestionsDropdown.querySelectorAll('.suggestion-item');
+        if (items.length === 0) return;
+        items.forEach(item => item.classList.remove('active'));
+        activeSuggestionIdx = Math.max(-1, Math.min(items.length - 1, activeSuggestionIdx + delta));
+        if (activeSuggestionIdx >= 0) {
+            items[activeSuggestionIdx].classList.add('active');
+            items[activeSuggestionIdx].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    if (cleanSuggestionsDropdown) {
+        cleanSuggestionsDropdown.addEventListener('click', (e) => {
+            const item = e.target.closest('.suggestion-item');
+            const footer = e.target.closest('.suggestion-footer');
+            if (footer && footer.dataset.action === 'clear-history') {
+                clearSearchHistory();
+                return;
+            }
+            if (item && item.dataset.query) {
+                doWebSearch(item.dataset.query);
+            }
+        });
+    }
+
+    if (cleanSearchSubmitBtn) {
+        cleanSearchSubmitBtn.addEventListener('click', () => {
+            const query = cleanSearchInput.value.trim();
+            if (!query) return;
+            doWebSearch(query);
+        });
+    }
+
+    // 简洁模式外部点击关闭
+    document.addEventListener('click', (e) => {
+        if (cleanSearchEnginePicker && !cleanSearchEnginePicker.contains(e.target) && e.target !== cleanSearchEngineBtn) {
+            cleanSearchEnginePicker.classList.add('hidden');
+        }
+        if (cleanSuggestionsDropdown && !cleanSuggestionsDropdown.contains(e.target) && e.target !== cleanSearchInput) {
+            cleanSuggestionsDropdown.classList.remove('show');
+            cleanSuggestionsDropdown.innerHTML = '';
+        }
+    });
+
+    // 视图模式切换按钮
+    if (viewModeBtn) {
+        viewModeBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
+            const newMode = currentViewMode === 'clean' ? 'bookmark' : 'clean';
+            switchViewMode(newMode);
+        });
+    }
+
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
     let currentTheme = localStorage.getItem('mark_theme') || 'light';
@@ -233,6 +459,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchInput) {
             const t = i18n[currentLang];
             searchInput.placeholder = isBookmarkMode() ? t.searchBookmark : t.searchPlaceholder;
+        }
+        if (cleanSearchEngineBtn) {
+            cleanSearchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
+        }
+        if (cleanSearchInput) {
+            const t = i18n[currentLang];
+            cleanSearchInput.placeholder = isBookmarkMode() ? t.searchBookmark : t.searchPlaceholder;
         }
     }
 
@@ -418,6 +651,8 @@ document.addEventListener('DOMContentLoaded', () => {
             admin: '后台管理',
             logout: '退出登录',
             profile: '个人',
+            cleanMode: '简洁模式',
+            bookmarkMode: '书签模式',
             loginSync: '登录同步书签',
             profileTitle: '个人资料',
             changeUsername: '新用户名（留空不修改）',
@@ -466,6 +701,8 @@ document.addEventListener('DOMContentLoaded', () => {
             admin: 'Admin Panel',
             logout: 'Logout',
             profile: 'Profile',
+            cleanMode: 'Clean Mode',
+            bookmarkMode: 'Bookmark Mode',
             loginSync: 'Login to Sync',
             profileTitle: 'User Profile',
             changeUsername: 'New username (leave blank to keep)',
@@ -525,6 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const profileBtn = document.getElementById('profile-btn');
         if (profileBtn) profileBtn.textContent = t.profile;
         if (logoutBtn) logoutBtn.textContent = currentUser ? t.logout : t.loginSync;
+        if (viewModeBtn) viewModeBtn.textContent = currentViewMode === 'clean' ? t.bookmarkMode : t.cleanMode;
         if (versionDisplay) versionDisplay.title = t.versionBadgeTitle;
         // 侧边栏标题
         const sidebarTitle = document.querySelector('.sidebar-title');
@@ -909,7 +1147,12 @@ document.addEventListener('DOMContentLoaded', () => {
             window.open(searchUrl, '_blank');
         }
         hideSuggestions();
-        searchInput.value = '';
+        if (searchInput) searchInput.value = '';
+        if (cleanSearchInput) cleanSearchInput.value = '';
+        if (cleanSuggestionsDropdown) {
+            cleanSuggestionsDropdown.classList.remove('show');
+            cleanSuggestionsDropdown.innerHTML = '';
+        }
         saveSearchHistory(query, null, null, 'search');
         // 同步到云端
         debouncedSearchHistorySync();
@@ -1062,6 +1305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         await saveBookmarks();
         renderFolderTree();
+        renderCleanModeBookmarks();
         if (parent) {
             selectedFolderName.textContent = parent.name;
             updateBookmarksList(parent.children || []);
@@ -1591,6 +1835,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookmarks = data.bookmarks || [];
                 localStorage.setItem('mark_current_user', JSON.stringify({ username: currentUser, id: currentUserId }));
                 showMainContainer();
+                // 登录后恢复保存的视图模式，默认书签模式
+                const savedMode = localStorage.getItem('mark_view_mode');
+                const mode = (savedMode === 'clean' || savedMode === 'bookmark') ? savedMode : 'bookmark';
+                switchViewMode(mode);
+                if (viewModeBtn) viewModeBtn.classList.remove('hidden');
                 // 新用户默认创建"收藏夹"文件夹
                 initDefaultFolder();
                 renderFolderTree();
@@ -1623,6 +1872,9 @@ document.addEventListener('DOMContentLoaded', () => {
             selectedFolder = null;
             applyLanguage();
             showMainContainer();
+            // 登出后进入简洁模式
+            switchViewMode('clean');
+            if (viewModeBtn) viewModeBtn.classList.add('hidden');
             initDefaultFolder();
             renderFolderTree();
             selectDefaultFolder();
@@ -3007,6 +3259,12 @@ document.addEventListener('DOMContentLoaded', () => {
             selectDefaultFolder();
             updateEngineIcon();
             applyLanguage();
+            showMainContainer();
+            // 已登录：恢复保存的视图模式，默认书签模式
+            const savedMode = localStorage.getItem('mark_view_mode');
+            const mode = (savedMode === 'clean' || savedMode === 'bookmark') ? savedMode : 'bookmark';
+            switchViewMode(mode);
+            if (viewModeBtn) viewModeBtn.classList.remove('hidden');
             // 后台同步服务器数据
             syncBookmarks().then(() => {
                 renderFolderTree();
@@ -3039,6 +3297,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateEngineIcon();
         applyLanguage();
         showMainContainer();
+        // 游客默认简洁模式
+        switchViewMode('clean');
+        if (viewModeBtn) viewModeBtn.classList.add('hidden');
 
         // 页面关闭前强制同步搜索历史到云端
         window.addEventListener('beforeunload', () => {
