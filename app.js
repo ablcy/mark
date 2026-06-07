@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.24';
+const CURRENT_VERSION = 'v3.0.25';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -160,6 +160,69 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.log('保存偏好失败');
         }
+    }
+
+    // ====== 搜索历史云同步 ======
+    let searchHistorySyncTimer = null;
+
+    // 从云端加载搜索历史并与本地合并
+    async function loadSearchHistoryFromCloud() {
+        if (!currentUserId) return;
+        try {
+            const resp = await fetch(`${API_URL}/preferences/${currentUserId}`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.success && data.preferences && Array.isArray(data.preferences.searchHistory)) {
+                const cloudHistory = data.preferences.searchHistory;
+                const localHistory = getSearchHistory();
+                const merged = mergeSearchHistory(localHistory, cloudHistory);
+                localStorage.setItem('mark_bing_history', JSON.stringify(merged));
+                if (searchHistoryList && searchHistoryPanel && !searchHistoryPanel.classList.contains('hidden')) {
+                    renderSearchHistoryPanel();
+                }
+            }
+        } catch (e) {
+            console.log('加载搜索历史失败');
+        }
+    }
+
+    // 合并本地和云端历史（去重，保留较新版本）
+    function mergeSearchHistory(local, cloud) {
+        const map = new Map();
+        const all = [...cloud, ...local];
+        all.forEach(item => {
+            const key = (item.query || '') + '|' + (item.type || 'search') + '|' + (item.url || '') + '|' + (item.time || 0);
+            map.set(key, item);
+        });
+        return Array.from(map.values()).sort((a, b) => b.time - a.time).slice(0, 100);
+    }
+
+    // 保存搜索历史到云端（防抖）
+    async function saveSearchHistoryToCloud() {
+        if (!currentUserId) return;
+        try {
+            const history = getSearchHistory();
+            await fetch(`${API_URL}/save-preference`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId, key: 'searchHistory', value: history })
+            });
+        } catch (e) {
+            console.log('保存搜索历史到云端失败');
+        }
+    }
+
+    function debouncedSearchHistorySync() {
+        if (searchHistorySyncTimer) clearTimeout(searchHistorySyncTimer);
+        searchHistorySyncTimer = setTimeout(() => {
+            saveSearchHistoryToCloud();
+        }, 3000);
+    }
+
+    // 强制立即同步（用于登出、页面关闭）
+    async function forceSearchHistorySync() {
+        if (searchHistorySyncTimer) clearTimeout(searchHistorySyncTimer);
+        await saveSearchHistoryToCloud();
     }
 
     function updateEngineIcon() {
@@ -848,6 +911,8 @@ document.addEventListener('DOMContentLoaded', () => {
         hideSuggestions();
         searchInput.value = '';
         saveSearchHistory(query, null, null, 'search');
+        // 同步到云端
+        debouncedSearchHistorySync();
     }
 
     // 搜索输入事件
@@ -1533,6 +1598,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectDefaultFolder();
                 // 加载用户偏好（搜索引擎等）
                 loadPreferences();
+                // 加载搜索历史（云端同步）
+                loadSearchHistoryFromCloud();
                 applyLanguage();
             } else {
                 alert(data.error || '登录失败');
@@ -1546,6 +1613,8 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', async () => {
         navMenuDropdown.classList.add('hidden');
         if (currentUser) {
+            // 登出前强制同步搜索历史到云端
+            await forceSearchHistorySync();
             await saveBookmarks();
             localStorage.removeItem('mark_current_user');
             currentUser = null;
@@ -2696,6 +2765,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // 记录书签访问历史
         div.addEventListener('click', () => {
             saveVisitHistory(bookmark.url, bookmark.title);
+            // 同步到云端
+            debouncedSearchHistorySync();
         });
 
         const favicon = document.createElement('img');
@@ -2941,6 +3012,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderFolderTree();
                 selectDefaultFolder();
                 loadPreferences();
+                // 加载搜索历史（云端同步）
+                loadSearchHistoryFromCloud();
             }).catch(() => {});
         } catch (err) {
             console.log('无法解析保存的用户信息');
@@ -2966,5 +3039,18 @@ document.addEventListener('DOMContentLoaded', () => {
         updateEngineIcon();
         applyLanguage();
         showMainContainer();
+
+        // 页面关闭前强制同步搜索历史到云端
+        window.addEventListener('beforeunload', () => {
+            if (currentUserId) {
+                const history = getSearchHistory();
+                fetch(`${API_URL}/save-preference`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUserId, key: 'searchHistory', value: history }),
+                    keepalive: true
+                }).catch(() => {});
+            }
+        });
     }
 });

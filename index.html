@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.24</span>
+                            <span class="auth-version">v3.0.25</span>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.24</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.25</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -212,12 +212,11 @@
                 <div id="changelog-content">
                     <h2>更新日志</h2>
                     <div class="changelog-entry">
-                        <h3>v3.0.24 - 2026年6月7日</h3>
+                        <h3>v3.0.25 - 2026年6月7日</h3>
                         <ul>
-                            <li>搜索历史新增访问记录功能，点击书签打开的网址也会自动记录到搜索历史中</li>
-                            <li>搜索历史面板区分搜索记录和访问记录，访问记录显示标题和URL</li>
-                            <li>点击访问记录可直接打开对应网址，点击搜索记录执行搜索</li>
-                            <li>历史最大保存条数提升到100条</li>
+                            <li>搜索历史实现云端同步，登录后自动在多设备间同步搜索历史和访问记录</li>
+                            <li>搜索/访问后自动同步到云端（防抖3秒），登出或关闭页面时强制同步</li>
+                            <li>多设备合并策略：去重后按时间排序，最多保留100条</li>
                         </ul>
                     </div>
                     <div class="changelog-entry">
