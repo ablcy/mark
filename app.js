@@ -2312,7 +2312,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 dateAdded: Math.floor(Date.now() / 1000),
                 children: []
             }];
-            saveBookmarks();
+            // 仅游客模式立即保存，登录用户等 syncBookmarks 从服务器加载数据后再保存
+            if (!currentUserId) {
+                saveBookmarks();
+            }
         }
     }
 
