@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.22</span>
+                            <span class="auth-version">v3.0.23</span>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.22</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.23</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -121,6 +121,7 @@
                             <div class="dropdown-divider"></div>
                             <button id="multi-select-nav-btn" class="dropdown-item">多选</button>
                             <button id="shares-btn" class="dropdown-item">短链接</button>
+                            <button id="search-history-btn" class="dropdown-item">搜索历史</button>
                             <button id="admin-btn" class="dropdown-item">后台管理</button>
                             <div class="dropdown-divider"></div>
                             <button id="logout-btn" class="dropdown-item">退出登录</button>
@@ -211,11 +212,12 @@
                 <div id="changelog-content">
                     <h2>更新日志</h2>
                     <div class="changelog-entry">
-                        <h3>v3.0.22 - 2026年6月7日</h3>
+                        <h3>v3.0.23 - 2026年6月7日</h3>
                         <ul>
-                            <li>修复 @media 断点内多余的闭合括号导致移动端样式泄露到桌面端的关键问题</li>
-                            <li>响应式断点恢复为 768px，移动端恢复原样</li>
-                            <li>电脑端侧边栏宽度调整为 254px，文件夹菜单"..."与导航栏菜单"..."对齐</li>
+                            <li>新增搜索历史功能，入口在导航栏「...」菜单中</li>
+                            <li>搜索历史以右侧滑出面板展示，每条记录显示搜索词和时间</li>
+                            <li>支持搜索历史内搜索过滤、一键清空、点击复用</li>
+                            <li>搜索历史数据格式升级，支持时间戳记录（向后兼容旧数据）</li>
                         </ul>
                     </div>
                     <div class="changelog-entry">
@@ -721,6 +723,28 @@
                 <input type="password" id="profile-new-password" placeholder="新密码（留空不修改）" autocomplete="off">
                 <button type="submit">保存修改</button>
             </form>
+        </div>
+    </div>
+
+    <!-- 搜索历史面板 -->
+    <div id="search-history-panel" class="side-panel hidden">
+        <div class="side-panel-header">
+            <h3>搜索历史</h3>
+            <div class="side-panel-actions">
+                <button id="search-history-clear" class="side-panel-icon-btn" title="清空">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+                <button id="search-history-close" class="side-panel-icon-btn" title="关闭">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+        <div class="side-panel-search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="search-history-filter" placeholder="搜索历史记录" autocomplete="off">
+        </div>
+        <div id="search-history-list" class="side-panel-list">
+            <div class="side-panel-empty">暂无搜索历史</div>
         </div>
     </div>
 

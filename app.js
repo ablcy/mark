@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.0.22';
+const CURRENT_VERSION = 'v3.0.23';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -120,6 +120,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeBtn = document.getElementById('theme-btn');
     const navMenuBtn = document.getElementById('nav-menu-btn');
     const navMenuDropdown = document.getElementById('nav-menu-dropdown');
+    const searchHistoryBtn = document.getElementById('search-history-btn');
+    const searchHistoryPanel = document.getElementById('search-history-panel');
+    const searchHistoryClose = document.getElementById('search-history-close');
+    const searchHistoryClear = document.getElementById('search-history-clear');
+    const searchHistoryList = document.getElementById('search-history-list');
+    const searchHistoryFilter = document.getElementById('search-history-filter');
 
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
@@ -345,6 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPassword: '确认密码',
             multiSelect: '多选',
             shares: '短链接',
+            searchHistory: '搜索历史',
             admin: '后台管理',
             logout: '退出登录',
             profile: '个人',
@@ -392,6 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             confirmPassword: 'Confirm Password',
             multiSelect: 'Multi',
             shares: 'Shares',
+            searchHistory: 'Search History',
             admin: 'Admin Panel',
             logout: 'Logout',
             profile: 'Profile',
@@ -449,6 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (langBtn) langBtn.textContent = currentLang === 'zh' ? '中' : 'En';
         if (multiSelectNavBtn) multiSelectNavBtn.textContent = t.multiSelect;
         if (sharesBtn) sharesBtn.textContent = t.shares;
+        if (searchHistoryBtn) searchHistoryBtn.textContent = t.searchHistory;
         if (adminBtn) adminBtn.textContent = t.admin;
         const profileBtn = document.getElementById('profile-btn');
         if (profileBtn) profileBtn.textContent = t.profile;
@@ -634,23 +643,82 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
     }
 
-    // 搜索历史（localStorage）
-    const MAX_HISTORY = 6;
+    // 搜索历史（localStorage）- 格式: [{query, time}, ...]
+    const MAX_HISTORY = 50;
     function getSearchHistory() {
         try {
-            return JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
+            const raw = JSON.parse(localStorage.getItem('mark_bing_history') || '[]');
+            // 向后兼容：如果存储的是纯字符串数组，转换为对象格式
+            if (raw.length > 0 && typeof raw[0] === 'string') {
+                const migrated = raw.map(q => ({ query: q, time: Date.now() }));
+                localStorage.setItem('mark_bing_history', JSON.stringify(migrated));
+                return migrated;
+            }
+            return Array.isArray(raw) ? raw : [];
         } catch { return []; }
     }
     function saveSearchHistory(query) {
         let hist = getSearchHistory();
-        hist = hist.filter(h => h !== query);
-        hist.unshift(query);
+        hist = hist.filter(h => h.query !== query);
+        hist.unshift({ query, time: Date.now() });
         if (hist.length > MAX_HISTORY) hist = hist.slice(0, MAX_HISTORY);
         localStorage.setItem('mark_bing_history', JSON.stringify(hist));
     }
     function clearSearchHistory() {
         localStorage.removeItem('mark_bing_history');
         hideSuggestions();
+        renderSearchHistoryPanel();
+    }
+
+    // 格式化时间显示
+    function formatHistoryTime(timestamp) {
+        const now = new Date();
+        const t = new Date(timestamp);
+        const diffMs = now - t;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return '刚刚';
+        if (diffMins < 60) return diffMins + '分钟前';
+        if (diffHours < 24) return diffHours + '小时前';
+        if (diffDays === 1) return '昨天';
+        if (diffDays < 7) return diffDays + '天前';
+
+        const y = t.getFullYear();
+        const m = String(t.getMonth() + 1).padStart(2, '0');
+        const d = String(t.getDate()).padStart(2, '0');
+        if (y === now.getFullYear()) {
+            return m + '-' + d;
+        }
+        return y + '-' + m + '-' + d;
+    }
+
+    // 渲染搜索历史面板
+    function renderSearchHistoryPanel(filterText) {
+        if (!searchHistoryList) return;
+        const history = getSearchHistory();
+        const filter = (filterText || '').trim().toLowerCase();
+        const filtered = filter
+            ? history.filter(h => h.query.toLowerCase().includes(filter))
+            : history;
+
+        if (filtered.length === 0) {
+            searchHistoryList.innerHTML = '<div class="side-panel-empty">' +
+                (filter ? '无匹配记录' : '暂无搜索历史') +
+                '</div>';
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(item => {
+            html += `<div class="history-item" data-query="${escapeAttr(item.query)}">
+                <span class="history-item-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <span class="history-item-query">${escapeHtml(item.query)}</span>
+                <span class="history-item-time">${escapeHtml(formatHistoryTime(item.time))}</span>
+            </div>`;
+        });
+        searchHistoryList.innerHTML = html;
     }
 
     async function fetchBingSuggestions(query) {
@@ -668,13 +736,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const history = getSearchHistory();
         let html = '';
 
-        // 搜索历史
+        // 搜索历史（仅输入框为空时显示在联想面板中）
         if (!query && history.length > 0) {
             html += '<div class="suggestion-section-label">搜索历史</div>';
-            history.forEach(item => {
-                html += `<div class="suggestion-item" data-query="${escapeAttr(item)}">
+            history.slice(0, 6).forEach(item => {
+                html += `<div class="suggestion-item" data-query="${escapeAttr(item.query)}">
                     <span class="suggestion-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                    <span class="suggestion-text">${escapeHtml(item)}</span>
+                    <span class="suggestion-text">${escapeHtml(item.query)}</span>
                 </div>`;
             });
             html += '<div class="suggestion-footer" data-action="clear-history">清除搜索历史</div>';
@@ -1494,6 +1562,56 @@ document.addEventListener('DOMContentLoaded', () => {
         adminBtn.addEventListener('click', () => {
             navMenuDropdown.classList.add('hidden');
             window.open('/admin', '_blank');
+        });
+    }
+    if (searchHistoryBtn) {
+        searchHistoryBtn.addEventListener('click', () => {
+            navMenuDropdown.classList.add('hidden');
+            if (searchHistoryPanel) {
+                searchHistoryPanel.classList.remove('hidden');
+                renderSearchHistoryPanel();
+                if (searchHistoryFilter) searchHistoryFilter.value = '';
+            }
+        });
+    }
+    if (searchHistoryClose) {
+        searchHistoryClose.addEventListener('click', () => {
+            if (searchHistoryPanel) searchHistoryPanel.classList.add('hidden');
+        });
+    }
+    if (searchHistoryClear) {
+        searchHistoryClear.addEventListener('click', () => {
+            if (confirm('确定要清空所有搜索历史吗？')) {
+                clearSearchHistory();
+            }
+        });
+    }
+    if (searchHistoryFilter) {
+        searchHistoryFilter.addEventListener('input', () => {
+            renderSearchHistoryPanel(searchHistoryFilter.value);
+        });
+    }
+    if (searchHistoryList) {
+        searchHistoryList.addEventListener('click', (e) => {
+            const item = e.target.closest('.history-item');
+            if (!item) return;
+            const query = item.getAttribute('data-query');
+            if (!query) return;
+            if (searchInput) searchInput.value = query;
+            if (searchHistoryPanel) searchHistoryPanel.classList.add('hidden');
+            // 自动执行搜索
+            if (isBookmarkMode()) {
+                searchInput.dispatchEvent(new Event('input'));
+            } else {
+                doWebSearch(query);
+            }
+        });
+    }
+    if (searchHistoryPanel) {
+        searchHistoryPanel.addEventListener('click', (e) => {
+            if (e.target === searchHistoryPanel) {
+                searchHistoryPanel.classList.add('hidden');
+            }
         });
     }
 
