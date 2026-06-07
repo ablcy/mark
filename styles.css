@@ -42,6 +42,10 @@ body {
     gap: 12px;
     position: relative;
     z-index: 1;
+    width: 257px;
+    min-width: 257px;
+    flex: 0 0 auto;
+    padding-right: 20px;
 }
 
 .nav-left .logo {
@@ -440,7 +444,7 @@ body {
 .nav-menu-wrapper {
     position: relative;
     display: inline-flex;
-    margin-left: 4px;
+    margin-left: auto;
 }
 
 /* 统一 ... 菜单按钮样式（无边框无方框） */
@@ -1339,7 +1343,9 @@ body {
 
     .nav-left {
         flex: 0 0 auto;
-        min-width: 0;
+        width: 140px;
+        min-width: 140px;
+        padding-right: 8px;
         order: 1;
     }
 
@@ -3281,12 +3287,67 @@ body {
 }
 
 @media (max-width: 768px) {
+    .clean-mode-view {
+        height: calc(100vh - 80px);
+        height: calc(100dvh - 80px);
+        padding: 20px 12px;
+    }
     .clean-search-wrapper {
         max-width: 100%;
+    }
+    .clean-search-bar {
+        height: 44px;
+        border-radius: 22px;
+    }
+    .clean-search-input {
+        font-size: 15px;
+        height: 44px;
+    }
+    .clean-search-engine-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+    .clean-search-submit-btn {
+        padding: 8px 14px;
+        font-size: 14px;
+    }
+    .clean-suggestions-dropdown {
+        max-height: 280px;
     }
     .clean-bookmarks-grid {
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
         max-width: 100%;
+        padding: 0 4px;
+    }
+    .clean-bookmark-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    .clean-bookmark-name {
+        font-size: 11px;
+        max-width: 70px;
+    }
+    .clean-add-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    .clean-add-label {
+        font-size: 11px;
+    }
+    .search-engine-picker.clean-picker-mobile {
+        left: 8px;
+        right: 8px;
+        max-height: 60vh;
+    }
+    .search-engine-picker.clean-picker-mobile .engine-item {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
+    .search-engine-picker.clean-picker-mobile .engine-icon {
+        width: 22px;
+        height: 22px;
     }
 }
