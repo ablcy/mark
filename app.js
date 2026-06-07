@@ -221,28 +221,138 @@ document.addEventListener('DOMContentLoaded', () => {
     // 简洁模式搜索引擎选择器
     function renderCleanEnginePicker() {
         if (!cleanSearchEnginePicker) return;
+        const currentId = localStorage.getItem('mark_engine') || 'bing';
+        const engines = getAllEngines();
+
         let html = '';
-        DEFAULT_ENGINES.forEach(engine => {
-            const isBookmark = engine.id === 'bookmark';
+        engines.forEach(eng => {
+            const isActive = eng.id === currentId;
+            const isBookmark = eng.id === 'bookmark';
             if (isBookmark && !currentUserId) return;
-            html += `<button class="engine-option" data-engine="${engine.id}">${getEngineIconSVG(engine.id, 18)}<span>${engine.name}</span></button>`;
+            const isCustom = !DEFAULT_ENGINES.some(d => d.id === eng.id);
+            html += '<div class="engine-item' + (isActive ? ' active' : '') + '" data-engine-id="' + eng.id + '">';
+            html += '<div class="engine-item-icon">' + getEngineIconSVG(eng.id, 28) + '</div>';
+            html += '<span class="engine-item-name">' + eng.name + '</span>';
+            if (isActive) html += '<span class="engine-item-check">&#10003;</span>';
+            if (isCustom) html += '<button class="engine-item-delete" data-delete="' + eng.id + '" title="删除">&times;</button>';
+            html += '</div>';
         });
+        html += '<div class="engine-divider"></div>';
+        html += '<button class="engine-add-btn" data-action="add-engine" type="button">';
+        html += '<div class="engine-add-icon">+</div>';
+        html += '<span>自定义搜索引擎</span>';
+        html += '</button>';
+
         cleanSearchEnginePicker.innerHTML = html;
-        cleanSearchEnginePicker.querySelectorAll('.engine-option').forEach(btn => {
-            btn.addEventListener('click', () => {
-                localStorage.setItem('mark_engine', btn.dataset.engine);
-                updateEngineIcon();
-                updateCleanEngineIcon();
-                cleanSearchEnginePicker.classList.remove('show');
-            });
-        });
+        cleanSearchEnginePicker.classList.add('show');
+    }
+
+    function showCleanCustomEngineForm() {
+        cleanSearchEnginePicker.innerHTML =
+            '<div class="engine-custom-form">' +
+            '<input type="text" id="clean-custom-engine-name" placeholder="搜索引擎名称" autocomplete="off">' +
+            '<input type="text" id="clean-custom-engine-url" placeholder="搜索地址（用 {q} 代替关键词）" autocomplete="off">' +
+            '<div class="engine-custom-actions">' +
+            '<button type="button" id="clean-custom-engine-cancel">取消</button>' +
+            '<button type="button" class="engine-save-btn" id="clean-custom-engine-save">添加</button>' +
+            '</div></div>';
+
+        setTimeout(() => {
+            const nameInput = document.getElementById('clean-custom-engine-name');
+            const urlInput = document.getElementById('clean-custom-engine-url');
+            const cancelBtn = document.getElementById('clean-custom-engine-cancel');
+            const saveBtn = document.getElementById('clean-custom-engine-save');
+
+            if (nameInput) nameInput.focus();
+
+            if (cancelBtn) {
+                cancelBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    cleanSearchEnginePicker.classList.remove('show');
+                    setTimeout(() => renderCleanEnginePicker(), 100);
+                };
+            }
+
+            if (saveBtn) {
+                saveBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    const name = nameInput ? nameInput.value.trim() : '';
+                    const url = urlInput ? urlInput.value.trim() : '';
+                    if (!name || !url) {
+                        alert('请填写名称和搜索地址');
+                        return;
+                    }
+                    if (!url.includes('{q}')) {
+                        alert('搜索地址必须包含 {q} 作为搜索关键词占位符');
+                        return;
+                    }
+                    const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+                    const id = 'custom_' + Date.now();
+                    customs.push({ id, name, searchUrl: url, color: '#666' });
+                    localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+                    localStorage.setItem('mark_engine', id);
+                    updateEngineIcon();
+                    updateCleanEngineIcon();
+                    renderCleanEnginePicker();
+                };
+            }
+        }, 50);
     }
 
     if (cleanSearchEngineBtn) {
         cleanSearchEngineBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            renderCleanEnginePicker();
-            cleanSearchEnginePicker.classList.toggle('show');
+            if (cleanSearchEnginePicker.classList.contains('show')) {
+                cleanSearchEnginePicker.classList.remove('show');
+            } else {
+                cleanSearchEnginePicker.classList.remove('show');
+                renderCleanEnginePicker();
+            }
+        });
+    }
+
+    // 简洁模式引擎选择器面板内事件委托
+    if (cleanSearchEnginePicker) {
+        cleanSearchEnginePicker.addEventListener('click', function(e) {
+            const engineItem = e.target.closest('.engine-item');
+            if (engineItem && !e.target.closest('.engine-item-delete')) {
+                const engineId = engineItem.dataset.engineId;
+                if (engineId === 'bookmark' && !currentUser) {
+                    cleanSearchEnginePicker.classList.remove('show');
+                    showAuthContainer();
+                    return;
+                }
+                localStorage.setItem('mark_engine', engineId);
+                savePreference('currentEngine', engineId);
+                updateEngineIcon();
+                updateCleanEngineIcon();
+                cleanSearchEnginePicker.classList.remove('show');
+                return;
+            }
+
+            const delBtn = e.target.closest('.engine-item-delete');
+            if (delBtn) {
+                e.stopPropagation();
+                if (!confirm('确定删除这个搜索引擎吗？')) return;
+                let customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+                customs = customs.filter(eng => eng.id !== delBtn.dataset.delete);
+                localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+                const currentId = localStorage.getItem('mark_engine');
+                if (currentId === delBtn.dataset.delete) {
+                    localStorage.setItem('mark_engine', 'bookmark');
+                    updateEngineIcon();
+                    updateCleanEngineIcon();
+                }
+                renderCleanEnginePicker();
+                return;
+            }
+
+            const addBtn = e.target.closest('.engine-add-btn');
+            if (addBtn) {
+                e.stopPropagation();
+                showCleanCustomEngineForm();
+                return;
+            }
         });
     }
 
