@@ -3045,6 +3045,14 @@ body {
     color: #666;
 }
 
+/* 主容器 */
+#main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
 /* ========== 简洁模式 ========== */
 .clean-mode-view {
     flex: 1;

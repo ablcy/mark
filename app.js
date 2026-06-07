@@ -233,15 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('mark_engine', btn.dataset.engine);
                 updateEngineIcon();
                 updateCleanEngineIcon();
-                cleanSearchEnginePicker.classList.add('hidden');
+                cleanSearchEnginePicker.classList.remove('show');
             });
         });
     }
 
     if (cleanSearchEngineBtn) {
-        cleanSearchEngineBtn.addEventListener('click', () => {
+        cleanSearchEngineBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             renderCleanEnginePicker();
-            cleanSearchEnginePicker.classList.toggle('hidden');
+            cleanSearchEnginePicker.classList.toggle('show');
         });
     }
 
@@ -336,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 简洁模式外部点击关闭
     document.addEventListener('click', (e) => {
         if (cleanSearchEnginePicker && !cleanSearchEnginePicker.contains(e.target) && e.target !== cleanSearchEngineBtn) {
-            cleanSearchEnginePicker.classList.add('hidden');
+            cleanSearchEnginePicker.classList.remove('show');
         }
         if (cleanSuggestionsDropdown && !cleanSuggestionsDropdown.contains(e.target) && e.target !== cleanSearchInput) {
             cleanSuggestionsDropdown.classList.remove('show');
