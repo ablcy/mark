@@ -692,7 +692,7 @@ body {
 [data-theme="dark"] .profile-msg--error { color: #e74c3c; }
 
 /* 移动端 */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .profile-box {
         padding: 24px 18px;
         max-width: 100%;
@@ -803,8 +803,8 @@ body {
 
 /* 左侧边栏 */
 .sidebar {
-    width: 256px !important;
-    min-width: 256px !important;
+    width: 254px;
+    min-width: 254px;
     background: #fafafa;
     border-right: 1px solid #e8e8e8;
     display: flex;
@@ -1328,7 +1328,7 @@ body {
 }
 
 /* 手机端适配 */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .top-nav {
         flex-direction: row;
         flex-wrap: wrap;
@@ -1363,8 +1363,6 @@ body {
         min-width: 0;
         order: 2;
         display: flex;
-    }
-
     }
 
     .search-input {
@@ -2764,7 +2762,7 @@ body {
 }
 
 /* 移动端适配 */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .browser-main {
         padding-top: 6vh;
     }

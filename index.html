@@ -34,7 +34,7 @@
         .search-submit-btn:hover{color:#333;background:#f0f0f0}
         /* 主布局 */
         .main-layout{flex:1;display:flex;background:white;min-height:0;height:calc(100dvh - 56px)}
-        .sidebar{width:256px !important;min-width:256px !important;background:#fafafa;border-right:1px solid #eee;display:flex;flex-direction:column;padding:16px 0;overflow-y:auto}
+        .sidebar{width:254px;min-width:254px;background:#fafafa;border-right:1px solid #eee;display:flex;flex-direction:column;padding:16px 0;overflow-y:auto}
         .content-area{flex:1;display:flex;flex-direction:column;overflow-y:auto;background:white}
         /* 认证界面 */
         #auth-container{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;height:100dvh}
@@ -62,7 +62,7 @@
         .skeleton-line:last-child{margin-bottom:0}
         @keyframes skeleton-pulse{0%,100%{opacity:1}50%{opacity:.4}}
         /* 响应式 */
-        @media(max-width:600px){
+        @media(max-width:768px){
             .top-nav{padding:8px 12px}
             .nav-center{width:calc(100% - 100px)}
             .sidebar{display:none;width:0;min-width:0}
@@ -99,7 +99,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.0.21</span>
+                            <span class="auth-version">v3.0.22</span>
             </div>
         </div>
 
@@ -110,7 +110,7 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.21</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.0.22</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
@@ -211,11 +211,11 @@
                 <div id="changelog-content">
                     <h2>更新日志</h2>
                     <div class="changelog-entry">
-                        <h3>v3.0.21 - 2026年6月7日</h3>
+                        <h3>v3.0.22 - 2026年6月7日</h3>
                         <ul>
-                            <li>修复移动端 @media 中 !important 覆盖桌面端 sidebar 宽度的问题</li>
-                            <li>电脑端左侧文件夹栏宽度添加 !important 强制确保 256px 生效</li>
-                            <li>响应式断点从 768px 改为 600px，600px 以下才触发移动端布局</li>
+                            <li>修复 @media 断点内多余的闭合括号导致移动端样式泄露到桌面端的关键问题</li>
+                            <li>响应式断点恢复为 768px，移动端恢复原样</li>
+                            <li>电脑端侧边栏宽度调整为 254px，文件夹菜单"..."与导航栏菜单"..."对齐</li>
                         </ul>
                     </div>
                     <div class="changelog-entry">
