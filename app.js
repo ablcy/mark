@@ -291,6 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     customs.push({ id, name, searchUrl: url, color: '#666' });
                     localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
                     localStorage.setItem('mark_engine', id);
+                    saveCustomEnginesToCloud();
+                    savePreference('currentEngine', id);
                     updateEngineIcon();
                     updateCleanEngineIcon();
                     renderCleanEnginePicker();
@@ -337,9 +339,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 let customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
                 customs = customs.filter(eng => eng.id !== delBtn.dataset.delete);
                 localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+                saveCustomEnginesToCloud();
                 const currentId = localStorage.getItem('mark_engine');
                 if (currentId === delBtn.dataset.delete) {
-                    localStorage.setItem('mark_engine', 'bookmark');
+                    localStorage.setItem('mark_engine', 'bing');
+                    savePreference('currentEngine', 'bing');
                     updateEngineIcon();
                     updateCleanEngineIcon();
                 }
@@ -476,14 +480,26 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resp.ok) return;
             const data = await resp.json();
             if (data.success && data.preferences) {
+                // 加载自定义搜索引擎（云端覆盖本地，以云端为准）
+                if (Array.isArray(data.preferences.customEngines)) {
+                    localStorage.setItem('mark_custom_engines', JSON.stringify(data.preferences.customEngines));
+                }
                 if (data.preferences.currentEngine) {
                     localStorage.setItem('mark_engine', data.preferences.currentEngine);
-                    updateEngineIcon();
                 }
+                updateEngineIcon();
+                updateCleanEngineIcon();
             }
         } catch (e) {
             console.log('加载偏好失败');
         }
+    }
+
+    // 保存自定义引擎列表到云端
+    function saveCustomEnginesToCloud() {
+        if (!currentUserId) return;
+        const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+        savePreference('customEngines', customs);
     }
 
     async function savePreference(key, value) {
@@ -665,7 +681,10 @@ document.addEventListener('DOMContentLoaded', () => {
         customs.push({ id, name, searchUrl: url, color: '#666' });
         localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
         localStorage.setItem('mark_engine', id);
+        saveCustomEnginesToCloud();
+        savePreference('currentEngine', id);
         updateEngineIcon();
+        updateCleanEngineIcon();
         renderEnginePicker();
     }
 
@@ -674,11 +693,14 @@ document.addEventListener('DOMContentLoaded', () => {
         let customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
         customs = customs.filter(e => e.id !== engineId);
         localStorage.setItem('mark_custom_engines', JSON.stringify(customs));
+        saveCustomEnginesToCloud();
 
         const currentId = localStorage.getItem('mark_engine');
         if (currentId === engineId) {
-            localStorage.setItem('mark_engine', 'bookmark');
+            localStorage.setItem('mark_engine', 'bing');
+            savePreference('currentEngine', 'bing');
             updateEngineIcon();
+            updateCleanEngineIcon();
         }
         renderEnginePicker();
     }
