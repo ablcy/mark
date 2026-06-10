@@ -3148,9 +3148,9 @@ body {
 
 .clean-bookmarks-grid {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
-    gap: 32px;
+    gap: 16px;
     max-width: 900px;
     width: 100%;
     margin-top: 32px;
@@ -3178,13 +3178,14 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #f0f0f0;
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     overflow: hidden;
     flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
 }
 
 .clean-bookmark-icon img,
@@ -3199,7 +3200,7 @@ body {
 .clean-icon-char {
     font-size: 14px;
     font-weight: 600;
-    color: #777;
+    color: #555;
     line-height: 1;
     user-select: none;
 }
@@ -3290,8 +3291,13 @@ body {
     background: rgba(255,255,255,.08);
 }
 
+[data-theme="dark"] .clean-bookmark-icon {
+    background: #2a2a2a;
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
+}
+
 [data-theme="dark"] .clean-icon-char {
-    color: #aaa;
+    color: #ccc;
 }
 
 [data-theme="dark"] .clean-bookmark-title {
@@ -3336,10 +3342,17 @@ body {
         max-height: 280px;
     }
     .clean-bookmarks-grid {
-        gap: 20px;
-        max-width: 100%;
+        flex-wrap: wrap;
+        gap: 14px;
+        max-width: 340px;
         padding: 0 4px;
         margin-top: 24px;
+    }
+    .clean-bookmark-item {
+        width: 56px;
+    }
+    .clean-add-btn {
+        width: 56px;
     }
     .clean-bookmark-icon {
         width: 32px;

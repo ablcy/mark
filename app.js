@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const firstChar = (item.title || '?').charAt(0).toUpperCase();
             const iconHtml = faviconUrl
-                ? `<img src="${faviconUrl}" alt="" width="48" height="48" data-fallback="${escapeAttr(firstChar)}" class="clean-favicon">`
+                ? `<img src="${faviconUrl}" alt="" width="48" height="48" data-fallback="${escapeAttr(firstChar)}" data-hostname="${escapeAttr(hostname)}" class="clean-favicon">`
                 : `<span class="clean-icon-char">${escapeHtml(firstChar)}</span>`;
             html += `<a class="clean-bookmark-item" href="${escapeAttr(item.url)}" target="_blank" title="${title}">
                 <div class="clean-bookmark-icon">${iconHtml}</div>
@@ -198,9 +198,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="clean-add-label">添加</span>
         </button>`;
         cleanBookmarksGrid.innerHTML = html;
-        // favicon 加载失败时显示首字母
+        // favicon 加载失败时先尝试备用源，再显示首字母
         cleanBookmarksGrid.querySelectorAll('.clean-favicon').forEach(img => {
             img.addEventListener('error', function() {
+                if (!this.dataset.retried && this.dataset.hostname) {
+                    // 备用 favicon 源：icon.horse
+                    this.dataset.retried = '1';
+                    this.src = 'https://icon.horse/icon/' + this.dataset.hostname;
+                    return;
+                }
                 const fallback = this.dataset.fallback || '?';
                 const span = document.createElement('span');
                 span.className = 'clean-icon-char';
