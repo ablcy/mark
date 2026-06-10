@@ -3089,15 +3089,6 @@ body {
     box-shadow: 0 4px 24px rgba(0,0,0,.12);
 }
 
-.clean-search-icon {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #bbb;
-    margin-right: 10px;
-}
-
 .clean-search-bar .search-engine-btn {
     flex-shrink: 0;
     width: 28px;
@@ -3132,6 +3123,27 @@ body {
 
 .clean-search-bar .search-input::placeholder {
     color: #bbb;
+}
+
+.clean-search-bar .search-submit-btn {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    color: #999;
+    padding: 0;
+    transition: all .15s;
+}
+
+.clean-search-bar .search-submit-btn:hover {
+    color: #333;
+    background: rgba(0,0,0,.05);
 }
 
 .clean-bookmarks-grid {
@@ -3267,6 +3279,15 @@ body {
 
 [data-theme="dark"] .clean-search-bar .search-input::placeholder {
     color: #666;
+}
+
+[data-theme="dark"] .clean-search-bar .search-submit-btn {
+    color: #666;
+}
+
+[data-theme="dark"] .clean-search-bar .search-submit-btn:hover {
+    color: #ccc;
+    background: rgba(255,255,255,.08);
 }
 
 [data-theme="dark"] .clean-icon-char {
