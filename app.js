@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const all = getAllBookmarks(bookmarks);
-        const items = all.filter(b => b.type === 'bookmark').slice(0, 10);
+        const items = all.filter(b => b.type === 'bookmark').slice(0, 9);
         let html = '';
         items.forEach(item => {
             const title = escapeHtml(item.title);

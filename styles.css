@@ -3141,7 +3141,7 @@ body {
 
 .clean-bookmarks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    grid-template-columns: repeat(10, 80px);
     gap: 24px;
     max-width: 720px;
     width: 100%;
@@ -3325,7 +3325,7 @@ body {
         max-height: 280px;
     }
     .clean-bookmarks-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 16px;
         max-width: 100%;
         padding: 0 4px;
