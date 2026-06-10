@@ -811,6 +811,71 @@ app.post('/api/save-preference', async (req, res) => {
     }
 });
 
+// ============ Favicon 代理 API ============
+// 服务端抓取 favicon 并缓存，解决国内无法访问 Google/DuckDuckGo 的问题
+const faviconCache = new Map(); // 内存缓存: hostname → { data, contentType, t }
+const FAVICON_CACHE_TTL = 24 * 60 * 60 * 1000; // 24h 过期
+const FAVICON_CACHE_MAX = 2000;
+
+app.get('/api/favicon/:hostname', async (req, res) => {
+    const hostname = req.params.hostname;
+    if (!hostname || !/^[a-zA-Z0-9._-]+$/.test(hostname)) {
+        return res.status(400).send('Invalid hostname');
+    }
+
+    // 检查内存缓存
+    const cached = faviconCache.get(hostname);
+    if (cached && Date.now() - cached.t < FAVICON_CACHE_TTL) {
+        res.set('Content-Type', cached.contentType);
+        res.set('Cache-Control', 'public, max-age=86400'); // 浏览器缓存24h
+        return res.send(cached.data);
+    }
+
+    // 按优先级尝试不同源
+    const sources = [
+        `https://favicon.im/${hostname}`,
+        `https://icon.horse/icon/${hostname}`,
+    ];
+
+    for (const sourceUrl of sources) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
+            const response = await fetch(sourceUrl, {
+                signal: controller.signal,
+                headers: { 'User-Agent': 'MarkFaviconBot/1.0' }
+            });
+            clearTimeout(timeout);
+
+            if (response.ok) {
+                const contentType = response.headers.get('content-type') || 'image/png';
+                const buffer = Buffer.from(await response.arrayBuffer());
+
+                // 检查是否是有效图片（大于100字节）
+                if (buffer.length < 100) continue;
+
+                // 存入内存缓存
+                faviconCache.set(hostname, { data: buffer, contentType, t: Date.now() });
+                // 清理超量缓存
+                if (faviconCache.size > FAVICON_CACHE_MAX) {
+                    const oldest = [...faviconCache.entries()].sort((a, b) => a[1].t - b[1].t);
+                    for (let i = 0; i < oldest.length / 2; i++) faviconCache.delete(oldest[i][0]);
+                }
+
+                res.set('Content-Type', contentType);
+                res.set('Cache-Control', 'public, max-age=86400');
+                return res.send(buffer);
+            }
+        } catch (e) {
+            // 此源失败，尝试下一个
+            continue;
+        }
+    }
+
+    // 所有源都失败，返回 404
+    res.status(404).send('Not found');
+});
+
 // Bing 搜索联想代理（解决浏览器 CORS 限制）
 app.get('/api/bing-suggestions', async (req, res) => {
     const { query } = req.query;
