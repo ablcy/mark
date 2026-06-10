@@ -3343,16 +3343,16 @@ body {
     }
     .clean-bookmarks-grid {
         flex-wrap: wrap;
-        gap: 14px;
-        max-width: 340px;
+        gap: 8px;
+        max-width: 300px;
         padding: 0 4px;
         margin-top: 24px;
     }
     .clean-bookmark-item {
-        width: 56px;
+        width: 52px;
     }
     .clean-add-btn {
-        width: 56px;
+        width: 52px;
     }
     .clean-bookmark-icon {
         width: 32px;
@@ -3366,7 +3366,7 @@ body {
     }
     .clean-bookmark-title {
         font-size: 10px;
-        max-width: 56px;
+        max-width: 52px;
     }
     .clean-add-icon {
         width: 32px;

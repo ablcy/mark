@@ -30,6 +30,43 @@ function getEngineIconSVG(engineId, size) {
     return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
 }
 
+// 统一 favicon 加载策略
+// 优先级: DuckDuckGo(国内可用) → icon.horse → 直接 /favicon.ico → 首字母
+const FAVICON_SOURCES = [
+    (h) => 'https://icons.duckduckgo.com/ip3/' + h + '.ico',
+    (h) => 'https://icon.horse/icon/' + h,
+    (h) => null  // 由调用者提供 origin + '/favicon.ico'
+];
+
+function tryFaviconSources(imgEl, hostname, origin, fallbackChar) {
+    let attempt = 0;
+    const urls = [];
+    FAVICON_SOURCES.forEach(fn => {
+        const url = fn(hostname);
+        if (url) urls.push(url);
+    });
+    if (origin) urls.push(origin + '/favicon.ico');
+
+    function tryNext() {
+        if (attempt >= urls.length) {
+            // 所有源都失败，显示首字母
+            if (fallbackChar && imgEl.parentNode) {
+                const span = document.createElement('span');
+                span.className = 'clean-icon-char';
+                span.textContent = fallbackChar;
+                imgEl.parentNode.replaceChild(span, imgEl);
+            } else {
+                imgEl.style.opacity = '0';
+            }
+            return;
+        }
+        imgEl.src = urls[attempt++];
+    }
+
+    imgEl.onerror = tryNext;
+    tryNext(); // 从第一个开始
+}
+
 function getAllEngines() {
     const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
     return [...DEFAULT_ENGINES, ...customs];
@@ -175,17 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
         let html = '';
         items.forEach(item => {
             const title = escapeHtml(item.title);
-            let faviconUrl = '';
-            let hostname = '';
+            const firstChar = (item.title || '?').charAt(0).toUpperCase();
+            let hostname = '', origin = '';
             try {
                 hostname = new URL(item.url).hostname;
-                faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(hostname) + '&sz=64';
-            } catch (e) {
-                faviconUrl = '';
-            }
-            const firstChar = (item.title || '?').charAt(0).toUpperCase();
-            const iconHtml = faviconUrl
-                ? `<img src="${faviconUrl}" alt="" width="48" height="48" data-fallback="${escapeAttr(firstChar)}" data-hostname="${escapeAttr(hostname)}" class="clean-favicon">`
+                origin = new URL(item.url).origin;
+            } catch (e) {}
+            const dataAttrs = hostname
+                ? `data-hostname="${escapeAttr(hostname)}" data-origin="${escapeAttr(origin)}" data-fallback="${escapeAttr(firstChar)}"`
+                : '';
+            const iconHtml = hostname
+                ? `<img src="" alt="" width="48" height="48" ${dataAttrs} class="clean-favicon">`
                 : `<span class="clean-icon-char">${escapeHtml(firstChar)}</span>`;
             html += `<a class="clean-bookmark-item" href="${escapeAttr(item.url)}" target="_blank" title="${title}">
                 <div class="clean-bookmark-icon">${iconHtml}</div>
@@ -198,21 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="clean-add-label">添加</span>
         </button>`;
         cleanBookmarksGrid.innerHTML = html;
-        // favicon 加载失败时先尝试备用源，再显示首字母
+        // 使用统一 favicon 加载策略
         cleanBookmarksGrid.querySelectorAll('.clean-favicon').forEach(img => {
-            img.addEventListener('error', function() {
-                if (!this.dataset.retried && this.dataset.hostname) {
-                    // 备用 favicon 源：icon.horse
-                    this.dataset.retried = '1';
-                    this.src = 'https://icon.horse/icon/' + this.dataset.hostname;
-                    return;
-                }
-                const fallback = this.dataset.fallback || '?';
-                const span = document.createElement('span');
-                span.className = 'clean-icon-char';
-                span.textContent = fallback;
-                this.parentNode.replaceChild(span, this);
-            });
+            tryFaviconSources(img, img.dataset.hostname, img.dataset.origin, img.dataset.fallback);
         });
         // 绑定点击事件（记录访问历史）
         cleanBookmarksGrid.querySelectorAll('.clean-bookmark-item').forEach(el => {
@@ -3182,28 +3207,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const urlObj = new URL(bookmark.url);
-            const googleFavicon = 'https://www.google.com/s2/favicons?domain=' + urlObj.hostname + '&sz=32';
-            const fallbackFavicon = urlObj.origin + '/favicon.ico';
+            // 使用统一 favicon 加载策略
+            const urls = [];
+            FAVICON_SOURCES.forEach(fn => {
+                const url = fn(urlObj.hostname);
+                if (url) urls.push(url);
+            });
+            urls.push(urlObj.origin + '/favicon.ico');
 
-            // 先用 Google favicon，加载成功后显示
-            const img = new Image();
-            img.onload = function() {
-                favicon.src = googleFavicon;
-                favicon.style.opacity = '1';
-            };
-            img.onerror = function() {
-                // Google 失败，尝试 fallback
-                const img2 = new Image();
-                img2.onload = function() {
-                    favicon.src = fallbackFavicon;
+            let attempt = 0;
+            function tryNext() {
+                if (attempt >= urls.length) return;
+                const currentUrl = urls[attempt++];
+                const testImg = new Image();
+                testImg.onload = function() {
+                    favicon.src = currentUrl;
                     favicon.style.opacity = '1';
                 };
-                img2.onerror = function() {
-                    // 都失败，保持透明与背景融为一体
-                };
-                img2.src = fallbackFavicon;
-            };
-            img.src = googleFavicon;
+                testImg.onerror = tryNext;
+                testImg.src = currentUrl;
+            }
+            tryNext();
         } catch (e) {
             // URL 解析失败，保持透明
         }
