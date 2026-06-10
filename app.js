@@ -131,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanModeView = document.getElementById('clean-mode-view');
     const cleanSearchInput = document.getElementById('clean-search-input');
     const cleanSearchEngineBtn = document.getElementById('clean-search-engine-btn');
-    const cleanSearchSubmitBtn = document.getElementById('clean-search-submit-btn');
     const cleanSearchEnginePicker = document.getElementById('clean-search-engine-picker');
     const cleanSuggestionsDropdown = document.getElementById('clean-suggestions-dropdown');
     const cleanBookmarksGrid = document.getElementById('clean-bookmarks-grid');
@@ -449,14 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (item && item.dataset.query) {
                 doWebSearch(item.dataset.query);
             }
-        });
-    }
-
-    if (cleanSearchSubmitBtn) {
-        cleanSearchSubmitBtn.addEventListener('click', () => {
-            const query = cleanSearchInput.value.trim();
-            if (!query) return;
-            doWebSearch(query);
         });
     }
 

@@ -3060,14 +3060,14 @@ body {
     height: calc(100vh - 56px);
     height: calc(100dvh - 56px);
     padding: 40px 20px;
-    background: white;
+    background: #f5f0eb;
     overflow-y: auto;
     min-height: 0;
 }
 
 .clean-search-wrapper {
     width: 100%;
-    max-width: 680px;
+    max-width: 800px;
     position: relative;
 }
 
@@ -3076,23 +3076,32 @@ body {
     display: flex;
     align-items: center;
     background: white;
-    border: 1px solid #ddd;
+    border: none;
     border-radius: 28px;
     overflow: visible;
-    transition: border-color .2s, box-shadow .2s;
-    height: 56px;
-    padding: 0 12px;
+    transition: box-shadow .2s;
+    height: 52px;
+    padding: 0 16px 0 20px;
+    box-shadow: 0 2px 16px rgba(0,0,0,.08);
 }
 
 .clean-search-bar:focus-within {
-    border-color: #3498db;
-    box-shadow: 0 2px 12px rgba(52,152,219,.15);
+    box-shadow: 0 4px 24px rgba(0,0,0,.12);
+}
+
+.clean-search-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    margin-right: 10px;
 }
 
 .clean-search-bar .search-engine-btn {
     flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3101,12 +3110,19 @@ body {
     cursor: pointer;
     border-radius: 50%;
     padding: 0;
+    margin-right: 6px;
+    opacity: .7;
+    transition: opacity .15s;
+}
+
+.clean-search-bar .search-engine-btn:hover {
+    opacity: 1;
 }
 
 .clean-search-bar .search-input {
     flex: 1;
     min-width: 0;
-    padding: 14px 8px;
+    padding: 12px 0;
     border: none;
     font-size: 16px;
     background: transparent;
@@ -3115,38 +3131,17 @@ body {
 }
 
 .clean-search-bar .search-input::placeholder {
-    color: #999;
-}
-
-.clean-search-bar .search-submit-btn {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 50%;
-    color: #999;
-    padding: 0;
-    transition: all .15s;
-}
-
-.clean-search-bar .search-submit-btn:hover {
-    color: #333;
-    background: #f0f0f0;
+    color: #bbb;
 }
 
 .clean-bookmarks-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 80px);
-    gap: 24px;
-    max-width: 720px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 32px;
+    max-width: 900px;
     width: 100%;
-    margin-top: 40px;
-    justify-items: center;
+    margin-top: 32px;
     padding: 0 20px;
 }
 
@@ -3154,53 +3149,53 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
-    transition: background .2s;
-    width: 80px;
+    padding: 4px;
+    border-radius: 8px;
+    transition: transform .15s;
+    width: 64px;
     text-decoration: none;
 }
 
 .clean-bookmark-item:hover {
-    background: #f5f5f5;
+    transform: translateY(-2px);
 }
 
 .clean-bookmark-icon {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: #f0f0f0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 20px;
+    font-size: 14px;
     overflow: hidden;
     flex-shrink: 0;
 }
 
 .clean-bookmark-icon img,
 .clean-favicon {
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
     display: block;
 }
 
 .clean-icon-char {
-    font-size: 20px;
+    font-size: 14px;
     font-weight: 600;
-    color: #555;
+    color: #777;
     line-height: 1;
     user-select: none;
 }
 
 .clean-bookmark-title {
-    font-size: 12px;
-    color: #666;
-    max-width: 80px;
+    font-size: 11px;
+    color: #888;
+    max-width: 64px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -3211,36 +3206,36 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
-    transition: background .2s, border-color .2s;
-    width: 80px;
-    border: 2px dashed #ddd;
+    padding: 4px;
+    border-radius: 8px;
+    transition: transform .15s;
+    width: 64px;
+    border: none;
     background: transparent;
 }
 
 .clean-add-btn:hover {
-    background: #f5f5f5;
-    border-color: #3498db;
+    transform: translateY(-2px);
 }
 
 .clean-add-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #999;
-    font-size: 24px;
+    color: #bbb;
+    font-size: 20px;
     flex-shrink: 0;
+    background: #eee;
 }
 
 .clean-add-label {
-    font-size: 12px;
-    color: #999;
+    font-size: 11px;
+    color: #888;
 }
 
 /* 简洁模式下隐藏导航栏搜索框 */
@@ -3255,12 +3250,15 @@ body {
 
 [data-theme="dark"] .clean-search-bar {
     background: #2a2a2a;
-    border-color: #444;
+    box-shadow: 0 2px 16px rgba(0,0,0,.25);
 }
 
 [data-theme="dark"] .clean-search-bar:focus-within {
-    border-color: #3498db;
-    box-shadow: 0 2px 12px rgba(52,152,219,.25);
+    box-shadow: 0 4px 24px rgba(0,0,0,.35);
+}
+
+[data-theme="dark"] .clean-search-icon {
+    color: #666;
 }
 
 [data-theme="dark"] .clean-search-bar .search-input {
@@ -3268,31 +3266,23 @@ body {
 }
 
 [data-theme="dark"] .clean-search-bar .search-input::placeholder {
-    color: #888;
+    color: #666;
 }
 
-[data-theme="dark"] .clean-bookmark-item:hover {
-    background: #2a2a2a;
+[data-theme="dark"] .clean-icon-char {
+    color: #aaa;
 }
 
 [data-theme="dark"] .clean-bookmark-title {
-    color: #b0b0b0;
-}
-
-[data-theme="dark"] .clean-add-btn {
-    border-color: #444;
-}
-
-[data-theme="dark"] .clean-add-btn:hover {
-    background: #2a2a2a;
-    border-color: #3498db;
-}
-
-[data-theme="dark"] .clean-add-label {
     color: #888;
 }
 
 [data-theme="dark"] .clean-add-icon {
+    color: #666;
+    background: #333;
+}
+
+[data-theme="dark"] .clean-add-label {
     color: #888;
 }
 
@@ -3308,44 +3298,49 @@ body {
     .clean-search-bar {
         height: 44px;
         border-radius: 22px;
+        padding: 0 12px 0 16px;
     }
-    .clean-search-input {
+    .clean-search-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    .clean-search-bar .search-engine-btn {
+        width: 24px;
+        height: 24px;
+    }
+    .clean-search-bar .search-input {
         font-size: 15px;
-        height: 44px;
-    }
-    .clean-search-engine-btn {
-        padding: 6px 10px;
-        font-size: 12px;
-    }
-    .clean-search-submit-btn {
-        padding: 8px 14px;
-        font-size: 14px;
     }
     .clean-suggestions-dropdown {
         max-height: 280px;
     }
     .clean-bookmarks-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 16px;
+        gap: 20px;
         max-width: 100%;
         padding: 0 4px;
+        margin-top: 24px;
     }
     .clean-bookmark-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 16px;
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
     }
-    .clean-bookmark-name {
-        font-size: 11px;
-        max-width: 70px;
+    .clean-bookmark-icon img,
+    .clean-favicon {
+        width: 32px;
+        height: 32px;
+    }
+    .clean-bookmark-title {
+        font-size: 10px;
+        max-width: 56px;
     }
     .clean-add-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 20px;
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
     }
     .clean-add-label {
-        font-size: 11px;
+        font-size: 10px;
     }
     .search-engine-picker.clean-picker-mobile {
         left: 8px;
