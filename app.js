@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.1.0';
+const CURRENT_VERSION = 'v3.1.1';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -176,15 +176,17 @@ document.addEventListener('DOMContentLoaded', () => {
         items.forEach(item => {
             const title = escapeHtml(item.title);
             let faviconUrl = '';
+            let hostname = '';
             try {
-                faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(new URL(item.url).hostname) + '&sz=64';
+                hostname = new URL(item.url).hostname;
+                faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(hostname) + '&sz=64';
             } catch (e) {
                 faviconUrl = '';
             }
-            const firstChar = title.charAt(0).toUpperCase();
+            const firstChar = (item.title || '?').charAt(0).toUpperCase();
             const iconHtml = faviconUrl
-                ? `<img src="${faviconUrl}" alt="" onerror="this.style.display='none';this.parentNode.textContent='${firstChar}'">`
-                : firstChar;
+                ? `<img src="${faviconUrl}" alt="" width="48" height="48" data-fallback="${escapeAttr(firstChar)}" class="clean-favicon">`
+                : `<span class="clean-icon-char">${escapeHtml(firstChar)}</span>`;
             html += `<a class="clean-bookmark-item" href="${escapeAttr(item.url)}" target="_blank" title="${title}">
                 <div class="clean-bookmark-icon">${iconHtml}</div>
                 <span class="clean-bookmark-title">${title}</span>
@@ -196,6 +198,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="clean-add-label">添加</span>
         </button>`;
         cleanBookmarksGrid.innerHTML = html;
+        // favicon 加载失败时显示首字母
+        cleanBookmarksGrid.querySelectorAll('.clean-favicon').forEach(img => {
+            img.addEventListener('error', function() {
+                const fallback = this.dataset.fallback || '?';
+                const span = document.createElement('span');
+                span.className = 'clean-icon-char';
+                span.textContent = fallback;
+                this.parentNode.replaceChild(span, this);
+            });
+        });
         // 绑定点击事件（记录访问历史）
         cleanBookmarksGrid.querySelectorAll('.clean-bookmark-item').forEach(el => {
             el.addEventListener('click', () => {

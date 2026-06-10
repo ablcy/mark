@@ -3180,11 +3180,21 @@ body {
     flex-shrink: 0;
 }
 
-.clean-bookmark-icon img {
+.clean-bookmark-icon img,
+.clean-favicon {
     width: 48px;
     height: 48px;
     border-radius: 50%;
     object-fit: cover;
+    display: block;
+}
+
+.clean-icon-char {
+    font-size: 20px;
+    font-weight: 600;
+    color: #555;
+    line-height: 1;
+    user-select: none;
 }
 
 .clean-bookmark-title {
