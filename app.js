@@ -1,5 +1,5 @@
 // 当前版本号 - 每次发布时自动更新
-const CURRENT_VERSION = 'v3.1.1';
+const CURRENT_VERSION = 'v3.3.4';
 
 // 搜索引擎定义
 const DEFAULT_ENGINES = [
@@ -16,17 +16,38 @@ function getEngineIconSVG(engineId, size) {
     if (engineId === 'bookmark') {
         return '<img src="favicon.png" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="Mark">';
     }
-    const icons = {
-        baidu: ['https://www.baidu.com/favicon.ico', 'B', '#2932E1'],
-        bing: ['https://www.bing.com/favicon.ico', 'b', '#008373'],
-        sogou: ['https://www.sogou.com/favicon.ico', 'S', '#FF4F01'],
-        so360: ['https://www.so.com/favicon.ico', '3', '#40BA21'],
-        metaso: ['https://metaso.cn/favicon.ico', 'M', '#6C5CE7']
-    };
-    const cfg = icons[engineId];
-    if (cfg) {
-        return '<img src="' + cfg[0] + '" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="" onerror="this.outerHTML=\'<svg width=' + s + ' height=' + s + ' viewBox=0 0 24 24><rect width=24 height=24 rx=12 fill=' + cfg[2] + '/><text x=12 y=17 text-anchor=middle fill=white font-size=13 font-weight=bold font-family=Arial>' + cfg[1] + '</text></svg>\'">';
+    // 必应：直接使用其 favicon URL（代理抓取不稳定）
+    if (engineId === 'bing') {
+        return '<img src="https://www.bing.com/favicon.ico" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="" '
+            + 'onerror="this.outerHTML=\'<svg width=' + s + ' height=' + s + ' viewBox=0 0 24 24><rect width=24 height=24 rx=12 fill=%23008373/><text x=12 y=17 text-anchor=middle fill=white font-size=13 font-weight=bold font-family=Arial>b</text></svg>\'">';
     }
+    // 1. 优先从全局引擎列表（服务端下发，含内置+管理员添加）查找
+    // 2. 找不到时从 DEFAULT_ENGINES 查找（服务端未返回时的兜底）
+    // 3. 再找不到则查用户本地自定义引擎
+    try {
+        var globalList = (typeof GLOBAL_ENGINES !== 'undefined' ? GLOBAL_ENGINES : []);
+        var customList = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
+        // 合并：全局 → 默认内置 → 用户自定义，确保任何 id 都能找到
+        var allDynamic = globalList.concat(
+            DEFAULT_ENGINES.filter(function(e) {
+                return e.id !== 'bookmark' && !globalList.some(function(g) { return g.id === e.id; });
+            })
+        ).concat(
+            customList.filter(function(e) {
+                return !globalList.some(function(g) { return g.id === e.id; });
+            })
+        );
+        var cEng = allDynamic.find(function(e) { return e.id === engineId; });
+        if (cEng && cEng.searchUrl) {
+            var urlStr = cEng.searchUrl.replace('{q}', '');
+            var uObj = new URL(urlStr);
+            var hName = uObj.hostname;
+            var fChar = (cEng.name || '?').charAt(0).toUpperCase();
+            var fColor = cEng.color || '#666';
+            var fUrl = '/api/favicon/' + encodeURIComponent(hName);
+            return '<img src="' + fUrl + '" width="' + s + '" height="' + s + '" style="border-radius:4px" alt="" onerror="this.outerHTML=\'<svg width=' + s + ' height=' + s + ' viewBox=0 0 24 24><rect width=24 height=24 rx=12 fill=' + fColor + '/><text x=12 y=17 text-anchor=middle fill=white font-size=13 font-weight=bold font-family=Arial>' + fChar + '</text></svg>\'">';
+        }
+    } catch (e) {}
     return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#666"/><text x="12" y="17" text-anchor="middle" fill="white" font-size="12" font-weight="bold" font-family="Arial">?</text></svg>';
 }
 
@@ -117,23 +138,56 @@ function loadFaviconInPlace(imgEl, hostname, fallbackChar) {
 function showFallback(imgEl, fallbackChar) {
     if (fallbackChar && imgEl.parentNode) {
         const span = document.createElement('span');
-        span.className = 'clean-icon-char';
         span.textContent = fallbackChar || '?';
+        // 根据上下文使用不同样式：简洁模式用 clean-icon-char，书签列表用 bookmark-favicon-fallback
+        if (imgEl.closest && imgEl.closest('.clean-bookmark-icon')) {
+            span.className = 'clean-icon-char';
+        } else {
+            span.className = 'bookmark-favicon-fallback';
+        }
         imgEl.parentNode.replaceChild(span, imgEl);
     } else {
         imgEl.style.opacity = '0';
     }
 }
 
+// 全局引擎（由服务端管理，启动时异步拉取）
+let GLOBAL_ENGINES = [];
+
 function getAllEngines() {
     const customs = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
-    return [...DEFAULT_ENGINES, ...customs];
+    // 服务端返回全局引擎时（包含内置+管理员添加），以服务端顺序为准
+    // 服务端不可达时 fallback 到 DEFAULT_ENGINES
+    const base = (typeof GLOBAL_ENGINES !== 'undefined' && GLOBAL_ENGINES.length > 0)
+        ? GLOBAL_ENGINES
+        : DEFAULT_ENGINES;
+    // 过滤掉管理员隐藏的引擎（visible === false）
+    const visibleBase = base.filter(function(e) { return e.visible !== false; });
+    // 用户自定义引擎追加到末尾（去重：不覆盖同ID的全局引擎）
+    const baseIds = new Set(visibleBase.map(function(e) { return e.id; }));
+    const uniqueCustoms = customs.filter(function(e) { return !baseIds.has(e.id); });
+    return [...visibleBase, ...uniqueCustoms];
+}
+
+// 拉取全局引擎并刷新图标/选择器
+function fetchGlobalEngines() {
+    fetch('/api/global-engines')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success && Array.isArray(data.engines) && data.engines.length > 0) {
+                GLOBAL_ENGINES = data.engines;
+                // 刷新当前搜索引擎图标（全局引擎可能是当前选中引擎）
+                if (typeof updateEngineIcon === 'function') updateEngineIcon();
+                if (typeof updateCleanEngineIcon === 'function') updateCleanEngineIcon();
+            }
+        })
+        .catch(function() {}); // 拉取失败不影响正常使用
 }
 
 function getCurrentEngine() {
     const all = getAllEngines();
     const id = localStorage.getItem('mark_engine') || 'bing';
-    return all.find(e => e.id === id) || DEFAULT_ENGINES.find(e => e.id === 'bing');
+    return all.find(e => e.id === id) || all[0] || DEFAULT_ENGINES.find(e => e.id === 'bing');
 }
 
 // 文件夹 SVG 图标
@@ -173,6 +227,9 @@ function toggleSelectAll() { if (window._markToggleSelectAll) window._markToggle
 document.addEventListener('DOMContentLoaded', () => {
     const API_URL = '/api';
 
+    // 启动时拉取全局引擎
+    fetchGlobalEngines();
+
     let currentUser = null;
     let currentUserId = null;
     let bookmarks = [];
@@ -181,6 +238,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // 多选状态
     let multiSelectMode = false;
     let selectedItems = []; // {type: 'folder'|'bookmark', item: ..., parentArray: ...}
+
+    // 拖拽排序状态
+    let dragState = null; // { items: [...], srcArray: [...] }
 
     // 初始化版本号显示
     const versionDisplay = document.getElementById('version-display');
@@ -565,7 +625,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ====== 语言与主题切换 ======
     let currentLang = localStorage.getItem('mark_lang') || 'zh';
-    let currentTheme = localStorage.getItem('mark_theme') || 'light';
+    // 兼容旧版 light → white
+    let currentTheme = localStorage.getItem('mark_theme') || 'white';
+    if (currentTheme === 'light') currentTheme = 'white';
+    const THEME_LIST = ['white', 'warm', 'cool', 'green', 'pink', 'dark'];
+    const THEME_NAMES = {
+        white: '纯白', warm: '暖色', cool: '冷色',
+        green: '护眼', pink: '粉色', dark: '暗色'
+    };
 
     // 偏好管理
     async function loadPreferences() {
@@ -575,9 +642,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!resp.ok) return;
             const data = await resp.json();
             if (data.success && data.preferences) {
-                // 加载自定义搜索引擎（云端覆盖本地，以云端为准）
+                // 加载自定义搜索引擎：合并云端与本地（云端为准，本地有而云端没有的也保留并同步）
+                const localCustoms = JSON.parse(localStorage.getItem('mark_custom_engines') || '[]');
                 if (Array.isArray(data.preferences.customEngines)) {
-                    localStorage.setItem('mark_custom_engines', JSON.stringify(data.preferences.customEngines));
+                    const cloudCustoms = data.preferences.customEngines;
+                    const cloudIds = new Set(cloudCustoms.map(e => e.id));
+                    // 本地独有（尚未同步）的引擎追加到云端列表
+                    const localOnly = localCustoms.filter(e => !cloudIds.has(e.id));
+                    const merged = [...cloudCustoms, ...localOnly];
+                    localStorage.setItem('mark_custom_engines', JSON.stringify(merged));
+                    // 如果有本地独有引擎，立即同步到云端
+                    if (localOnly.length > 0) {
+                        savePreference('customEngines', merged);
+                    }
+                } else if (localCustoms.length > 0) {
+                    // 云端没有记录但本地有，直接同步上去
+                    savePreference('customEngines', localCustoms);
                 }
                 if (data.preferences.currentEngine) {
                     localStorage.setItem('mark_engine', data.preferences.currentEngine);
@@ -676,14 +756,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateEngineIcon() {
         const engine = getCurrentEngine();
         if (searchEngineBtn) {
-            searchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
+            searchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 28);
         }
         if (searchInput) {
             const t = i18n[currentLang];
             searchInput.placeholder = isBookmarkMode() ? t.searchBookmark : t.searchPlaceholder;
         }
         if (cleanSearchEngineBtn) {
-            cleanSearchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 22);
+            cleanSearchEngineBtn.innerHTML = getEngineIconSVG(engine.id, 28);
         }
         if (cleanSearchInput) {
             const t = i18n[currentLang];
@@ -715,12 +795,14 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</button>';
 
         searchEnginePicker.innerHTML = html;
+        searchEnginePicker.classList.remove('hidden');
         searchEnginePicker.classList.add('show');
     }
 
     function hideEnginePicker() {
         if (searchEnginePicker) {
             searchEnginePicker.classList.remove('show');
+            searchEnginePicker.classList.add('hidden');
         }
     }
 
@@ -1042,10 +1124,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyTheme() {
         document.documentElement.setAttribute('data-theme', currentTheme);
         if (themeBtn) {
-            const isLight = currentTheme === 'light';
-            themeBtn.innerHTML = '<span>主题</span>';
-            themeBtn.title = isLight ? '切换暗色主题' : '切换亮色主题';
+            var name = THEME_NAMES[currentTheme] || '主题';
+            themeBtn.innerHTML = '<span>' + name + '</span>';
+            themeBtn.title = '选择主题';
         }
+        // 更新下拉面板中的选中状态
+        document.querySelectorAll('.theme-picker-item').forEach(function(item) {
+            item.classList.toggle('active', item.dataset.theme === currentTheme);
+        });
     }
 
     if (langBtn) {
@@ -1057,14 +1143,47 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (themeBtn) {
-        themeBtn.addEventListener('click', () => {
-            navMenuDropdown.classList.add('hidden');
-            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
-            localStorage.setItem('mark_theme', currentTheme);
-            applyTheme();
+    // 主题选择下拉面板
+    var themePickerDropdown = document.getElementById('theme-picker-dropdown');
+    var THEME_SWATCHES = {
+        white: '#ffffff', warm: '#faf5ef', cool: '#eef3f8',
+        green: '#eef5ee', pink: '#fdf2f6', dark: '#1a1a1a'
+    };
+
+    // 初始化主题选项（竖排列表）
+    if (themePickerDropdown) {
+        THEME_LIST.forEach(function(t) {
+            var btn = document.createElement('button');
+            btn.className = 'theme-picker-item' + (t === currentTheme ? ' active' : '');
+            btn.dataset.theme = t;
+            btn.innerHTML = '<span class="theme-picker-swatch" style="background:' + THEME_SWATCHES[t] + ';"></span>' +
+                            '<span>' + THEME_NAMES[t] + '</span>';
+            btn.addEventListener('click', function() {
+                currentTheme = t;
+                localStorage.setItem('mark_theme', currentTheme);
+                applyTheme();
+                themePickerDropdown.classList.add('hidden');
+            });
+            themePickerDropdown.appendChild(btn);
         });
     }
+
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            navMenuDropdown.classList.add('hidden');
+            themePickerDropdown.classList.toggle('hidden');
+        });
+    }
+
+    // 点击其他地方关闭主题下拉
+    document.addEventListener('click', function(e) {
+        if (themePickerDropdown && !themePickerDropdown.classList.contains('hidden')) {
+            if (!e.target.closest('.nav-menu-wrapper')) {
+                themePickerDropdown.classList.add('hidden');
+            }
+        }
+    });
 
     // 多选操作栏
     const multiSelectBar = document.getElementById('multi-select-bar');
@@ -1987,11 +2106,25 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.classList.add('hidden');
     });
 
-    // 返回主页按钮
+    // 取消/关闭登录弹窗
     const authBackBtn = document.querySelector('.auth-back-btn');
     if (authBackBtn) {
         authBackBtn.addEventListener('click', () => {
-            guestMode();
+            showMainContainer();
+        });
+    }
+
+    // 关闭按钮 & 点击遮罩层关闭弹窗
+    const authModalClose = document.querySelector('.auth-modal-close');
+    const authModalOverlay = document.querySelector('.auth-modal-overlay');
+    if (authModalClose) {
+        authModalClose.addEventListener('click', () => {
+            showMainContainer();
+        });
+    }
+    if (authModalOverlay) {
+        authModalOverlay.addEventListener('click', () => {
+            showMainContainer();
         });
     }
 
@@ -2412,12 +2545,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 辅助函数
     function showAuthContainer() {
         authContainer.classList.remove('hidden');
-        mainContainer.classList.add('hidden');
     }
 
     function showMainContainer() {
         authContainer.classList.add('hidden');
-        mainContainer.classList.remove('hidden');
     }
 
     // 初始化默认文件夹（新用户无数据时创建"根文件夹"）
@@ -2660,10 +2791,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderFolderTree() {
         folderTree.innerHTML = '';
 
-        // 渲染用户导入的文件夹树
+        // 渲染用户导入的文件夹树（parentArray 直接传 bookmarks，确保拖拽排序修改到原始数组）
         const topFolders = bookmarks.filter(item => item.type === 'folder');
         for (let i = 0; i < topFolders.length; i++) {
-            const childItem = renderFolderItem(topFolders[i], topFolders, i);
+            const childItem = renderFolderItem(topFolders[i], bookmarks, i);
             folderTree.appendChild(childItem);
         }
     }
@@ -2760,6 +2891,85 @@ document.addEventListener('DOMContentLoaded', () => {
             div.appendChild(subfolders);
         }
         
+        // 多选模式：侧边栏文件夹拖拽排序
+        if (multiSelectMode) {
+            div.setAttribute('draggable', 'true');
+            div.dataset.dragType = 'sidebar-folder';
+            div.dataset.dragRef = folder._dragId = folder._dragId || (Math.random().toString(36).slice(2));
+
+            div.addEventListener('dragstart', (e) => {
+                const isSelected = selectedItems.some(s => s.item === folder);
+                if (isSelected && selectedItems.length > 0) {
+                    // 拖整个选中集合（仅同一 parentArray 内的）
+                    dragState = {
+                        items: selectedItems.filter(s => s.parentArray === parentArray).map(s => s.item),
+                        srcArray: parentArray
+                    };
+                } else {
+                    dragState = { items: [folder], srcArray: parentArray };
+                }
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', 'sidebar-folder');
+                div.classList.add('drag-source');
+            });
+
+            div.addEventListener('dragend', () => {
+                div.classList.remove('drag-source');
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom');
+                });
+            });
+
+            div.addEventListener('dragover', (e) => {
+                if (!dragState || dragState.srcArray !== parentArray) return;
+                if (dragState.items.includes(folder)) return;
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const rect = div.getBoundingClientRect();
+                const mid = rect.top + rect.height / 2;
+                document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+                    el.classList.remove('drag-over-top', 'drag-over-bottom');
+                });
+                if (e.clientY < mid) {
+                    div.classList.add('drag-over-top');
+                } else {
+                    div.classList.add('drag-over-bottom');
+                }
+            });
+
+            div.addEventListener('dragleave', () => {
+                div.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+
+            div.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!dragState || dragState.srcArray !== parentArray) return;
+                if (dragState.items.includes(folder)) return;
+
+                const isTop = div.classList.contains('drag-over-top');
+                div.classList.remove('drag-over-top', 'drag-over-bottom');
+
+                const arr = parentArray;
+                // 从数组中移除被拖动的项
+                const dragged = dragState.items;
+                dragged.forEach(it => {
+                    const idx = arr.indexOf(it);
+                    if (idx !== -1) arr.splice(idx, 1);
+                });
+
+                // 找目标位置（移除后重新找）
+                let targetIdx = arr.indexOf(folder);
+                if (!isTop) targetIdx += 1;
+                if (targetIdx < 0) targetIdx = 0;
+                arr.splice(targetIdx, 0, ...dragged);
+
+                dragState = null;
+                renderFolderTree();
+                saveBookmarks();
+            });
+        }
+
         return div;
     }
 
@@ -2785,6 +2995,89 @@ document.addEventListener('DOMContentLoaded', () => {
         return folder.children.filter(item => item.type === 'bookmark');
     }
 
+    // ====== 拖拽排序（内容区：文件夹 + 书签） ======
+    function attachContentDrag(el, dataItem, arr) {
+        el.setAttribute('draggable', 'true');
+
+        el.addEventListener('dragstart', (e) => {
+            // 如果当前项已选中，则批量拖动选中项（同一 arr 内）
+            const isSelected = selectedItems.some(s => s.item === dataItem && s.parentArray === arr);
+            if (isSelected && selectedItems.length > 0) {
+                dragState = {
+                    items: selectedItems.filter(s => s.parentArray === arr).map(s => s.item),
+                    srcArray: arr
+                };
+            } else {
+                dragState = { items: [dataItem], srcArray: arr };
+            }
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', 'content-item');
+            el.classList.add('drag-source');
+            // 拖动期间半透明
+            setTimeout(() => { el.style.opacity = '0.4'; }, 0);
+        });
+
+        el.addEventListener('dragend', () => {
+            el.classList.remove('drag-source');
+            el.style.opacity = '';
+            document.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(node => {
+                node.classList.remove('drag-over-top', 'drag-over-bottom');
+            });
+        });
+
+        el.addEventListener('dragover', (e) => {
+            if (!dragState || dragState.srcArray !== arr) return;
+            if (dragState.items.includes(dataItem)) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const rect = el.getBoundingClientRect();
+            const mid = rect.top + rect.height / 2;
+            // 清除同区域其他高亮
+            el.closest('#bookmarks-list, #folder-tree') &&
+                el.closest('#bookmarks-list, #folder-tree')
+                    .querySelectorAll('.drag-over-top, .drag-over-bottom')
+                    .forEach(n => n.classList.remove('drag-over-top', 'drag-over-bottom'));
+            if (e.clientY < mid) {
+                el.classList.add('drag-over-top');
+            } else {
+                el.classList.add('drag-over-bottom');
+            }
+        });
+
+        el.addEventListener('dragleave', (e) => {
+            if (!el.contains(e.relatedTarget)) {
+                el.classList.remove('drag-over-top', 'drag-over-bottom');
+            }
+        });
+
+        el.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!dragState || dragState.srcArray !== arr) return;
+            if (dragState.items.includes(dataItem)) return;
+
+            const isTop = el.classList.contains('drag-over-top');
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+
+            const dragged = dragState.items;
+            // 移除原位置
+            dragged.forEach(it => {
+                const idx = arr.indexOf(it);
+                if (idx !== -1) arr.splice(idx, 1);
+            });
+            // 找目标位置
+            let targetIdx = arr.indexOf(dataItem);
+            if (!isTop) targetIdx += 1;
+            if (targetIdx < 0) targetIdx = 0;
+            arr.splice(targetIdx, 0, ...dragged);
+
+            dragState = null;
+            // 刷新内容区
+            updateBookmarksList(arr);
+            saveBookmarks();
+        });
+    }
+
     function updateBookmarksList(items, highlightKeyword) {
         bookmarksList.innerHTML = '';
 
@@ -2798,16 +3091,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fragment = document.createDocumentFragment();
 
-        // 先渲染子文件夹（如果有）
-        const folders = items.filter(item => item.type === 'folder');
-        for (let i = 0; i < folders.length; i++) {
-            fragment.appendChild(renderContentFolderItem(folders[i]));
-        }
-
-        // 再渲染书签，传入 items 作为 parentArray（用于删除/插入定位）
-        const bookmarkArray = items.filter(item => item.type === 'bookmark');
-        for (let i = 0; i < bookmarkArray.length; i++) {
-            fragment.appendChild(renderBookmarkItem(bookmarkArray[i], items, highlightKeyword));
+        // 按 items 原始顺序渲染（支持拖拽混排，文件夹和书签可自由排列）
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.type === 'folder') {
+                fragment.appendChild(renderContentFolderItem(item, items));
+            } else if (item.type === 'bookmark') {
+                fragment.appendChild(renderBookmarkItem(item, items, highlightKeyword));
+            }
         }
 
         bookmarksList.appendChild(fragment);
@@ -3184,7 +3475,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 渲染内容区的子文件夹（可点击进入）
-    function renderContentFolderItem(folder) {
+    function renderContentFolderItem(folder, parentArray) {
         const div = document.createElement('div');
         div.className = 'content-folder-item';
 
@@ -3210,10 +3501,14 @@ document.addEventListener('DOMContentLoaded', () => {
             checkbox.className = 'select-checkbox';
             checkbox.addEventListener('click', (e) => {
                 e.stopPropagation();
-                toggleSelectItem('folder', folder, null, checkbox);
+                toggleSelectItem('folder', folder, parentArray || null, checkbox);
             });
             div.insertBefore(checkbox, div.firstChild);
             div.classList.add('multi-select-item');
+            // 多选模式：内容区文件夹拖拽排序
+            if (parentArray) {
+                attachContentDrag(div, folder, parentArray);
+            }
         }
 
         div.onclick = (e) => {
@@ -3303,6 +3598,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.preventDefault();
                 }
             });
+            // 多选模式：书签拖拽排序
+            if (parentArray) {
+                attachContentDrag(div, bookmark, parentArray);
+            }
         }
 
         // ====== 书签菜单栏 ======

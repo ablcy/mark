@@ -518,6 +518,205 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
+// ====== 全局搜索引擎管理 ======
+
+// 内置引擎默认值（首次初始化时写入数据库，管理员可编辑排序但不可删除）
+const DEFAULT_ENGINES_SEED = [
+    { id: 'bookmark', name: '书签搜索', searchUrl: null,                                     color: '#2c3e50', isBuiltin: true,  visible: true },
+    { id: 'bing',     name: '必应',     searchUrl: 'https://www.bing.com/search?q={q}',      color: '#008373', isBuiltin: true,  visible: true },
+    { id: 'baidu',    name: '百度',     searchUrl: 'https://www.baidu.com/s?wd={q}',         color: '#2932E1', isBuiltin: false, visible: true },
+    { id: 'sogou',    name: '搜狗',     searchUrl: 'https://www.sogou.com/web?query={q}',    color: '#FF4F01', isBuiltin: false, visible: true },
+    { id: 'so360',    name: '360搜索',  searchUrl: 'https://www.so.com/s?q={q}',             color: '#40BA21', isBuiltin: false, visible: true },
+    { id: 'metaso',   name: '秘塔AI',   searchUrl: 'https://metaso.cn/?q={q}',               color: '#6C5CE7', isBuiltin: false, visible: true },
+];
+
+// 初始化全局引擎（首次部署时写入内置引擎）
+async function initGlobalEngines() {
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        if (result.rows.length === 0) {
+            // 首次部署：写入全套内置引擎
+            await pool.query(
+                "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO NOTHING",
+                [JSON.stringify(DEFAULT_ENGINES_SEED)]
+            );
+            console.log('Default engines seeded to global_engines');
+        } else {
+            // 已有数据：补齐缺失的内置引擎，并同步更新已有引擎的 isBuiltin 字段
+            let existing = JSON.parse(result.rows[0].value);
+            const existingIds = new Set(existing.map(e => e.id));
+            const missing = DEFAULT_ENGINES_SEED.filter(e => !existingIds.has(e.id));
+            // 同步 isBuiltin 字段（确保升级后旧数据的 isBuiltin 状态正确）
+            const builtinMap = {};
+            DEFAULT_ENGINES_SEED.forEach(e => { builtinMap[e.id] = e.isBuiltin; });
+            let changed = missing.length > 0;
+            existing = existing.map(e => {
+                let modified = false;
+                // 同步 isBuiltin 字段
+                if (e.id in builtinMap && e.isBuiltin !== builtinMap[e.id]) {
+                    e = { ...e, isBuiltin: builtinMap[e.id] };
+                    modified = true;
+                }
+                // 补齐 visible 字段（旧数据可能没有）
+                if (e.visible === undefined) {
+                    e = { ...e, visible: true };
+                    modified = true;
+                }
+                if (modified) changed = true;
+                return e;
+            });
+            if (changed) {
+                // 补齐的内置引擎放到列表头部
+                const merged = [...missing, ...existing];
+                await pool.query(
+                    "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+                    [JSON.stringify(merged)]
+                );
+                console.log(`Global engines updated: ${missing.length} added, isBuiltin fields synced`);
+            }
+        }
+    } catch (err) {
+        console.error('Failed to init global engines:', err.message);
+    }
+}
+
+// 公开接口：所有用户获取全局引擎列表
+app.get('/api/global-engines', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        const engines = result.rows.length > 0 ? JSON.parse(result.rows[0].value) : [];
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Get global engines error:', err);
+        res.json({ success: true, engines: [] });
+    }
+});
+
+// 管理员接口：整体排序（传入完整的 engines 数组，顺序即为新顺序）
+app.put('/api/admin/global-engines/reorder', async (req, res) => {
+    const { password, engines } = req.body;
+    if (!password) return res.status(400).json({ error: '缺少密码' });
+    const valid = await bcrypt.compare(password, adminPassword);
+    if (!valid) return res.status(403).json({ error: '管理员密码错误' });
+    if (!Array.isArray(engines)) return res.status(400).json({ error: 'engines 必须为数组' });
+    try {
+        await pool.query(
+            "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [JSON.stringify(engines)]
+        );
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Reorder global engines error:', err);
+        res.status(500).json({ error: '排序保存失败' });
+    }
+});
+
+// 管理员接口：新增全局引擎
+app.post('/api/admin/global-engines', async (req, res) => {
+    const { password, name, searchUrl, color } = req.body;
+    if (!password || !name || !searchUrl) {
+        return res.status(400).json({ error: '参数不完整' });
+    }
+    const valid = await bcrypt.compare(password, adminPassword);
+    if (!valid) return res.status(403).json({ error: '管理员密码错误' });
+    if (!searchUrl.includes('{q}')) {
+        return res.status(400).json({ error: '搜索地址必须包含 {q}' });
+    }
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        const engines = result.rows.length > 0 ? JSON.parse(result.rows[0].value) : [];
+        const id = 'global_' + Date.now();
+        engines.push({ id, name, searchUrl, color: color || '#666' });
+        await pool.query(
+            "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [JSON.stringify(engines)]
+        );
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Add global engine error:', err);
+        res.status(500).json({ error: '添加失败' });
+    }
+});
+
+// 管理员接口：修改全局引擎
+app.put('/api/admin/global-engines/:id', async (req, res) => {
+    const { password, name, searchUrl, color } = req.body;
+    const { id } = req.params;
+    if (!password) return res.status(400).json({ error: '缺少密码' });
+    const valid = await bcrypt.compare(password, adminPassword);
+    if (!valid) return res.status(403).json({ error: '管理员密码错误' });
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        let engines = result.rows.length > 0 ? JSON.parse(result.rows[0].value) : [];
+        const idx = engines.findIndex(e => e.id === id);
+        if (idx === -1) return res.status(404).json({ error: '引擎不存在' });
+        if (name) engines[idx].name = name;
+        if (searchUrl) {
+            if (!searchUrl.includes('{q}')) return res.status(400).json({ error: '搜索地址必须包含 {q}' });
+            engines[idx].searchUrl = searchUrl;
+        }
+        if (color) engines[idx].color = color;
+        await pool.query(
+            "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [JSON.stringify(engines)]
+        );
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Update global engine error:', err);
+        res.status(500).json({ error: '修改失败' });
+    }
+});
+
+// 管理员接口：删除全局引擎
+app.delete('/api/admin/global-engines/:id', async (req, res) => {
+    const { password } = req.body;
+    const { id } = req.params;
+    if (!password) return res.status(400).json({ error: '缺少密码' });
+    const valid = await bcrypt.compare(password, adminPassword);
+    if (!valid) return res.status(403).json({ error: '管理员密码错误' });
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        let engines = result.rows.length > 0 ? JSON.parse(result.rows[0].value) : [];
+        const target = engines.find(e => e.id === id);
+        if (target && target.isBuiltin) {
+            return res.status(403).json({ error: '内置引擎不可删除，可在列表中隐藏或调整顺序' });
+        }
+        engines = engines.filter(e => e.id !== id);
+        await pool.query(
+            "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [JSON.stringify(engines)]
+        );
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Delete global engine error:', err);
+        res.status(500).json({ error: '删除失败' });
+    }
+});
+
+// 管理员接口：切换引擎显示/隐藏
+app.patch('/api/admin/global-engines/:id/visibility', async (req, res) => {
+    const { password, visible } = req.body;
+    const { id } = req.params;
+    if (!password) return res.status(400).json({ error: '缺少密码' });
+    const valid = await bcrypt.compare(password, adminPassword);
+    if (!valid) return res.status(403).json({ error: '管理员密码错误' });
+    try {
+        const result = await pool.query("SELECT value FROM admin_settings WHERE key = 'global_engines'");
+        let engines = result.rows.length > 0 ? JSON.parse(result.rows[0].value) : [];
+        const idx = engines.findIndex(e => e.id === id);
+        if (idx === -1) return res.status(404).json({ error: '引擎不存在' });
+        engines[idx].visible = !!visible;
+        await pool.query(
+            "INSERT INTO admin_settings (key, value) VALUES ('global_engines', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [JSON.stringify(engines)]
+        );
+        res.json({ success: true, engines });
+    } catch (err) {
+        console.error('Toggle engine visibility error:', err);
+        res.status(500).json({ error: '操作失败' });
+    }
+});
+
 // ====== 分享功能 ======
 
 // 已知路由列表，避免分享短码冲突
@@ -835,6 +1034,8 @@ app.get('/api/favicon/:hostname', async (req, res) => {
     const sources = [
         `https://favicon.im/${hostname}`,
         `https://icon.horse/icon/${hostname}`,
+        `https://${hostname}/favicon.ico`,
+        `https://${hostname}/favicon.png`,
     ];
 
     for (const sourceUrl of sources) {
@@ -924,6 +1125,7 @@ async function startServer() {
     if (dbInitialized) {
         console.log('Database connection successful');
         await loadAdminPassword();
+        await initGlobalEngines();
         // 每次启动清理 shares 脏数据
         try {
             await pool.query("UPDATE shares SET domain = NULL WHERE domain LIKE 'mark.lcy.app%'");

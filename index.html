@@ -11,13 +11,14 @@
     <style>
         /* === Critical CSS - 首屏极速渲染 === */
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:#f5f5f5;height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0)}
+        :root{--theme-bg:#fff;--theme-nav:#fff;--theme-surface:#fff;--theme-border:#e8e8e8;--theme-text:#333;--theme-text-muted:#666;--theme-shadow:rgba(0,0,0,.06)}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;background:var(--theme-bg,#fff);height:100dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0)}
         #app{flex:1;display:flex;flex-direction:column;height:100dvh;overflow:hidden}
         .hidden{display:none!important}
         /* 顶栏 */
-        .top-nav{background:#f5f5f5;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,.08);position:sticky;top:0;z-index:100;min-height:56px}
+        .top-nav{background:var(--theme-nav,#fff);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 3px var(--theme-shadow,rgba(0,0,0,.08));position:sticky;top:0;z-index:100;min-height:56px}
         .nav-left{display:flex;align-items:center;gap:12px;position:relative;z-index:1;width:257px;min-width:257px;flex:0 0 auto;padding-right:20px}
-        .nav-left .logo{color:#333;font-size:24px;font-weight:bold}
+        .nav-left .logo{color:var(--theme-text,#333);font-size:24px;font-weight:bold}
         .nav-logo-img{width:28px;height:28px;border-radius:4px;flex-shrink:0}
         .version-badge{background:#e8e8e8;color:#666;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:500}
         .nav-right{display:flex;gap:8px}
@@ -73,11 +74,11 @@
 </head>
 <body>
     <div id="app">
-        <!-- 认证界面 -->
-        <div id="auth-container" class="hidden">
+        <!-- 登录/注册弹窗 -->
+        <div id="auth-container" class="auth-modal hidden">
+            <div class="auth-modal-overlay"></div>
             <div class="auth-wrapper">
-                <img class="auth-logo-img" src="favicon.png" alt="Mark Logo">
-                <h1 class="auth-logo">Mark</h1>
+                <button class="auth-modal-close" title="关闭">&times;</button>
                 <div class="auth-box">
                     <div class="auth-tabs">
                         <button id="login-tab" class="active">登录</button>
@@ -88,7 +89,7 @@
                         <input type="text" id="login-username" placeholder="用户名" required>
                         <input type="password" id="login-password" placeholder="密码" required>
                         <button type="submit">登录</button>
-                        <button type="button" class="auth-back-btn">返回主页</button>
+                        <button type="button" class="auth-back-btn">取消</button>
                     </form>
 
                     <form id="register-form" class="auth-form hidden">
@@ -99,7 +100,7 @@
                     </form>
                 </div>
                 <p class="auth-copyright">© 2026 Li Chengyan. All Rights Reserved.</p>
-                            <span class="auth-version">v3.1.1</span>
+                                <span class="auth-version">v3.3.4</span>
             </div>
         </div>
 
@@ -110,9 +111,11 @@
                 <div class="nav-left">
                     <img class="nav-logo-img" src="favicon.png" alt="Mark Logo">
                     <h1 class="logo">Mark</h1>
-                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.1.1</span>
+                    <span id="version-display" class="version-badge" title="点击查看更新日志">v3.3.4</span>
                     <div class="nav-menu-wrapper">
                         <button id="nav-menu-btn" class="nav-menu-btn" title="菜单">...</button>
+                        <div id="theme-picker-dropdown" class="dropdown-menu theme-picker-dropdown hidden">
+                        </div>
                         <div id="nav-menu-dropdown" class="dropdown-menu hidden">
                             <button id="profile-btn" class="dropdown-item">个人</button>
                             <button id="view-mode-btn" class="dropdown-item hidden">简洁模式</button>
@@ -207,21 +210,24 @@
 
             <!-- 简洁模式 -->
             <div id="clean-mode-view" class="clean-mode-view hidden">
-                <div class="clean-search-wrapper">
-                    <div class="clean-search-bar" id="clean-search-bar">
-                        <button class="search-engine-btn" id="clean-search-engine-btn" title="切换搜索引擎"></button>
-                        <input type="text" class="search-input" id="clean-search-input" placeholder="搜索网页" autocomplete="off">
-                        <button class="search-submit-btn" id="clean-search-submit-btn" title="搜索">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"/>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-                            </svg>
-                        </button>
+                <div class="clean-content-shift">
+                    <div class="clean-search-wrapper">
+                        <div class="clean-search-bar" id="clean-search-bar">
+                            <button class="search-engine-btn" id="clean-search-engine-btn" title="切换搜索引擎"></button>
+                            <input type="text" class="search-input" id="clean-search-input" placeholder="搜索网页" autocomplete="off">
+                            <button class="search-submit-btn" id="clean-search-submit-btn" title="搜索">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"/>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="search-engine-picker" id="clean-search-engine-picker"></div>
+                        <div class="suggestions-dropdown" id="clean-suggestions-dropdown"></div>
                     </div>
-                    <div class="search-engine-picker" id="clean-search-engine-picker"></div>
-                    <div class="suggestions-dropdown" id="clean-suggestions-dropdown"></div>
+                    <div id="clean-bookmarks-grid" class="clean-bookmarks-grid"></div>
                 </div>
-                <div id="clean-bookmarks-grid" class="clean-bookmarks-grid"></div>
+                <div class="clean-copyright">&copy; 2026 Li Chengyan. All Rights Reserved.</div>
             </div>
         </div>
 
@@ -231,6 +237,105 @@
                 <span class="close">&times;</span>
                 <div id="changelog-content">
                     <h2>更新日志</h2>
+                    <div class="changelog-entry">
+                        <h3>v3.3.4 - 2026年6月26日</h3>
+                        <ul>
+                            <li>修复简洁模式登录后搜索框被快捷方式往上挤的问题</li>
+                            <li>修复手机端键盘弹出时搜索框位置偏移问题</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.3.3 - 2026年6月26日</h3>
+                        <ul>
+                            <li>修复简洁模式快捷方式未与搜索框同步上移的问题</li>
+                            <li>后台管理新增搜索引擎显示/隐藏功能，管理员可控制所有用户看到的引擎</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.3.2 - 2026年6月26日</h3>
+                        <ul>
+                            <li>简洁模式搜索框向上平移，视觉重心上移</li>
+                            <li>主题选择从居中弹窗改为菜单按钮旁竖排下拉面板</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.3.1 - 2026年6月26日</h3>
+                        <ul>
+                            <li>主题切换改为弹出选择器，点击主题按钮展示所有色系选项，直接选择目标主题</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.3.0 - 2026年6月25日</h3>
+                        <ul>
+                            <li>多色系主题：新增纯白(默认)、暖色、冷色、护眼、粉色 5 个亮色主题 + 暗色主题，点击循环切换</li>
+                            <li>主题切换同步简洁模式和书签模式，全站背景色统一跟随</li>
+                            <li>CSS 变量重构：body/nav/简洁模式背景色统一使用 --theme-bg/--theme-nav 变量</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.8 - 2026年6月23日</h3>
+                        <ul>
+                            <li>搜索框内引擎图标尺寸从 22px 统一为 28px，与下拉列表图标大小一致</li>
+                            <li>搜索框图标圆角改为 50%（圆形），与下拉列表样式统一</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.7 - 2026年6月23日</h3>
+                        <ul>
+                            <li>修复必应搜索引擎图标不显示问题（改为直连必应 favicon，不再走代理）</li>
+                            <li>调整内置引擎范围：仅书签搜索和必应为不可删除的内置引擎，其他引擎（百度、搜狗等）均可在管理后台删除</li>
+                            <li>修复升级部署后旧数据 isBuiltin 字段未同步的问题</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.6 - 2026年6月23日</h3>
+                        <ul>
+                            <li>修复全局引擎图标显示：升级部署时自动补齐缺失的内置引擎到数据库，图标不再显示问号</li>
+                            <li>favicon 加载新增直接访问站点 /favicon.ico 作为备用源，提升图标加载成功率</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.5 - 2026年6月23日</h3>
+                        <ul>
+                            <li>管理后台搜索引擎管理：内置引擎（必应、百度等）纳入统一管理，支持拖拽全局排序</li>
+                            <li>内置引擎可编辑名称、颜色，不可删除；新排序实时同步给所有用户</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.4 - 2026年6月10日</h3>
+                        <ul>
+                            <li>管理后台新增全局搜索引擎管理：管理员可添加、修改、删除搜索引擎，自动同步给所有用户</li>
+                            <li>全局搜索引擎图标通过 favicon 服务加载，加载失败回退到首字母</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.3 - 2026年6月18日</h3>
+                        <ul>
+                            <li>自定义搜索引擎图标正常显示：从搜索地址提取域名，通过 favicon 服务加载真实图标，加载失败回退到首字母</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.2 - 2026年6月18日</h3>
+                        <ul>
+                            <li>修复书签模式下搜索引擎选择器无法弹出的问题</li>
+                            <li>修复自定义搜索引擎跨设备同步：登录时本地引擎自动合并到云端，不再被覆盖</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.1 - 2026年6月16日</h3>
+                        <ul>
+                            <li>多选模式下支持拖拽排序书签和文件夹位置</li>
+                            <li>导航栏菜单按钮与侧边栏菜单按钮对齐</li>
+                        </ul>
+                    </div>
+                    <div class="changelog-entry">
+                        <h3>v3.2.0 - 2026年6月15日</h3>
+                        <ul>
+                            <li>登录/注册从跳转新页面改为弹窗模态框，主界面始终可见</li>
+                            <li>弹窗支持点击遮罩层或关闭按钮关闭，体验更流畅</li>
+                            <li>书签列表模式 favicon 加载失败时显示规范的占位图标，不再裸露文字</li>
+                        </ul>
+                    </div>
                     <div class="changelog-entry">
                         <h3>v3.1.1 - 2026年6月10日</h3>
                         <ul>
